@@ -1,0 +1,34 @@
+{
+  "apps": {
+    "org.onosproject.xran": {
+      "xran": {
+        "active_cells": [
+          {
+            "plmn_id": "220841",
+            "eci": "FFFFFFA0",
+            "ip_addr": "10.0.0.2"
+          },
+          {
+            "plmn_id": "220842",
+            "eci": "FFFFFFB0",
+            "ip_addr": "10.0.0.3"
+          },
+          {
+            "plmn_id": "220843",
+            "eci": "FFFFFFC0",
+            "ip_addr": "192.168.56.101"
+          },
+          {
+            "plmn_id": "220844",
+            "eci": "FFFFFFD0",
+            "ip_addr": "127.0.0.1"
+          }
+        ],
+        "l2_meas_report_interval_ms": 30000,
+        "rx_signal_meas_report_interval_seconds": 7,
+        "xranc_cellconfigrequest_interval_seconds": 10,
+        "xranc_port": 7891
+      }
+    }
+  }
+}
