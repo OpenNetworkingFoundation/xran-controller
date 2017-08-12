@@ -20,7 +20,7 @@ public class UEAdmEncoderDecoder {
     }
 
     public static XrancPdu constructPacket(ECGI ecgi, CRNTI crnti) {
-        AdmEstResponse response = new AdmEstResponse(1);
+        AdmEstResponse response = new AdmEstResponse(0);
 
         UEAdmissionResponse ueAdmissionResponse = new UEAdmissionResponse();
         ueAdmissionResponse.setCrnti(crnti);

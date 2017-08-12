@@ -22,6 +22,8 @@ import org.onosproject.xran.codecs.pdu.RRMConfig;
 import org.onosproject.xran.identifiers.LinkId;
 import org.openmuc.jasn1.ber.types.BerInteger;
 
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.Timer;
 
 /**
@@ -42,8 +44,9 @@ public class RnibLink {
     private Type type;
     private Timer timer;
 
-    public RnibLink() {
+    public RnibLink(RnibCell cell, RnibUe ue) {
         trafficPercent = new TrafficSplitPercentage();
+        trafficPercent.setEcgi(cell.getEcgi());
         trafficPercent.setTrafficPercentDl(new BerInteger(100));
         trafficPercent.setTrafficPercentUl(new BerInteger(100));
 
@@ -52,6 +55,10 @@ public class RnibLink {
         pdcpPackDelay = new PDCPPacketDelay();
         resourceUsage = new ResourceUsage();
         timer = new Timer();
+
+        type = Type.NON_SERVING;
+
+        linkId = LinkId.valueOf(cell, ue);
     }
 
     public Timer getTimer() {
@@ -73,7 +80,7 @@ public class RnibLink {
     }
 
     public void setLinkId(RnibCell cell, RnibUe ue) {
-        this.linkId = new LinkId(cell.getEcgi(), ue.getMmeS1apId());
+        this.linkId = LinkId.valueOf(cell, ue);
         trafficPercent.setEcgi(cell.getEcgi());
     }
 
@@ -174,24 +181,38 @@ public class RnibLink {
     }
 
     public enum Type {
-        SERVING_PRIMARY {
+        SERVING_PRIMARY("serving/primary") {
             @Override
             public String toString() {
                 return "\"serving/primary\"";
             }
         },
         // TODO: Add CA/DC
-        SERVING_SECONDARY {
+        SERVING_SECONDARY("serving/secondary") {
             @Override
             public String toString() {
                 return "\"serving/secondary\"";
             }
         },
-        NON_SERVING {
+        NON_SERVING("non-serving") {
             @Override
             public String toString() {
                 return "\"non-serving\"";
             }
+        };
+
+        private String name;
+
+        Type(String name) {
+            this.name = name;
+        }
+
+        public static Type getEnum(String name) {
+            Optional<Type> any = Arrays.stream(Type.values()).filter(typeStr -> typeStr.name.equals(name)).findAny();
+            if (any.isPresent()) {
+                return any.get();
+            }
+            throw new IllegalArgumentException("No enum defined for string: " + name);
         }
     }
 

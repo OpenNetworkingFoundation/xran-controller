@@ -21,6 +21,9 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.onosproject.rest.AbstractWebResource;
 import org.onosproject.xran.XranStore;
 import org.onosproject.xran.annotations.Patch;
+import org.onosproject.xran.codecs.api.ECGI;
+import org.onosproject.xran.codecs.api.EUTRANCellIdentifier;
+import org.onosproject.xran.controller.XranController;
 import org.onosproject.xran.entities.RnibCell;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +37,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
+import java.util.concurrent.SynchronousQueue;
 
 /**
  * Cell web resource.
@@ -79,7 +84,7 @@ public class CellWebResource extends AbstractWebResource {
      * test.
      *
      * @param eciHex test
-     * @param stream test
+     * @param stream test (body of request)
      * @return test
      */
     @Patch
@@ -88,22 +93,29 @@ public class CellWebResource extends AbstractWebResource {
     public Response patchCell(@PathParam("cellid") String eciHex, InputStream stream) {
         log.debug("PATCH CELLID {}", eciHex);
 
-        boolean b = false;
+        boolean b;
+
+        RnibCell cell = get(XranStore.class).getCell(eciHex);
+        // Check if a cell with that ECI exists. If it does, then modify its contents.
 
         try {
             ObjectNode jsonTree = (ObjectNode) mapper().readTree(stream);
 
             JsonNode rrmConf = jsonTree.get("RRMConf");
             if (rrmConf != null) {
-                b = get(XranStore.class).modifyCellRrmConf(eciHex, rrmConf);
+                final SynchronousQueue<String>[] queue = new SynchronousQueue[1];
+                b = get(XranStore.class).modifyCellRrmConf(cell, rrmConf);
+                if (b) {
+                    queue[0] = get(XranController.class).sendModifiedRRMConf(cell);
+                    return Response.ok().entity(queue[0].take()).build();
+                }
             }
         } catch (Exception e) {
             log.error(ExceptionUtils.getFullStackTrace(e));
             e.printStackTrace();
+            return Response.serverError().entity(ExceptionUtils.getFullStackTrace(e)).build();
         }
-
-
-        return ok(b).build();
+        return Response.noContent().build();
     }
 
 }

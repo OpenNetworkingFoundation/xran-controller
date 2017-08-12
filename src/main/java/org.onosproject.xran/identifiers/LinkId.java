@@ -22,32 +22,57 @@ import org.onosproject.xran.entities.RnibCell;
 import org.onosproject.xran.entities.RnibUe;
 
 public class LinkId {
-    private ECGI source;
-    private MMEUES1APID destination;
+    private RnibCell cell;
+    private RnibUe ue;
 
-    public LinkId(ECGI source, MMEUES1APID destination) {
-        this.source = source;
-        this.destination = destination;
+    private LinkId(RnibCell cell, RnibUe ue) {
+        this.cell = cell;
+        this.ue = ue;
     }
 
     public static LinkId valueOf(RnibCell cell, RnibUe ue) {
-        return new LinkId(cell.getEcgi(), ue.getMmeS1apId());
+        return new LinkId(cell, ue);
     }
 
-    public ECGI getSource() {
-        return source;
+    public static LinkId valueOf(ECGI ecgi, MMEUES1APID mmeues1APID) {
+        RnibCell cell = new RnibCell();
+        RnibUe ue = new RnibUe();
+
+        cell.setEcgi(ecgi);
+        ue.setMmeS1apId(mmeues1APID);
+        return new LinkId(cell, ue);
     }
 
-    public void setSource(ECGI source) {
-        this.source = source;
+    public ECGI getSourceId() {
+        return cell.getEcgi();
     }
 
-    public MMEUES1APID getDestination() {
-        return destination;
+    public void setSourceId(ECGI sourceId) {
+        cell.setEcgi(sourceId);
     }
 
-    public void setDestination(MMEUES1APID destination) {
-        this.destination = destination;
+    public MMEUES1APID getDestinationId() {
+        return ue.getMmeS1apId();
+    }
+
+    public void setDestinationId(MMEUES1APID destinationId) {
+        ue.setMmeS1apId(destinationId);
+    }
+
+    public RnibCell getCell() {
+        return cell;
+    }
+
+    public void setCell(RnibCell cell) {
+        this.cell = cell;
+    }
+
+    public RnibUe getUe() {
+        return ue;
+    }
+
+    public void setUe(RnibUe ue) {
+        this.ue = ue;
     }
 
     @Override
@@ -55,15 +80,15 @@ public class LinkId {
         return this == o ||
                 o != null &&
                         o instanceof LinkId &&
-                        destination.equals(((LinkId) o).destination) &&
-                        source.equals(((LinkId) o).source);
+                        cell.getEcgi().equals(((LinkId) o).cell.getEcgi()) &&
+                        ue.getMmeS1apId().equals(((LinkId) o).ue.getMmeS1apId());
 
     }
 
     @Override
     public int hashCode() {
-        int result = source.hashCode();
-        result = 31 * result + destination.hashCode();
+        int result = cell.getEcgi().hashCode();
+        result = 31 * result + ue.getMmeS1apId().hashCode();
         return result;
     }
 
@@ -71,8 +96,8 @@ public class LinkId {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("{\n")
-                .append(source != null ? "\"cell\":" + source : "")
-                .append(destination != null ? ",\n\"ue\":" + destination : "")
+                .append(cell != null ? "\"cell\":" + cell : "")
+                .append(ue != null ? ",\n\"ue\":" + ue : "")
                 .append("\n}\n");
         return sb.toString();
     }

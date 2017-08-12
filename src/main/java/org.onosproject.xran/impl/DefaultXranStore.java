@@ -19,6 +19,7 @@ package org.onosproject.xran.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.felix.scr.annotations.*;
 import org.onosproject.core.ApplicationId;
 import org.onosproject.core.CoreService;
@@ -85,7 +86,7 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
         list.addAll(
                 linkMap.keySet()
                         .stream()
-                        .filter(k -> k.getSource().equals(ecgi))
+                        .filter(k -> k.getSourceId().equals(ecgi))
                         .map(v -> linkMap.get(v))
                         .collect(Collectors.toList()));
 
@@ -100,7 +101,7 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
         list.addAll(
                 linkMap.keySet()
                         .stream()
-                        .filter(k -> k.getSource().getEUTRANcellIdentifier().equals(eci))
+                        .filter(k -> k.getSourceId().getEUTRANcellIdentifier().equals(eci))
                         .map(v -> linkMap.get(v))
                         .collect(Collectors.toList()));
 
@@ -115,7 +116,7 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
         list.addAll(
                 linkMap.keySet()
                         .stream()
-                        .filter(k -> k.getDestination().equals(mme))
+                        .filter(k -> k.getDestinationId().equals(mme))
                         .map(v -> linkMap.get(v))
                         .collect(Collectors.toList()));
 
@@ -129,8 +130,8 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
 
         Optional<LinkId> first = linkMap.keySet()
                 .stream()
-                .filter(linkId -> linkId.getSource().getEUTRANcellIdentifier().equals(eci))
-                .filter(linkId -> linkId.getDestination().equals(mme))
+                .filter(linkId -> linkId.getSourceId().getEUTRANcellIdentifier().equals(eci))
+                .filter(linkId -> linkId.getDestinationId().equals(mme))
                 .findFirst();
 
         return first.map(linkId -> linkMap.get(linkId)).orElse(null);
@@ -142,12 +143,13 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
         RnibUe ue = getUe(euId);
 
         if (cell != null && ue != null) {
-            RnibLink link = new RnibLink();
-            link.setLinkId(cell, ue);
+            RnibLink link = new RnibLink(cell, ue);
 
-            // TODO: string to enum mapping
-//            link.setType(type);
-
+            try {
+                link.setType(RnibLink.Type.valueOf(type));
+            } catch (Exception e) {
+                log.error(ExceptionUtils.getFullStackTrace(e));
+            }
             linkMap.put(link.getLinkId(), link);
             return true;
         }
@@ -169,7 +171,8 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
 
     @Override
     public RnibLink getLink(ECGI ecgi, MMEUES1APID mme) {
-        LinkId linkId = new LinkId(ecgi, mme);
+
+        LinkId linkId = LinkId.valueOf(ecgi, mme);
         return linkMap.get(linkId);
     }
 
@@ -230,10 +233,12 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
     }
 
     @Override
-    public boolean modifyCellRrmConf(String hexeci, JsonNode rrmConf) {
-        EUTRANCellIdentifier eci = hexToECI(hexeci);
-        Optional<ECGI> first = cellMap.keySet().stream().filter(ecgi -> ecgi.getEUTRANcellIdentifier().equals(eci)).findFirst();
-        first.ifPresent(ecgi -> cellMap.get(ecgi).modifyRrmConfig(rrmConf));
+    public boolean modifyCellRrmConf(RnibCell cell, JsonNode rrmConf) {
+
+        List<RnibLink> linkList = getLinksByECGI(cell.getEcgi());
+        List<RnibUe> ueList = linkList.stream().map(link -> link.getLinkId().getUe()).collect(Collectors.toList());
+
+        cell.modifyRrmConfig(rrmConf, ueList);
         return false;
     }
 

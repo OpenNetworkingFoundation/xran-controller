@@ -49,17 +49,16 @@ import org.openmuc.jasn1.ber.types.BerInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 import static org.onosproject.net.DeviceId.deviceId;
+import static org.onosproject.xran.controller.XranChannelHandler.getSctpMessage;
 import static org.onosproject.xran.entities.RnibCell.decodeDeviceId;
 import static org.onosproject.xran.entities.RnibCell.uri;
-import static org.onosproject.xran.entities.RnibUe.UeState;
 import static org.onosproject.xran.entities.RnibUe.hostIdtoMME;
 
 /**
@@ -107,6 +106,8 @@ public class XranControllerImpl implements XranController {
     private LinkMap linkMap;
     /* MAPS */
     private ConcurrentMap<String, ECGI> legitCells = new ConcurrentHashMap<>();
+    private ConcurrentMap<CRNTI, SynchronousQueue<String>> hoQueue = new ConcurrentHashMap<CRNTI, SynchronousQueue<String>>();
+    private ConcurrentMap<ECGI, SynchronousQueue<String>> RRMCellQueue = new ConcurrentHashMap<ECGI, SynchronousQueue<String>>();
     /* AGENTS */
     private InternalXranDeviceAgent deviceAgent = new InternalXranDeviceAgent();
     private InternalXranHostAgent hostAgent = new InternalXranHostAgent();
@@ -151,6 +152,28 @@ public class XranControllerImpl implements XranController {
     }
 
     @Override
+    public SynchronousQueue<String> sendHORequest(RnibLink newLink, RnibLink oldLink) {
+        ECGI newEcgi = newLink.getLinkId().getSourceId(),
+                oldEcgi = oldLink.getLinkId().getSourceId();
+        CRNTI crnti = linkMap.getCrnti(newLink.getLinkId().getDestinationId());
+        ChannelHandlerContext newCtx = cellMap.getCtx(newEcgi),
+                oldCtx = cellMap.getCtx(oldEcgi);
+
+        try {
+            XrancPdu xrancPdu = HandoffRequest.constructPacket(crnti, oldEcgi, newEcgi);
+            newCtx.writeAndFlush(getSctpMessage(xrancPdu));
+            oldCtx.writeAndFlush(getSctpMessage(xrancPdu));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        SynchronousQueue<String> queue = new SynchronousQueue<>();
+        hoQueue.put(crnti, queue);
+
+        return queue;
+    }
+
+    @Override
     public void addListener(XranDeviceListener listener) {
         xranDeviceListeners.add(listener);
     }
@@ -170,6 +193,22 @@ public class XranControllerImpl implements XranController {
         xranHostListeners.remove(listener);
     }
 
+    @Override
+    public SynchronousQueue<String> sendModifiedRRMConf(RnibCell cell) {
+        ECGI ecgi = cell.getEcgi();
+        ChannelHandlerContext ctx = cellMap.getCtx(ecgi);
+        try {
+            XrancPdu pdu = RRMConfig.constructPacket(cell);
+            ctx.writeAndFlush(getSctpMessage(pdu));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        SynchronousQueue<String> queue = new SynchronousQueue<>();
+        RRMCellQueue.put(ecgi, queue);
+
+        return queue;
+    }
+
     private void restartTimer(RnibUe ue) {
         Timer timer = new Timer();
         ue.setTimer(timer);
@@ -177,7 +216,7 @@ public class XranControllerImpl implements XranController {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                if (ue.getUeState() == UeState.IDLE) {
+                if (ue.getState() == RnibUe.State.IDLE) {
                     hostAgent.removeConnectedHost(ue);
                     log.info("UE is removed after 10 seconds of IDLE");
                 } else {
@@ -222,8 +261,8 @@ public class XranControllerImpl implements XranController {
                                             if (conf == null) {
                                                 try {
                                                     ChannelHandlerContext ctx = cellMap.getCtx(ecgi);
-                                                    SctpMessage msg = XranChannelHandler.getSctpMessage(ConfigEncoderDecoder.constructPacket(ecgi));
-                                                    ctx.writeAndFlush(msg);
+                                                    XrancPdu xrancPdu = ConfigEncoderDecoder.constructPacket(ecgi);
+                                                    ctx.writeAndFlush(getSctpMessage(xrancPdu));
                                                 } catch (IOException e) {
                                                     log.error(ExceptionUtils.getFullStackTrace(e));
                                                     e.printStackTrace();
@@ -236,8 +275,7 @@ public class XranControllerImpl implements XranController {
                                                             getCtx(ecgi);
                                                     XrancPdu xrancPdu = L2MeasConf.constructPacket(ecgi, xranConfig.getL2MeasInterval());
                                                     cell.setMeasConfig(xrancPdu.getBody().getL2MeasConfig());
-                                                    SctpMessage sctpMessage = XranChannelHandler.
-                                                            getSctpMessage(xrancPdu);
+                                                    SctpMessage sctpMessage = getSctpMessage(xrancPdu);
                                                     ctx.writeAndFlush(sctpMessage);
                                                 } catch (IOException e) {
                                                     log.error(ExceptionUtils.getFullStackTrace(e));
@@ -287,11 +325,10 @@ public class XranControllerImpl implements XranController {
                                             if (ue.getCapability() == null) {
                                                 try {
                                                     ChannelHandlerContext ctx = cellMap.getCtx(primary.getEcgi());
-                                                    SctpMessage msg = XranChannelHandler.
-                                                            getSctpMessage(UECapabilityEnq.constructPacket(
-                                                                    primary.getEcgi(),
-                                                                    ue.getRanId()));
-                                                    ctx.writeAndFlush(msg);
+                                                    XrancPdu xrancPdu = UECapabilityEnq.constructPacket(
+                                                            primary.getEcgi(),
+                                                            ue.getRanId());
+                                                    ctx.writeAndFlush(getSctpMessage(xrancPdu));
                                                 } catch (IOException e) {
                                                     log.warn(ExceptionUtils.getFullStackTrace(e));
                                                     e.printStackTrace();
@@ -317,8 +354,7 @@ public class XranControllerImpl implements XranController {
                                                                 xranConfig.getRxSignalInterval()
                                                         );
                                                         ue.setMeasConfig(xrancPdu.getBody().getRXSigMeasConfig());
-                                                        SctpMessage msg = XranChannelHandler.getSctpMessage(xrancPdu);
-                                                        ctx.writeAndFlush(msg);
+                                                        ctx.writeAndFlush(getSctpMessage(xrancPdu));
                                                     } catch (IOException e) {
                                                         log.warn(ExceptionUtils.getFullStackTrace(e));
                                                         e.printStackTrace();
@@ -400,7 +436,7 @@ public class XranControllerImpl implements XranController {
 
                 Set<ECGI> ecgiSet = xranStore.getLinksByUeId(ue.getMmeS1apId().longValue())
                         .stream()
-                        .map(l -> l.getLinkId().getSource())
+                        .map(l -> l.getLinkId().getSourceId())
                         .collect(Collectors.toSet());
 
                 for (XranHostListener l : xranHostListeners) {
@@ -462,7 +498,7 @@ public class XranControllerImpl implements XranController {
                     if (xranStore.getCell(ecgi) != null) {
                         CRNTI crnti = ueAdmissionRequest.getCrnti();
                         send_pdu = UEAdmEncoderDecoder.constructPacket(ecgi, crnti);
-                        ctx.writeAndFlush(XranChannelHandler.getSctpMessage(send_pdu));
+                        ctx.writeAndFlush(getSctpMessage(send_pdu));
                     } else {
                         log.warn("Could not find ECGI in registered cells: {}", ecgi);
                     }
@@ -475,9 +511,9 @@ public class XranControllerImpl implements XranController {
                     RnibUe ue = ueMap.get(ueAdmissionStatus.getCrnti());
                     if (ue != null) {
                         if (ueAdmissionStatus.getAdmEstStatus().value.intValue() == 0) {
-                            ue.setUeState(UeState.ACTIVE);
+                            ue.setState(RnibUe.State.ACTIVE);
                         } else {
-                            ue.setUeState(UeState.IDLE);
+                            ue.setState(RnibUe.State.IDLE);
                         }
                     }
                     break;
@@ -518,7 +554,7 @@ public class XranControllerImpl implements XranController {
                     UEReleaseInd ueReleaseInd = recv_pdu.getBody().getUEReleaseInd();
                     RnibUe ue = ueMap.get(ueReleaseInd.getCrnti());
                     if (ue != null) {
-                        ue.setUeState(UeState.IDLE);
+                        ue.setState(RnibUe.State.IDLE);
                         restartTimer(ue);
                     }
                     break;
@@ -541,7 +577,7 @@ public class XranControllerImpl implements XranController {
 
                     send_pdu = BearerEncoderDecoder.constructPacket(ecgi, crnti, erabParams, numErabs);
                     // Encode and send Bearer Admission Response - API ID 9
-                    ctx.writeAndFlush(XranChannelHandler.getSctpMessage(send_pdu));
+                    ctx.writeAndFlush(getSctpMessage(send_pdu));
                     break;
                 }
                 case 10: {
@@ -582,7 +618,7 @@ public class XranControllerImpl implements XranController {
                     // Encode and send UE CAPABILITY ENQUIRY
                     UECapabilityEnquiry ueCapabilityEnquiry = recv_pdu.getBody().getUECapabilityEnquiry();
                     XrancPdu xrancPdu = UECapabilityEnq.constructPacket(ueCapabilityEnquiry.getEcgi(), ueCapabilityEnquiry.getCrnti());
-                    ctx.writeAndFlush(XranChannelHandler.getSctpMessage(xrancPdu));
+                    ctx.writeAndFlush(getSctpMessage(xrancPdu));
                     break;
                 }
                 case 13: {
@@ -598,6 +634,40 @@ public class XranControllerImpl implements XranController {
                     break;
 
                     //14, 15, 16 are handoff
+                }
+                case 15: {
+                    HOFailure hoFailure = recv_pdu.getBody().getHOFailure();
+
+                    try {
+                        hoQueue.get(hoFailure.getCrnti())
+                                .put("Hand Over Failed with cause: " + hoFailure.getCause());
+                    } catch (InterruptedException e) {
+                        log.error(ExceptionUtils.getFullStackTrace(e));
+                        e.printStackTrace();
+                    } finally {
+                        hoQueue.remove(hoFailure.getCrnti());
+                    }
+                    break;
+                }
+                case 16: {
+                    HOComplete hoComplete = recv_pdu.getBody().getHOComplete();
+
+                    RnibLink oldLink = linkMap.get(hoComplete.getEcgiS(), hoComplete.getCrntiNew()),
+                            newLink = linkMap.get(hoComplete.getEcgiT(), hoComplete.getCrntiNew());
+
+                    oldLink.setType(RnibLink.Type.NON_SERVING);
+                    newLink.setType(RnibLink.Type.SERVING_PRIMARY);
+
+                    try {
+                        hoQueue.get(hoComplete.getCrntiNew())
+                                .put("Hand Over Completed");
+                    } catch (InterruptedException e) {
+                        log.error(ExceptionUtils.getFullStackTrace(e));
+                        e.printStackTrace();
+                    } finally {
+                        hoQueue.remove(hoComplete.getCrntiNew());
+                    }
+                    break;
                 }
                 case 18: {
                     // Decode RX Sig Meas Report.
@@ -666,7 +736,7 @@ public class XranControllerImpl implements XranController {
                             log.warn("Could not find cell with PCI-ARFCN: {}", servCell.getPciArfcn());
                         }
                     });
-
+                    break;
                 }
                 case 21: {
                     RadioMeasReportPerCell radioMeasReportPerCell = recv_pdu.getBody().getRadioMeasReportPerCell();
@@ -723,6 +793,19 @@ public class XranControllerImpl implements XranController {
                     }
                     break;
                 }
+                case 27: {
+                    RRMConfigStatus rrmConfigStatus = recv_pdu.getBody().getRRMConfigStatus();
+                    try {
+                        RRMCellQueue.get(rrmConfigStatus.getEcgi())
+                                .put("RRM Config's status: " + rrmConfigStatus.getStatus());
+                    } catch (InterruptedException e) {
+                        log.error(ExceptionUtils.getFullStackTrace(e));
+                        e.printStackTrace();
+                    } finally {
+                        RRMCellQueue.remove(rrmConfigStatus.getEcgi());
+                    }
+                    break;
+                }
                 case 34: {
                     TrafficSplitConfig trafficSplitConfig = recv_pdu.getBody().getTrafficSplitConfig();
 
@@ -741,9 +824,11 @@ public class XranControllerImpl implements XranController {
                             log.warn("Could not find cell with ECGI: {}", trafficSplitConfig.getEcgi());
                         }
                     });
+                    break;
                 }
                 default: {
                     log.warn("Wrong API ID");
+                    break;
                 }
             }
 

@@ -16,6 +16,8 @@
 
 package org.onosproject.xran.wrapper;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import org.onosproject.xran.XranStore;
 import org.onosproject.xran.codecs.api.CRNTI;
 import org.onosproject.xran.codecs.api.ECGI;
@@ -28,29 +30,30 @@ import org.slf4j.Logger;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class LinkMap {
     private static final Logger log = getLogger(LinkMap.class);
-
-    private ConcurrentMap<CRNTI, MMEUES1APID> crntiMme = new ConcurrentHashMap<>();
-
-    private XranStore xranStore;
+    private final XranStore xranStore;
+    private BiMap<CRNTI, MMEUES1APID> crntiMme = HashBiMap.create();
 
     public LinkMap(XranStore xranStore) {
         this.xranStore = xranStore;
     }
 
     public void putPrimaryLink(RnibCell cell, RnibUe ue) {
-        RnibLink link = new RnibLink();
-        link.setLinkId(cell, ue);
+        RnibLink link = new RnibLink(cell, ue);
         link.setType(RnibLink.Type.SERVING_PRIMARY);
-        xranStore.getLinksByUeId(ue.getMmeS1apId().longValue())
-                .forEach(l -> l.setType(RnibLink.Type.SERVING_SECONDARY));
-        xranStore.storeLink(link);
+        synchronized (xranStore) {
+            xranStore.getLinksByUeId(ue.getMmeS1apId().longValue())
+                    .forEach(l -> {
+                        if (l.getType().equals(RnibLink.Type.SERVING_PRIMARY)) {
+                            l.setType(RnibLink.Type.SERVING_SECONDARY);
+                        }
+                    });
+            xranStore.storeLink(link);
+        }
         crntiMme.put(ue.getRanId(), ue.getMmeS1apId());
     }
 
@@ -59,10 +62,8 @@ public class LinkMap {
         MMEUES1APID mmeues1APID = crntiMme.get(crnti);
 
         if (mmeues1APID != null) {
-            link = new RnibLink();
             RnibUe ue = xranStore.getUe(mmeues1APID);
-            link.setLinkId(cell, ue);
-            link.setType(RnibLink.Type.NON_SERVING);
+            link = new RnibLink(cell, ue);
             xranStore.storeLink(link);
         } else {
             log.error("Could not find mapping for CRNTI to UE. Aborting creation of non-serving link");
@@ -84,6 +85,10 @@ public class LinkMap {
             return xranStore.getLink(src, mmeues1APID);
         }
         return null;
+    }
+
+    public CRNTI getCrnti(MMEUES1APID mme) {
+        return crntiMme.inverse().get(mme);
     }
 
     public boolean remove(ECGI src, MMEUES1APID dst) {
@@ -116,7 +121,7 @@ public class LinkMap {
         Optional<RnibLink> primary = linksByUeId.stream().filter(l -> l.getType().equals(RnibLink.Type.SERVING_PRIMARY)).findFirst();
 
         if (primary.isPresent()) {
-            return primary.get().getLinkId().getSource();
+            return primary.get().getLinkId().getSourceId();
         }
         return null;
     }

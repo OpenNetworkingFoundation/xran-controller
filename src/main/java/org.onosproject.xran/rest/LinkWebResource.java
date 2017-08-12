@@ -22,7 +22,9 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.onosproject.rest.AbstractWebResource;
 import org.onosproject.xran.XranStore;
 import org.onosproject.xran.annotations.Patch;
+import org.onosproject.xran.controller.XranController;
 import org.onosproject.xran.entities.RnibLink;
+import org.openmuc.jasn1.ber.types.BerInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +41,8 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.SynchronousQueue;
 
 /**
  * Link web resource.
@@ -103,25 +107,48 @@ public class LinkWebResource extends AbstractWebResource {
     public Response patchLinks(@PathParam("src") String src, @PathParam("dst") long dst, InputStream stream) {
         log.debug("Patch LINKS FROM {} to {}", src, dst);
 
-        boolean b = false;
         try {
-            ObjectNode jsonTree = (ObjectNode) mapper().readTree(stream);
+            RnibLink link = get(XranStore.class).getLinkBetweenCellIdUeId(src, dst);
+            if (link != null) {
 
-            JsonNode type = jsonTree.get("type");
-            if (type != null) {
+                ObjectNode jsonTree = (ObjectNode) mapper().readTree(stream);
 
-            }
+                JsonNode type = jsonTree.get("type");
+                if (type != null) {
+                    final SynchronousQueue<String>[] queue = new SynchronousQueue[1];
+                    RnibLink.Type linkType = RnibLink.Type.getEnum(type.asText());
+                    if (linkType.equals(RnibLink.Type.SERVING_PRIMARY)) {
+                        List<RnibLink> linksByUeId = get(XranStore.class).getLinksByUeId(dst);
+                        Optional<RnibLink> primary = linksByUeId.stream()
+                                .filter(l -> l.getType().equals(RnibLink.Type.SERVING_PRIMARY))
+                                .findFirst();
+                        if (primary.isPresent()) {
+                            queue[0] = get(XranController.class).sendHORequest(link, primary.get());
+                            return Response.ok().entity(queue[0].take()).build();
+                        }
+                    }
+                }
 
-            JsonNode trafficpercent = jsonTree.get("trafficpercent");
-            if (trafficpercent != null) {
-
+                JsonNode trafficpercent = jsonTree.get("trafficpercent");
+                if (trafficpercent != null) {
+                    JsonNode jsonNode = trafficpercent.get("traffic-percent-dl");
+                    if (jsonNode != null) {
+                        link.getTrafficPercent().setTrafficPercentDl(new BerInteger(jsonNode.asInt()));
+                    }
+                    jsonNode = trafficpercent.get("traffic-percent-ul");
+                    if (jsonNode != null) {
+                        link.getTrafficPercent().setTrafficPercentUl(new BerInteger(jsonNode.asInt()));
+                    }
+                    return Response.ok().build();
+                }
             }
         } catch (Exception e) {
             log.error(ExceptionUtils.getFullStackTrace(e));
             e.printStackTrace();
+            return Response.serverError().entity(ExceptionUtils.getFullStackTrace(e)).build();
         }
 
-        return ok(b).build();
+        return Response.noContent().build();
     }
 
     /**

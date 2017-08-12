@@ -16,13 +16,20 @@
 
 package org.onosproject.xran.controller;
 
+import org.onosproject.xran.entities.RnibCell;
+import org.onosproject.xran.entities.RnibLink;
 import org.onosproject.xran.providers.XranDeviceListener;
 import org.onosproject.xran.providers.XranHostListener;
+
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 
 /**
  * Created by dimitris on 7/27/17.
  */
 public interface XranController {
+
+    SynchronousQueue<String> sendHORequest(RnibLink newLink, RnibLink oldLink);
 
     void addListener(XranDeviceListener listener);
 
@@ -31,4 +38,6 @@ public interface XranController {
     void removeListener(XranDeviceListener listener);
 
     void removeListener(XranHostListener listener);
+
+    SynchronousQueue<String> sendModifiedRRMConf(RnibCell cell);
 }

@@ -48,13 +48,13 @@ public class RnibUe {
     private ENBUES1APID enbS1apId;
     private MMEUES1APID mmeS1apId;
     private CRNTI ranId;
-    private UeState ueState;
+    private State state;
     private UECapabilityInfo capability;
     private RXSigMeasConfig measConfig;
     private Timer timer;
 
     public RnibUe() {
-        ueState = UeState.ACTIVE;
+        state = State.ACTIVE;
         timer = new Timer();
     }
 
@@ -174,12 +174,12 @@ public class RnibUe {
         this.capability = capability;
     }
 
-    public UeState getUeState() {
-        return ueState;
+    public State getState() {
+        return state;
     }
 
-    public void setUeState(UeState ueState) {
-        this.ueState = ueState;
+    public void setState(State state) {
+        this.state = state;
     }
 
     @Override
@@ -190,7 +190,7 @@ public class RnibUe {
                 .append(enbS1apId != null ? ",\n\"enb-s1-ap-id\":" + enbS1apId : "")
                 .append(imsi != null ? ",\"imsi\":" + imsi : "")
                 .append(ranId != null ? ",\n\"ran-id\":" + ranId : "")
-                .append(ueState != null ? ",\n\"state\":" + ueState : "")
+                .append(state != null ? ",\n\"state\":" + state : "")
                 .append(capability != null ? ",\n\"capability\":" + capability : "")
                 .append(measConfig != null ? ",\n\"meas-config\":" + measConfig : "")
                 .append("\n}\n");
@@ -214,7 +214,7 @@ public class RnibUe {
         return result;
     }
 
-    public enum UeState {
+    public enum State {
         ACTIVE {
             @Override
             public String toString() {

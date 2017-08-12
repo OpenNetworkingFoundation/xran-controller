@@ -19,13 +19,14 @@ package org.onosproject.xran.entities;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.onosproject.net.DeviceId;
 import org.onosproject.xran.codecs.api.ECGI;
-import org.onosproject.xran.codecs.api.MMEUES1APID;
 import org.onosproject.xran.codecs.api.PRBUsage;
 import org.onosproject.xran.codecs.pdu.CellConfigReport;
 import org.onosproject.xran.codecs.pdu.L2MeasConfig;
 import org.onosproject.xran.codecs.pdu.RRMConfig;
 import org.onosproject.xran.codecs.pdu.SchedMeasReportPerCell;
 import org.openmuc.jasn1.ber.BerByteArrayOutputStream;
+import org.openmuc.jasn1.ber.types.BerBitString;
+import org.openmuc.jasn1.ber.types.BerInteger;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.ByteArrayInputStream;
@@ -33,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 
 /**
  * Created by dimitris on 7/22/17.
@@ -49,6 +51,8 @@ public class RnibCell {
 
     public RnibCell() {
         prbUsage = new PrbUsageContainer();
+        setDefaultRRMConf();
+
     }
 
     public static URI uri(ECGI ecgi) {
@@ -77,6 +81,65 @@ public class RnibCell {
         return ecgi;
     }
 
+    public RRMConfig getRrmConfig() {
+        return rrmConfig;
+    }
+
+    public void setRrmConfig(RRMConfig rrmConfig) {
+        this.rrmConfig = rrmConfig;
+    }
+
+    public PrbUsageContainer getPrbUsage() {
+        return prbUsage;
+    }
+
+    public void setPrbUsage(PrbUsageContainer prbUsage) {
+        this.prbUsage = prbUsage;
+    }
+
+    private void setDefaultRRMConf() {
+        rrmConfig = new RRMConfig();
+
+        RRMConfig.Crnti crnti2 = new RRMConfig.Crnti();
+
+        rrmConfig.setCrnti(crnti2);
+
+        rrmConfig.setEcgi(ecgi);
+
+        RRMConfig.StartPrbDl startPrbDl = new RRMConfig.StartPrbDl();
+        startPrbDl.addBerInteger(new BerInteger(0));
+        startPrbDl.addBerInteger(new BerInteger(50));
+
+        rrmConfig.setStartPrbDl(startPrbDl);
+
+        RRMConfig.StartPrbUl startPrbUl = new RRMConfig.StartPrbUl();
+        startPrbUl.addBerInteger(new BerInteger(50));
+        startPrbUl.addBerInteger(new BerInteger(100));
+
+        rrmConfig.setStartPrbUl(startPrbUl);
+
+        RRMConfig.EndPrbDl endPrbDl = new RRMConfig.EndPrbDl();
+        endPrbDl.addBerInteger(new BerInteger(50));
+        endPrbDl.addBerInteger(new BerInteger(100));
+
+        rrmConfig.setEndPrbDl(endPrbDl);
+
+        RRMConfig.EndPrbUl endPrbUl = new RRMConfig.EndPrbUl();
+        endPrbUl.addBerInteger(new BerInteger(50));
+        endPrbUl.addBerInteger(new BerInteger(100));
+
+        rrmConfig.setEndPrbUl(endPrbUl);
+
+        RRMConfig.SubframeBitmaskDl subframeBitmaskDl = new RRMConfig.SubframeBitmaskDl();
+        BerBitString berBitString = new BerBitString(new byte[]{(byte) 0xAA, (byte) 0x80}, 10);
+        BerBitString berBitString1 = new BerBitString(new byte[]{(byte) 0x55, (byte) 0x40}, 10);
+
+        subframeBitmaskDl.addBerBitString(berBitString);
+        subframeBitmaskDl.addBerBitString(berBitString1);
+
+        rrmConfig.setSubframeBitmaskDl(subframeBitmaskDl);
+    }
+
     public ECGI getEcgi() {
         return ecgi;
     }
@@ -89,15 +152,40 @@ public class RnibCell {
         return conf;
     }
 
+    /*public RRMConfig getRrmConfig() {
+        return rrmConfig;
+    }*/
+
     public void setConf(CellConfigReport conf) {
         this.conf = conf;
     }
 
-    public RRMConfig getRrmConfig() {
-        return rrmConfig;
-    }
+    public void modifyRrmConfig(JsonNode rrmConfigNode, List<RnibUe> ueList) {
+        RRMConfig.Crnti crnti = new RRMConfig.Crnti();
+        ueList.forEach(ue -> crnti.addCRNTI(ue.getRanId()));
 
-    public void modifyRrmConfig(JsonNode rrmConfig) {
+        RRMConfig.StartPrbDl startPrbDl = new RRMConfig.StartPrbDl();
+        RRMConfig.EndPrbDl endPrbDl = new RRMConfig.EndPrbDl();
+        int i = 0;
+        if (rrmConfigNode.get("start_prb_dl").isArray()) {
+            for (final JsonNode config : rrmConfigNode) {
+                startPrbDl.getSeqOf().set(i, new BerInteger(config.asInt()));
+                i++;
+            }
+        }
+        i = 0;
+        if (rrmConfigNode.get("end_prb_dl").isArray()) {
+            for (final JsonNode config : rrmConfigNode) {
+                endPrbDl.getSeqOf().set(i, new BerInteger(config.asInt()));
+                i++;
+            }
+        }
+        rrmConfig.setEndPrbDl(endPrbDl);
+        rrmConfig.setStartPrbDl(startPrbDl);
+        rrmConfig.setCrnti(crnti);
+        rrmConfig.setEcgi(ecgi);
+
+
         // TODO
     }
 

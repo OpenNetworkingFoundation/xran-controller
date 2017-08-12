@@ -73,7 +73,7 @@ public class Controller {
         return b;
     }
 
-    public void start(XranDeviceAgent deviceAgent, XranHostAgent hostAgent, XranControllerImpl.InternalXranPacketAgent packetAgent, int port) {
+    public void start(XranDeviceAgent deviceAgent, XranHostAgent hostAgent, XranPacketProcessor packetAgent, int port) {
         if (isRunning && this.port != port) {
             stop();
             this.deviceAgent = deviceAgent;
