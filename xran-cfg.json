@@ -27,7 +27,9 @@
         "l2_meas_report_interval_ms": 30000,
         "rx_signal_meas_report_interval_seconds": 7,
         "xranc_cellconfigrequest_interval_seconds": 10,
-        "xranc_port": 7891
+        "xranc_port": 7891,
+        "admission_success": false,
+        "bearer_success": false
       }
     }
   }

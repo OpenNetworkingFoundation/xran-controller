@@ -16,12 +16,11 @@
 
 package org.onosproject.xran.controller;
 
-import org.onosproject.xran.entities.RnibCell;
+import org.onosproject.xran.codecs.pdu.RRMConfig;
 import org.onosproject.xran.entities.RnibLink;
 import org.onosproject.xran.providers.XranDeviceListener;
 import org.onosproject.xran.providers.XranHostListener;
 
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 
 /**
@@ -39,5 +38,5 @@ public interface XranController {
 
     void removeListener(XranHostListener listener);
 
-    SynchronousQueue<String> sendModifiedRRMConf(RnibCell cell);
+    SynchronousQueue<String> sendModifiedRRMConf(RRMConfig rrmConfig, boolean xICIC);
 }

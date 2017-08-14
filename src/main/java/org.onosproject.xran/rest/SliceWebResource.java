@@ -54,25 +54,24 @@ public class SliceWebResource extends AbstractWebResource {
     @Path("{sliceid}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getSlice(@PathParam("sliceid") long sliceid) {
-        log.debug("GET SLICE {}", sliceid);
-
         RnibSlice slice = get(XranStore.class).getSlice(sliceid);
-
-        ObjectNode rootNode = mapper().createObjectNode();
 
         if (slice != null) {
             try {
+                ObjectNode rootNode = mapper().createObjectNode();
                 JsonNode jsonNode = mapper().readTree(slice.toString());
                 rootNode.put("slice", jsonNode);
+                return ok(rootNode.toString()).build();
             } catch (IOException e) {
                 log.error(ExceptionUtils.getFullStackTrace(e));
                 e.printStackTrace();
+                return Response.serverError()
+                        .entity(ExceptionUtils.getFullStackTrace(e))
+                        .build();
             }
-        } else {
-            rootNode.put("error", "not found");
         }
 
-        return ok(rootNode.toString()).build();
+        return Response.serverError().entity("slice not found").build();
     }
 
     /**
@@ -84,19 +83,19 @@ public class SliceWebResource extends AbstractWebResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response postSlice(InputStream stream) {
-        log.debug("POST SLICE");
-
-        boolean b = false;
         try {
+            boolean b;
             ObjectNode jsonTree = (ObjectNode) mapper().readTree(stream);
 
             b = get(XranStore.class).createSlice(jsonTree);
+            return ok(b).build();
         } catch (Exception e) {
             log.error(ExceptionUtils.getFullStackTrace(e));
             e.printStackTrace();
+            return Response.serverError()
+                    .entity(ExceptionUtils.getFullStackTrace(e))
+                    .build();
         }
-
-        return ok(b).build();
     }
 
 }

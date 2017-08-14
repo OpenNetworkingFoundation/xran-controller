@@ -121,7 +121,7 @@ public class LinkMap {
         Optional<RnibLink> primary = linksByUeId.stream().filter(l -> l.getType().equals(RnibLink.Type.SERVING_PRIMARY)).findFirst();
 
         if (primary.isPresent()) {
-            return primary.get().getLinkId().getSourceId();
+            return primary.get().getLinkId().getEcgi();
         }
         return null;
     }

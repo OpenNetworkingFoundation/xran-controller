@@ -7,7 +7,6 @@ package org.onosproject.xran.codecs.pdu;
 import org.onosproject.xran.codecs.api.CRNTI;
 import org.onosproject.xran.codecs.api.ECGI;
 import org.onosproject.xran.codecs.api.XICICPA;
-import org.onosproject.xran.entities.RnibCell;
 import org.openmuc.jasn1.ber.BerByteArrayOutputStream;
 import org.openmuc.jasn1.ber.BerLength;
 import org.openmuc.jasn1.ber.BerTag;
@@ -1347,6 +1346,14 @@ public class RRMConfig implements Serializable {
         public void addBerInteger(BerInteger berInteger) {
             seqOf.add(berInteger);
         }
+
+        public List<BerInteger> getSeqOf() {
+            return seqOf;
+        }
+
+        public void setSeqOf(List<BerInteger> seqOf) {
+            this.seqOf = seqOf;
+        }
     }
 
     public static class EndPrbUl implements Serializable {
@@ -1474,6 +1481,14 @@ public class RRMConfig implements Serializable {
         public void addBerInteger(BerInteger berInteger) {
             seqOf.add(berInteger);
         }
+
+        public List<BerInteger> getSeqOf() {
+            return seqOf;
+        }
+
+        public void setSeqOf(List<BerInteger> seqOf) {
+            this.seqOf = seqOf;
+        }
     }
 
     public static class SubframeBitmaskUl implements Serializable {
@@ -1600,18 +1615,18 @@ public class RRMConfig implements Serializable {
 
     }
 
-    public static XrancPdu constructPacket(RnibCell cell) {
+    public static XrancPdu constructPacket(RRMConfig config) {
         XrancPduBody body = new XrancPduBody();
-        body.setRRMConfig(cell.getRrmConfig());
+        body.setRRMConfig(config);
 
         BerUTF8String ver = null;
         try {
-            ver = new BerUTF8String("4");
+            ver = new BerUTF8String("3");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
 
-        XrancApiID apiID = new XrancApiID(26);
+        XrancApiID apiID = new XrancApiID(29);
         XrancPduHdr hdr = new XrancPduHdr();
         hdr.setVer(ver);
         hdr.setApiId(apiID);

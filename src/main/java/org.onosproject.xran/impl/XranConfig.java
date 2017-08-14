@@ -56,6 +56,10 @@ public class XranConfig extends Config<ApplicationId> {
 
     private static final String L2_MEAS_REPORT_INTERVAL = "l2_meas_report_interval_ms";
 
+    private static final String ADMISSION_SUCCESS = "admission_success";
+
+    private static final String BEARER_SUCCESS = "bearer_success";
+
     private final Logger log = LoggerFactory.getLogger(getClass());
 
     public Map<String, ECGI> activeCellSet() {
@@ -78,6 +82,16 @@ public class XranConfig extends Config<ApplicationId> {
         });
 
         return cells;
+    }
+
+    public boolean admissionFlag() {
+        JsonNode flag = object.get(ADMISSION_SUCCESS);
+        return flag != null && flag.asBoolean();
+    }
+
+    public boolean bearerFlag() {
+        JsonNode flag = object.get(BEARER_SUCCESS);
+        return flag != null && flag.asBoolean();
     }
 
     public int getXrancPort() {

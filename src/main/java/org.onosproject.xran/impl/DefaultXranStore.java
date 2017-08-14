@@ -86,7 +86,7 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
         list.addAll(
                 linkMap.keySet()
                         .stream()
-                        .filter(k -> k.getSourceId().equals(ecgi))
+                        .filter(k -> k.getEcgi().equals(ecgi))
                         .map(v -> linkMap.get(v))
                         .collect(Collectors.toList()));
 
@@ -101,7 +101,7 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
         list.addAll(
                 linkMap.keySet()
                         .stream()
-                        .filter(k -> k.getSourceId().getEUTRANcellIdentifier().equals(eci))
+                        .filter(k -> k.getEcgi().getEUTRANcellIdentifier().equals(eci))
                         .map(v -> linkMap.get(v))
                         .collect(Collectors.toList()));
 
@@ -116,7 +116,7 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
         list.addAll(
                 linkMap.keySet()
                         .stream()
-                        .filter(k -> k.getDestinationId().equals(mme))
+                        .filter(k -> k.getMmeues1apid().equals(mme))
                         .map(v -> linkMap.get(v))
                         .collect(Collectors.toList()));
 
@@ -130,8 +130,8 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
 
         Optional<LinkId> first = linkMap.keySet()
                 .stream()
-                .filter(linkId -> linkId.getSourceId().getEUTRANcellIdentifier().equals(eci))
-                .filter(linkId -> linkId.getDestinationId().equals(mme))
+                .filter(linkId -> linkId.getEcgi().getEUTRANcellIdentifier().equals(eci))
+                .filter(linkId -> linkId.getMmeues1apid().equals(mme))
                 .findFirst();
 
         return first.map(linkId -> linkMap.get(linkId)).orElse(null);
@@ -145,8 +145,17 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
         if (cell != null && ue != null) {
             RnibLink link = new RnibLink(cell, ue);
 
+            // TODO: check logic for each type
             try {
-                link.setType(RnibLink.Type.valueOf(type));
+                RnibLink.Type linkType = RnibLink.Type.valueOf(type);
+                switch (linkType) {
+                    case NON_SERVING:
+                        break;
+                    case SERVING_PRIMARY:
+                        break;
+                    case SERVING_SECONDARY:
+                        break;
+                }
             } catch (Exception e) {
                 log.error(ExceptionUtils.getFullStackTrace(e));
             }
@@ -174,6 +183,11 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
 
         LinkId linkId = LinkId.valueOf(ecgi, mme);
         return linkMap.get(linkId);
+    }
+
+    @Override
+    public void modifyLinkRrmConf(RnibLink link, JsonNode rrmConf) {
+        link.modifyRrmParameters(rrmConf);
     }
 
     @Override
@@ -233,13 +247,11 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
     }
 
     @Override
-    public boolean modifyCellRrmConf(RnibCell cell, JsonNode rrmConf) {
-
+    public void modifyCellRrmConf(RnibCell cell, JsonNode rrmConf) {
         List<RnibLink> linkList = getLinksByECGI(cell.getEcgi());
         List<RnibUe> ueList = linkList.stream().map(link -> link.getLinkId().getUe()).collect(Collectors.toList());
 
         cell.modifyRrmConfig(rrmConf, ueList);
-        return false;
     }
 
     @Override

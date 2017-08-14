@@ -55,8 +55,6 @@ public class NodeWebResource extends AbstractWebResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getNodes(@DefaultValue("") @QueryParam("type") String type) {
-        log.debug("GET NODES " + type);
-
         ObjectNode rootNode = mapper().createObjectNode();
 
         try {
@@ -85,6 +83,9 @@ public class NodeWebResource extends AbstractWebResource {
         } catch (IOException e) {
             log.error(ExceptionUtils.getFullStackTrace(e));
             e.printStackTrace();
+            return Response.serverError()
+                    .entity(ExceptionUtils.getFullStackTrace(e))
+                    .build();
         }
 
         return ok(rootNode.toString()).build();
@@ -100,25 +101,24 @@ public class NodeWebResource extends AbstractWebResource {
     @Path("{nodeid}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getNodeid(@PathParam("nodeid") String nodeid) {
-        log.debug("GET NODEID {}", nodeid);
-
         Object node = get(XranStore.class).getByNodeId(nodeid);
-
-        ObjectNode rootNode = mapper().createObjectNode();
 
         if (node != null) {
             try {
+                ObjectNode rootNode = mapper().createObjectNode();
                 JsonNode jsonNode = mapper().readTree(node.toString());
                 rootNode.put("node", jsonNode);
+                return ok(rootNode.toString()).build();
             } catch (IOException e) {
                 log.error(ExceptionUtils.getFullStackTrace(e));
                 e.printStackTrace();
+                return Response.serverError()
+                        .entity(ExceptionUtils.getFullStackTrace(e))
+                        .build();
             }
-        } else {
-            rootNode.put("error", "not found");
         }
 
-        return ok(rootNode.toString()).build();
+        return Response.serverError().entity("node not found").build();
     }
 
 }

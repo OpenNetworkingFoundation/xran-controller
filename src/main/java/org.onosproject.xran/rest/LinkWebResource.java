@@ -43,6 +43,7 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Link web resource.
@@ -63,9 +64,7 @@ public class LinkWebResource extends AbstractWebResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getLinksBetween(@DefaultValue("") @QueryParam("cell") String eciHex,
-                             @DefaultValue("-1") @QueryParam("ue") long ue) {
-        log.debug("GET LINKS CELL {} AND UE {}", eciHex, ue);
-
+                                    @DefaultValue("-1") @QueryParam("ue") long ue) {
         List<RnibLink> list = Lists.newArrayList();
         if (!eciHex.isEmpty() && ue != -1) {
             RnibLink link = get(XranStore.class).getLinkBetweenCellIdUeId(eciHex, ue);
@@ -80,17 +79,18 @@ public class LinkWebResource extends AbstractWebResource {
             list.addAll(get(XranStore.class).getLinks());
         }
 
-        ObjectNode rootNode = mapper().createObjectNode();
-
         try {
+            ObjectNode rootNode = mapper().createObjectNode();
             JsonNode jsonNode = mapper().readTree(list.toString());
             rootNode.put("links", jsonNode);
+            return Response.ok(rootNode.toString()).build();
         } catch (IOException e) {
             log.error(ExceptionUtils.getFullStackTrace(e));
             e.printStackTrace();
+            return Response.serverError()
+                    .entity(ExceptionUtils.getFullStackTrace(e))
+                    .build();
         }
-
-        return ok(rootNode.toString()).build();
     }
 
     /**
@@ -105,12 +105,9 @@ public class LinkWebResource extends AbstractWebResource {
     @Path("{src},{dst}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response patchLinks(@PathParam("src") String src, @PathParam("dst") long dst, InputStream stream) {
-        log.debug("Patch LINKS FROM {} to {}", src, dst);
-
-        try {
-            RnibLink link = get(XranStore.class).getLinkBetweenCellIdUeId(src, dst);
-            if (link != null) {
-
+        RnibLink link = get(XranStore.class).getLinkBetweenCellIdUeId(src, dst);
+        if (link != null) {
+            try {
                 ObjectNode jsonTree = (ObjectNode) mapper().readTree(stream);
 
                 JsonNode type = jsonTree.get("type");
@@ -124,7 +121,17 @@ public class LinkWebResource extends AbstractWebResource {
                                 .findFirst();
                         if (primary.isPresent()) {
                             queue[0] = get(XranController.class).sendHORequest(link, primary.get());
-                            return Response.ok().entity(queue[0].take()).build();
+                            String poll = queue[0].poll(5, TimeUnit.SECONDS);
+
+                            if (poll != null) {
+                                return Response.ok()
+                                        .entity(poll)
+                                        .build();
+                            } else {
+                                return Response.serverError()
+                                        .entity("did not receive response in time")
+                                        .build();
+                            }
                         }
                     }
                 }
@@ -139,16 +146,35 @@ public class LinkWebResource extends AbstractWebResource {
                     if (jsonNode != null) {
                         link.getTrafficPercent().setTrafficPercentUl(new BerInteger(jsonNode.asInt()));
                     }
-                    return Response.ok().build();
+                    return Response.ok("trafficpercent changed successfully").build();
                 }
-            }
-        } catch (Exception e) {
-            log.error(ExceptionUtils.getFullStackTrace(e));
-            e.printStackTrace();
-            return Response.serverError().entity(ExceptionUtils.getFullStackTrace(e)).build();
-        }
 
-        return Response.noContent().build();
+                JsonNode rrmConf = jsonTree.get("RRMConf");
+                if (rrmConf != null) {
+                    final SynchronousQueue<String>[] queue = new SynchronousQueue[1];
+                    get(XranStore.class).modifyLinkRrmConf(link, rrmConf);
+                    queue[0] = get(XranController.class).sendModifiedRRMConf(link.getRrmParameters(),
+                            link.getLinkId().getCell().getVersion().equals("3"));
+                    String poll = queue[0].poll(5, TimeUnit.SECONDS);
+
+                    if (poll != null) {
+                        return Response.ok()
+                                .entity(poll)
+                                .build();
+                    } else {
+                        return Response.serverError()
+                                .entity("did not receive response in time")
+                                .build();
+                    }
+                }
+
+            } catch (Exception e) {
+                log.error(ExceptionUtils.getFullStackTrace(e));
+                e.printStackTrace();
+                return Response.serverError().entity(ExceptionUtils.getFullStackTrace(e)).build();
+            }
+        }
+        return Response.serverError().entity("link not found").build();
     }
 
     /**
@@ -163,23 +189,25 @@ public class LinkWebResource extends AbstractWebResource {
     @Path("{src},{dst}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response postLinks(@PathParam("src") String src, @PathParam("dst") long dst, InputStream stream) {
-        log.debug("POST LINKS FROM {} to {}", src, dst);
-
-        boolean b = false;
         try {
             ObjectNode jsonTree = (ObjectNode) mapper().readTree(stream);
 
             JsonNode type = jsonTree.get("type");
 
             if (type != null) {
+                boolean b;
                 b = get(XranStore.class).createLinkBetweenCellIdUeId(src, dst, type.asText());
+                return ok(b).build();
             }
         } catch (Exception e) {
             log.error(ExceptionUtils.getFullStackTrace(e));
             e.printStackTrace();
+            return Response.serverError()
+                    .entity(ExceptionUtils.getFullStackTrace(e))
+                    .build();
         }
 
-        return ok(b).build();
+        return Response.serverError().entity("unreachable code").build();
     }
 
 }

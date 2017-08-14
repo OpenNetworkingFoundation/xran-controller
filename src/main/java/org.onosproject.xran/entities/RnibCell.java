@@ -35,6 +35,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by dimitris on 7/22/17.
@@ -49,10 +51,12 @@ public class RnibCell {
     private RRMConfig rrmConfig;
     private L2MeasConfig measConfig;
 
+    private String version;
+
     public RnibCell() {
         prbUsage = new PrbUsageContainer();
         setDefaultRRMConf();
-
+        version = "3";
     }
 
     public static URI uri(ECGI ecgi) {
@@ -81,6 +85,14 @@ public class RnibCell {
         return ecgi;
     }
 
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
     public RRMConfig getRrmConfig() {
         return rrmConfig;
     }
@@ -99,10 +111,6 @@ public class RnibCell {
 
     private void setDefaultRRMConf() {
         rrmConfig = new RRMConfig();
-
-        RRMConfig.Crnti crnti2 = new RRMConfig.Crnti();
-
-        rrmConfig.setCrnti(crnti2);
 
         rrmConfig.setEcgi(ecgi);
 
@@ -164,27 +172,71 @@ public class RnibCell {
         RRMConfig.Crnti crnti = new RRMConfig.Crnti();
         ueList.forEach(ue -> crnti.addCRNTI(ue.getRanId()));
 
-        RRMConfig.StartPrbDl startPrbDl = new RRMConfig.StartPrbDl();
-        RRMConfig.EndPrbDl endPrbDl = new RRMConfig.EndPrbDl();
-        int i = 0;
-        if (rrmConfigNode.get("start_prb_dl").isArray()) {
-            for (final JsonNode config : rrmConfigNode) {
-                startPrbDl.getSeqOf().set(i, new BerInteger(config.asInt()));
-                i++;
+        {
+            JsonNode start_prb_dl = rrmConfigNode.get("start_prb_dl");
+            if (start_prb_dl != null) {
+                RRMConfig.StartPrbDl startPrbDl = new RRMConfig.StartPrbDl();
+                if (start_prb_dl.isArray()) {
+                    if (rrmConfig.getStartPrbDl().getSeqOf().size() == start_prb_dl.size()) {
+                        List<BerInteger> collect = Stream.of(start_prb_dl)
+                                .map(val -> new BerInteger(val.asInt()))
+                                .collect(Collectors.toList());
+                        startPrbDl.setSeqOf(collect);
+                    }
+                }
+                rrmConfig.setStartPrbDl(startPrbDl);
             }
         }
-        i = 0;
-        if (rrmConfigNode.get("end_prb_dl").isArray()) {
-            for (final JsonNode config : rrmConfigNode) {
-                endPrbDl.getSeqOf().set(i, new BerInteger(config.asInt()));
-                i++;
-            }
-        }
-        rrmConfig.setEndPrbDl(endPrbDl);
-        rrmConfig.setStartPrbDl(startPrbDl);
-        rrmConfig.setCrnti(crnti);
-        rrmConfig.setEcgi(ecgi);
 
+        {
+            JsonNode end_prb_dl = rrmConfigNode.get("end_prb_dl");
+            if (end_prb_dl != null) {
+                RRMConfig.EndPrbDl endPrbDl = new RRMConfig.EndPrbDl();
+                if (end_prb_dl.isArray()) {
+                    if (rrmConfig.getEndPrbDl().getSeqOf().size() == end_prb_dl.size()) {
+                        List<BerInteger> collect = Stream.of(end_prb_dl)
+                                .map(val -> new BerInteger(val.asInt()))
+                                .collect(Collectors.toList());
+                        endPrbDl.setSeqOf(collect);
+                    }
+                }
+                rrmConfig.setEndPrbDl(endPrbDl);
+            }
+        }
+
+        {
+            JsonNode start_prb_ul = rrmConfigNode.get("start_prb_ul");
+            if (start_prb_ul != null) {
+                RRMConfig.StartPrbUl startPrbUl = new RRMConfig.StartPrbUl();
+                if (start_prb_ul.isArray()) {
+                    if (rrmConfig.getStartPrbUl().getSeqOf().size() == start_prb_ul.size()) {
+                        List<BerInteger> collect = Stream.of(start_prb_ul)
+                                .map(val -> new BerInteger(val.asInt()))
+                                .collect(Collectors.toList());
+                        startPrbUl.setSeqOf(collect);
+                    }
+                }
+                rrmConfig.setStartPrbUl(startPrbUl);
+            }
+        }
+
+        {
+            JsonNode end_prb_ul = rrmConfigNode.get("end_prb_ul");
+            if (end_prb_ul != null) {
+                RRMConfig.EndPrbUl endPrbUl = new RRMConfig.EndPrbUl();
+                if (end_prb_ul.isArray()) {
+                    if (rrmConfig.getEndPrbUl().getSeqOf().size() == end_prb_ul.size()) {
+                        List<BerInteger> collect = Stream.of(end_prb_ul)
+                                .map(val -> new BerInteger(val.asInt()))
+                                .collect(Collectors.toList());
+                        endPrbUl.setSeqOf(collect);
+                    }
+                }
+                rrmConfig.setEndPrbUl(endPrbUl);
+            }
+        }
+
+        rrmConfig.setCrnti(crnti);
 
         // TODO
     }

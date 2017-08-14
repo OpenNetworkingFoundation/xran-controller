@@ -16,15 +16,20 @@
 
 package org.onosproject.xran.entities;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.onosproject.xran.codecs.api.*;
 import org.onosproject.xran.codecs.pdu.PDCPMeasReportPerUe;
 import org.onosproject.xran.codecs.pdu.RRMConfig;
 import org.onosproject.xran.identifiers.LinkId;
+import org.openmuc.jasn1.ber.types.BerBitString;
 import org.openmuc.jasn1.ber.types.BerInteger;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.Timer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by dimitris on 7/22/17.
@@ -59,6 +64,8 @@ public class RnibLink {
         type = Type.NON_SERVING;
 
         linkId = LinkId.valueOf(cell, ue);
+
+        setDefaultRRMConf();
     }
 
     public Timer getTimer() {
@@ -124,6 +131,74 @@ public class RnibLink {
         this.rrmParameters = rrmParameters;
     }
 
+    public void modifyRrmParameters(JsonNode rrmConfigNode) {
+        {
+            JsonNode start_prb_dl = rrmConfigNode.get("start_prb_dl");
+            if (start_prb_dl != null) {
+                RRMConfig.StartPrbDl startPrbDl = new RRMConfig.StartPrbDl();
+                if (start_prb_dl.isArray()) {
+                    if (rrmParameters.getStartPrbDl().getSeqOf().size() == start_prb_dl.size()) {
+                        List<BerInteger> collect = Stream.of(start_prb_dl)
+                                .map(val -> new BerInteger(val.asInt()))
+                                .collect(Collectors.toList());
+                        startPrbDl.setSeqOf(collect);
+                    }
+                }
+                rrmParameters.setStartPrbDl(startPrbDl);
+            }
+        }
+
+        {
+            JsonNode end_prb_dl = rrmConfigNode.get("end_prb_dl");
+            if (end_prb_dl != null) {
+                RRMConfig.EndPrbDl endPrbDl = new RRMConfig.EndPrbDl();
+                if (end_prb_dl.isArray()) {
+                    if (rrmParameters.getEndPrbDl().getSeqOf().size() == end_prb_dl.size()) {
+                        List<BerInteger> collect = Stream.of(end_prb_dl)
+                                .map(val -> new BerInteger(val.asInt()))
+                                .collect(Collectors.toList());
+                        endPrbDl.setSeqOf(collect);
+                    }
+                }
+                rrmParameters.setEndPrbDl(endPrbDl);
+            }
+        }
+
+        {
+            JsonNode start_prb_ul = rrmConfigNode.get("start_prb_ul");
+            if (start_prb_ul != null) {
+                RRMConfig.StartPrbUl startPrbUl = new RRMConfig.StartPrbUl();
+                if (start_prb_ul.isArray()) {
+                    if (rrmParameters.getStartPrbUl().getSeqOf().size() == start_prb_ul.size()) {
+                        List<BerInteger> collect = Stream.of(start_prb_ul)
+                                .map(val -> new BerInteger(val.asInt()))
+                                .collect(Collectors.toList());
+                        startPrbUl.setSeqOf(collect);
+                    }
+                }
+                rrmParameters.setStartPrbUl(startPrbUl);
+            }
+        }
+
+        {
+            JsonNode end_prb_ul = rrmConfigNode.get("end_prb_ul");
+            if (end_prb_ul != null) {
+                RRMConfig.EndPrbUl endPrbUl = new RRMConfig.EndPrbUl();
+                if (end_prb_ul.isArray()) {
+                    if (rrmParameters.getEndPrbUl().getSeqOf().size() == end_prb_ul.size()) {
+                        List<BerInteger> collect = Stream.of(end_prb_ul)
+                                .map(val -> new BerInteger(val.asInt()))
+                                .collect(Collectors.toList());
+                        endPrbUl.setSeqOf(collect);
+                    }
+                }
+                rrmParameters.setEndPrbUl(endPrbUl);
+            }
+        }
+
+        // TODO
+    }
+
     public PDCPThroughput getPdcpThroughput() {
         return pdcpThroughput;
     }
@@ -146,6 +221,50 @@ public class RnibLink {
 
     public void setResourceUsage(ResourceUsage resourceUsage) {
         this.resourceUsage = resourceUsage;
+    }
+
+    private void setDefaultRRMConf() {
+        rrmParameters = new RRMConfig();
+
+        RRMConfig.Crnti crnti = new RRMConfig.Crnti();
+        crnti.addCRNTI(linkId.getUe().getRanId());
+
+        rrmParameters.setCrnti(crnti);
+
+        rrmParameters.setEcgi(linkId.getEcgi());
+
+        RRMConfig.StartPrbDl startPrbDl = new RRMConfig.StartPrbDl();
+        startPrbDl.addBerInteger(new BerInteger(0));
+        startPrbDl.addBerInteger(new BerInteger(50));
+
+        rrmParameters.setStartPrbDl(startPrbDl);
+
+        RRMConfig.StartPrbUl startPrbUl = new RRMConfig.StartPrbUl();
+        startPrbUl.addBerInteger(new BerInteger(50));
+        startPrbUl.addBerInteger(new BerInteger(100));
+
+        rrmParameters.setStartPrbUl(startPrbUl);
+
+        RRMConfig.EndPrbDl endPrbDl = new RRMConfig.EndPrbDl();
+        endPrbDl.addBerInteger(new BerInteger(50));
+        endPrbDl.addBerInteger(new BerInteger(100));
+
+        rrmParameters.setEndPrbDl(endPrbDl);
+
+        RRMConfig.EndPrbUl endPrbUl = new RRMConfig.EndPrbUl();
+        endPrbUl.addBerInteger(new BerInteger(50));
+        endPrbUl.addBerInteger(new BerInteger(100));
+
+        rrmParameters.setEndPrbUl(endPrbUl);
+
+        RRMConfig.SubframeBitmaskDl subframeBitmaskDl = new RRMConfig.SubframeBitmaskDl();
+        BerBitString berBitString = new BerBitString(new byte[]{(byte) 0xAA, (byte) 0x80}, 10);
+        BerBitString berBitString1 = new BerBitString(new byte[]{(byte) 0x55, (byte) 0x40}, 10);
+
+        subframeBitmaskDl.addBerBitString(berBitString);
+        subframeBitmaskDl.addBerBitString(berBitString1);
+
+        rrmParameters.setSubframeBitmaskDl(subframeBitmaskDl);
     }
 
     @Override

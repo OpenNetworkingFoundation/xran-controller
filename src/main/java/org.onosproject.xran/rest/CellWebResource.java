@@ -21,8 +21,6 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.onosproject.rest.AbstractWebResource;
 import org.onosproject.xran.XranStore;
 import org.onosproject.xran.annotations.Patch;
-import org.onosproject.xran.codecs.api.ECGI;
-import org.onosproject.xran.codecs.api.EUTRANCellIdentifier;
 import org.onosproject.xran.controller.XranController;
 import org.onosproject.xran.entities.RnibCell;
 import org.slf4j.Logger;
@@ -37,8 +35,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Optional;
 import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Cell web resource.
@@ -59,25 +57,24 @@ public class CellWebResource extends AbstractWebResource {
     @Path("{cellid}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getCell(@PathParam("cellid") String eciHex) {
-        log.debug("GET CELLID {}", eciHex);
-
         RnibCell cell = get(XranStore.class).getCell(eciHex);
-
-        ObjectNode rootNode = mapper().createObjectNode();
 
         if (cell != null) {
             try {
+                ObjectNode rootNode = mapper().createObjectNode();
+
                 JsonNode jsonNode = mapper().readTree(cell.toString());
                 rootNode.put("cell", jsonNode);
             } catch (IOException e) {
                 log.error(ExceptionUtils.getFullStackTrace(e));
                 e.printStackTrace();
+                return Response.serverError()
+                        .entity(ExceptionUtils.getFullStackTrace(e))
+                        .build();
             }
-        } else {
-            rootNode.put("error", "not found");
         }
 
-        return ok(rootNode.toString()).build();
+        return Response.serverError().entity("cell not found").build();
     }
 
     /**
@@ -91,31 +88,41 @@ public class CellWebResource extends AbstractWebResource {
     @Path("{cellid}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response patchCell(@PathParam("cellid") String eciHex, InputStream stream) {
-        log.debug("PATCH CELLID {}", eciHex);
-
-        boolean b;
-
         RnibCell cell = get(XranStore.class).getCell(eciHex);
-        // Check if a cell with that ECI exists. If it does, then modify its contents.
 
-        try {
-            ObjectNode jsonTree = (ObjectNode) mapper().readTree(stream);
+        if (cell != null) {
+            try {
+                ObjectNode jsonTree = (ObjectNode) mapper().readTree(stream);
 
-            JsonNode rrmConf = jsonTree.get("RRMConf");
-            if (rrmConf != null) {
-                final SynchronousQueue<String>[] queue = new SynchronousQueue[1];
-                b = get(XranStore.class).modifyCellRrmConf(cell, rrmConf);
-                if (b) {
-                    queue[0] = get(XranController.class).sendModifiedRRMConf(cell);
-                    return Response.ok().entity(queue[0].take()).build();
+                JsonNode rrmConf = jsonTree.get("RRMConf");
+                if (rrmConf != null) {
+                    final SynchronousQueue<String>[] queue = new SynchronousQueue[1];
+                    get(XranStore.class).modifyCellRrmConf(cell, rrmConf);
+
+                    queue[0] = get(XranController.class).sendModifiedRRMConf(cell.getRrmConfig(),
+                            cell.getVersion().equals("3"));
+                    String poll = queue[0].poll(5, TimeUnit.SECONDS);
+
+                    if (poll != null) {
+                        return Response.ok()
+                                .entity(poll)
+                                .build();
+                    } else {
+                        return Response.serverError()
+                                .entity("did not receive response in time")
+                                .build();
+                    }
                 }
+            } catch (Exception e) {
+                log.error(ExceptionUtils.getFullStackTrace(e));
+                e.printStackTrace();
+                return Response.serverError()
+                        .entity(ExceptionUtils.getFullStackTrace(e))
+                        .build();
             }
-        } catch (Exception e) {
-            log.error(ExceptionUtils.getFullStackTrace(e));
-            e.printStackTrace();
-            return Response.serverError().entity(ExceptionUtils.getFullStackTrace(e)).build();
         }
-        return Response.noContent().build();
+
+        return Response.serverError().entity("cell not found").build();
     }
 
 }

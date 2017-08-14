@@ -43,19 +43,19 @@ public class LinkId {
         return new LinkId(cell, ue);
     }
 
-    public ECGI getSourceId() {
+    public ECGI getEcgi() {
         return cell.getEcgi();
     }
 
-    public void setSourceId(ECGI sourceId) {
+    public void setEcgi(ECGI sourceId) {
         cell.setEcgi(sourceId);
     }
 
-    public MMEUES1APID getDestinationId() {
+    public MMEUES1APID getMmeues1apid() {
         return ue.getMmeS1apId();
     }
 
-    public void setDestinationId(MMEUES1APID destinationId) {
+    public void setMmeues1apid(MMEUES1APID destinationId) {
         ue.setMmeS1apId(destinationId);
     }
 

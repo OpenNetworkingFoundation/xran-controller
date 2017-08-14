@@ -51,6 +51,8 @@ public interface XranStore extends Store {
 
     RnibLink getLink(ECGI ecgi, MMEUES1APID mme);
 
+    void modifyLinkRrmConf(RnibLink link, JsonNode rrmConf);
+
     void storeLink(RnibLink link);
 
     boolean removeLink(LinkId link);
@@ -71,7 +73,7 @@ public interface XranStore extends Store {
 
     RnibCell getCell(ECGI cellId);
 
-    boolean modifyCellRrmConf(RnibCell cell, JsonNode rrmConf);
+    void modifyCellRrmConf(RnibCell cell, JsonNode rrmConf);
 
     void storeCell(RnibCell cell);
 
