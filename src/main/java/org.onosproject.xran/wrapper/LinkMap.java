@@ -45,15 +45,7 @@ public class LinkMap {
     public void putPrimaryLink(RnibCell cell, RnibUe ue) {
         RnibLink link = new RnibLink(cell, ue);
         link.setType(RnibLink.Type.SERVING_PRIMARY);
-        synchronized (xranStore) {
-            xranStore.getLinksByUeId(ue.getMmeS1apId().longValue())
-                    .forEach(l -> {
-                        if (l.getType().equals(RnibLink.Type.SERVING_PRIMARY)) {
-                            l.setType(RnibLink.Type.SERVING_SECONDARY);
-                        }
-                    });
-            xranStore.storeLink(link);
-        }
+        xranStore.storeLink(link);
         crntiMme.put(ue.getRanId(), ue.getMmeS1apId());
     }
 
@@ -116,12 +108,14 @@ public class LinkMap {
         return false;
     }
 
-    public ECGI getPrimaryCell(RnibUe ue) {
+    public RnibCell getPrimaryCell(RnibUe ue) {
         List<RnibLink> linksByUeId = xranStore.getLinksByUeId(ue.getMmeS1apId().longValue());
-        Optional<RnibLink> primary = linksByUeId.stream().filter(l -> l.getType().equals(RnibLink.Type.SERVING_PRIMARY)).findFirst();
+        Optional<RnibLink> primary = linksByUeId.stream()
+                .filter(l -> l.getType().equals(RnibLink.Type.SERVING_PRIMARY))
+                .findFirst();
 
         if (primary.isPresent()) {
-            return primary.get().getLinkId().getEcgi();
+            return primary.get().getLinkId().getCell();
         }
         return null;
     }

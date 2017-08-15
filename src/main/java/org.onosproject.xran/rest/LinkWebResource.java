@@ -23,19 +23,14 @@ import org.onosproject.rest.AbstractWebResource;
 import org.onosproject.xran.XranStore;
 import org.onosproject.xran.annotations.Patch;
 import org.onosproject.xran.controller.XranController;
+import org.onosproject.xran.entities.RnibCell;
 import org.onosproject.xran.entities.RnibLink;
+import org.onosproject.xran.entities.RnibUe;
 import org.openmuc.jasn1.ber.types.BerInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -110,62 +105,20 @@ public class LinkWebResource extends AbstractWebResource {
             try {
                 ObjectNode jsonTree = (ObjectNode) mapper().readTree(stream);
 
-                JsonNode type = jsonTree.get("type");
-                if (type != null) {
-                    final SynchronousQueue<String>[] queue = new SynchronousQueue[1];
-                    RnibLink.Type linkType = RnibLink.Type.getEnum(type.asText());
-                    if (linkType.equals(RnibLink.Type.SERVING_PRIMARY)) {
-                        List<RnibLink> linksByUeId = get(XranStore.class).getLinksByUeId(dst);
-                        Optional<RnibLink> primary = linksByUeId.stream()
-                                .filter(l -> l.getType().equals(RnibLink.Type.SERVING_PRIMARY))
-                                .findFirst();
-                        if (primary.isPresent()) {
-                            queue[0] = get(XranController.class).sendHORequest(link, primary.get());
-                            String poll = queue[0].poll(5, TimeUnit.SECONDS);
-
-                            if (poll != null) {
-                                return Response.ok()
-                                        .entity(poll)
-                                        .build();
-                            } else {
-                                return Response.serverError()
-                                        .entity("did not receive response in time")
-                                        .build();
-                            }
-                        }
-                    }
+                JsonNode type = jsonTree.path("type");
+                if (!type.isMissingNode()) {
+                    RnibLink.Type anEnum = RnibLink.Type.getEnum(type.asText());
+                    return handleTypeChange(link, anEnum);
                 }
 
-                JsonNode trafficpercent = jsonTree.get("trafficpercent");
-                if (trafficpercent != null) {
-                    JsonNode jsonNode = trafficpercent.get("traffic-percent-dl");
-                    if (jsonNode != null) {
-                        link.getTrafficPercent().setTrafficPercentDl(new BerInteger(jsonNode.asInt()));
-                    }
-                    jsonNode = trafficpercent.get("traffic-percent-ul");
-                    if (jsonNode != null) {
-                        link.getTrafficPercent().setTrafficPercentUl(new BerInteger(jsonNode.asInt()));
-                    }
-                    return Response.ok("trafficpercent changed successfully").build();
+                JsonNode trafficpercent = jsonTree.path("trafficpercent");
+                if (!trafficpercent.isMissingNode()) {
+                    return handleTrafficChange(link, trafficpercent);
                 }
 
-                JsonNode rrmConf = jsonTree.get("RRMConf");
-                if (rrmConf != null) {
-                    final SynchronousQueue<String>[] queue = new SynchronousQueue[1];
-                    get(XranStore.class).modifyLinkRrmConf(link, rrmConf);
-                    queue[0] = get(XranController.class).sendModifiedRRMConf(link.getRrmParameters(),
-                            link.getLinkId().getCell().getVersion().equals("3"));
-                    String poll = queue[0].poll(5, TimeUnit.SECONDS);
-
-                    if (poll != null) {
-                        return Response.ok()
-                                .entity(poll)
-                                .build();
-                    } else {
-                        return Response.serverError()
-                                .entity("did not receive response in time")
-                                .build();
-                    }
+                JsonNode rrmConf = jsonTree.path("RRMConf");
+                if (!rrmConf.isMissingNode()) {
+                    return handleRRMChange(link, rrmConf);
                 }
 
             } catch (Exception e) {
@@ -174,7 +127,7 @@ public class LinkWebResource extends AbstractWebResource {
                 return Response.serverError().entity(ExceptionUtils.getFullStackTrace(e)).build();
             }
         }
-        return Response.serverError().entity("link not found").build();
+        return Response.serverError().entity("link not found use POST request").build();
     }
 
     /**
@@ -189,15 +142,38 @@ public class LinkWebResource extends AbstractWebResource {
     @Path("{src},{dst}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response postLinks(@PathParam("src") String src, @PathParam("dst") long dst, InputStream stream) {
+        RnibCell cell = get(XranStore.class).getCell(src);
+        RnibUe ue = get(XranStore.class).getUe(dst);
+
+        if (cell == null) {
+            return Response.serverError()
+                    .entity("cell not found")
+                    .build();
+        }
+
+        if (ue == null) {
+            return Response.serverError()
+                    .entity("ue not found")
+                    .build();
+        }
+
+        if (get(XranStore.class).getLink(cell.getEcgi(), ue.getMmeS1apId()) != null) {
+            return Response.serverError()
+                    .entity("link exists use PATCH request")
+                    .build();
+        }
+
         try {
             ObjectNode jsonTree = (ObjectNode) mapper().readTree(stream);
 
-            JsonNode type = jsonTree.get("type");
+            JsonNode type = jsonTree.path("type");
 
-            if (type != null) {
-                boolean b;
-                b = get(XranStore.class).createLinkBetweenCellIdUeId(src, dst, type.asText());
-                return ok(b).build();
+            if (!type.isMissingNode()) {
+                RnibLink link = new RnibLink(cell, ue);
+                link.setType(RnibLink.Type.getEnum(type.asText()));
+                get(XranStore.class).storeLink(link);
+
+                // TODO: trigger the scell add
             }
         } catch (Exception e) {
             log.error(ExceptionUtils.getFullStackTrace(e));
@@ -207,7 +183,121 @@ public class LinkWebResource extends AbstractWebResource {
                     .build();
         }
 
-        return Response.serverError().entity("unreachable code").build();
+        return Response.serverError()
+                .entity("unreachable code")
+                .build();
     }
 
+    private Response handleTypeChange(RnibLink link, RnibLink.Type newType) throws InterruptedException {
+        final SynchronousQueue<String>[] queue = new SynchronousQueue[1];
+
+        if (newType.equals(RnibLink.Type.SERVING_PRIMARY)) {
+            List<RnibLink> linksByUeId = get(XranStore.class).getLinksByUeId(link.getLinkId().getMmeues1apid().longValue());
+
+            Optional<RnibLink> primary = linksByUeId.stream()
+                    .filter(l -> l.getType().equals(RnibLink.Type.SERVING_PRIMARY))
+                    .findFirst();
+            if (primary.isPresent()) {
+                queue[0] = get(XranController.class).sendHORequest(link, primary.get());
+                String poll = queue[0].poll(5, TimeUnit.SECONDS);
+
+                if (poll != null) {
+                    return Response.ok()
+                            .entity(poll)
+                            .build();
+                } else {
+                    return Response.serverError()
+                            .entity("did not receive response in time")
+                            .build();
+                }
+            } else {
+                link.setType(RnibLink.Type.SERVING_PRIMARY);
+                return Response.ok()
+                        .entity("there was not another primary link")
+                        .build();
+            }
+        } else if (newType.equals(RnibLink.Type.NON_SERVING)) {
+            switch (link.getType()) {
+                case NON_SERVING:
+                    return Response.ok()
+                            .entity("It's already a non serving link!" + link)
+                            .build();
+                case SERVING_PRIMARY:
+                    return Response.serverError()
+                            .entity("Cannot change a Primary link.")
+                            .build();
+                case SERVING_SECONDARY_CA:
+                case SERVING_SECONDARY_DC:
+                    if (get(XranController.class).sendScellDelete(link)) {
+                        return Response.ok()
+                                .entity("Successfully changed link type to " + link.getType())
+                                .build();
+                    } else {
+                        return Response.serverError()
+                                .entity("Could not change link type.")
+                                .build();
+                    }
+            }
+        } else if (newType.equals(RnibLink.Type.SERVING_SECONDARY_CA)) {
+            switch (link.getType()) {
+                case SERVING_PRIMARY:
+                    return Response.serverError()
+                            .entity("Cannot change a Primary link.")
+                            .build();
+                case SERVING_SECONDARY_DC:
+                case NON_SERVING:
+                    queue[0] = get(XranController.class).sendScellAdd(link);
+                    String poll = queue[0].poll(5, TimeUnit.SECONDS);
+                    if (poll != null) {
+                        return Response.ok()
+                                .entity("Successfully changed link type to " + link.getType())
+                                .build();
+                    } else {
+                        return Response.serverError()
+                                .entity("did not receive response in time")
+                                .build();
+                    }
+                case SERVING_SECONDARY_CA:
+                    return Response.ok()
+                            .entity("It's already a service secondary ca link!")
+                            .build();
+            }
+        }
+
+        return Response.serverError()
+                .entity("Unknown type")
+                .build();
+    }
+
+    private Response handleTrafficChange(RnibLink link, JsonNode trafficpercent) {
+        JsonNode jsonNode = trafficpercent.path("traffic-percent-dl");
+        if (!jsonNode.isMissingNode()) {
+            link.getTrafficPercent().setTrafficPercentDl(new BerInteger(jsonNode.asInt()));
+        }
+
+        jsonNode = trafficpercent.path("traffic-percent-ul");
+        if (!jsonNode.isMissingNode()) {
+            link.getTrafficPercent().setTrafficPercentUl(new BerInteger(jsonNode.asInt()));
+        }
+
+        return Response.ok("trafficpercent changed successfully").build();
+    }
+
+    private Response handleRRMChange(RnibLink link, JsonNode rrmConf) throws InterruptedException {
+        final SynchronousQueue<String>[] queue = new SynchronousQueue[1];
+        get(XranStore.class).modifyLinkRrmConf(link, rrmConf);
+        queue[0] = get(XranController.class).sendModifiedRRMConf(link.getRrmParameters(),
+                link.getLinkId().getCell().getVersion().equals("3"));
+        String poll = queue[0].poll(5, TimeUnit.SECONDS);
+
+        if (poll != null) {
+            return Response.ok()
+                    .entity(poll)
+                    .build();
+        } else {
+            return Response.serverError()
+                    .entity("did not receive response in time")
+                    .build();
+        }
+    }
 }

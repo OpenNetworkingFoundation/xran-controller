@@ -39,4 +39,8 @@ public interface XranController {
     void removeListener(XranHostListener listener);
 
     SynchronousQueue<String> sendModifiedRRMConf(RRMConfig rrmConfig, boolean xICIC);
+
+    SynchronousQueue<String> sendScellAdd(RnibLink link);
+
+    boolean sendScellDelete(RnibLink link);
 }

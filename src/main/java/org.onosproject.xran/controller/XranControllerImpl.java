@@ -107,8 +107,10 @@ public class XranControllerImpl implements XranController {
     private LinkMap linkMap;
     /* MAPS */
     private ConcurrentMap<String, ECGI> legitCells = new ConcurrentHashMap<>();
-    private ConcurrentMap<CRNTI, SynchronousQueue<String>> hoQueue = new ConcurrentHashMap<CRNTI, SynchronousQueue<String>>();
-    private ConcurrentMap<ECGI, SynchronousQueue<String>> RRMCellQueue = new ConcurrentHashMap<ECGI, SynchronousQueue<String>>();
+    private ConcurrentMap<CRNTI, SynchronousQueue<String>> hoQueue = new ConcurrentHashMap<>();
+    private ConcurrentMap<ECGI, SynchronousQueue<String>> RRMCellQueue = new ConcurrentHashMap<>();
+    private ConcurrentMap<CRNTI, SynchronousQueue<String>> scellAddQueue = new ConcurrentHashMap<>();
+    private ConcurrentMap<CRNTI, SynchronousQueue<String>> scellDeleteQueue = new ConcurrentHashMap<>();
     /* AGENTS */
     private InternalXranDeviceAgent deviceAgent = new InternalXranDeviceAgent();
     private InternalXranHostAgent hostAgent = new InternalXranHostAgent();
@@ -215,6 +217,70 @@ public class XranControllerImpl implements XranController {
         return queue;
     }
 
+    @Override
+    public SynchronousQueue<String> sendScellAdd(RnibLink link) {
+        RnibCell secondaryCell = link.getLinkId().getCell(),
+                primaryCell = linkMap.getPrimaryCell(link.getLinkId().getUe());
+        ECGI primaryEcgi = primaryCell.getEcgi();
+        ChannelHandlerContext ctx = cellMap.getCtx(primaryEcgi);
+
+        CRNTI crnti = linkMap.getCrnti(link.getLinkId().getMmeues1apid());
+
+        CellConfigReport cellReport = secondaryCell.getConf();
+
+        if (cellReport != null) {
+            PCIARFCN pciarfcn = new PCIARFCN();
+            pciarfcn.setPci(cellReport.getPci());
+            pciarfcn.setEarfcnDl(cellReport.getEarfcnDl());
+
+            PropScell propScell = new PropScell();
+            propScell.setPciArfcn(pciarfcn);
+
+            XrancPdu pdu = ScellAdd.constructPacket(primaryEcgi, crnti, propScell);
+            try {
+                ctx.writeAndFlush(getSctpMessage(pdu));
+                SynchronousQueue<String> queue = new SynchronousQueue<>();
+                scellAddQueue.put(crnti, queue);
+
+                return queue;
+            } catch (IOException e) {
+                log.error(ExceptionUtils.getFullStackTrace(e));
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public boolean sendScellDelete(RnibLink link) {
+        RnibCell secondaryCell = link.getLinkId().getCell(),
+                primaryCell = linkMap.getPrimaryCell(link.getLinkId().getUe());
+        ECGI primaryEcgi = primaryCell.getEcgi();
+        ChannelHandlerContext ctx = cellMap.getCtx(primaryEcgi);
+
+        CRNTI crnti = linkMap.getCrnti(link.getLinkId().getMmeues1apid());
+
+        CellConfigReport cellReport = secondaryCell.getConf();
+
+        if (cellReport != null) {
+            PCIARFCN pciarfcn = new PCIARFCN();
+            pciarfcn.setPci(cellReport.getPci());
+            pciarfcn.setEarfcnDl(cellReport.getEarfcnDl());
+
+            XrancPdu pdu = ScellDelete.constructPacket(primaryEcgi, crnti, pciarfcn);
+
+            try {
+                ctx.writeAndFlush(getSctpMessage(pdu));
+                link.setType(RnibLink.Type.NON_SERVING);
+                return true;
+            } catch (IOException e) {
+                log.error(ExceptionUtils.getFullStackTrace(e));
+                e.printStackTrace();
+            }
+        }
+        return false;
+    }
+
     private void restartTimer(RnibUe ue) {
         Timer timer = new Timer();
         ue.setTimer(timer);
@@ -319,7 +385,7 @@ public class XranControllerImpl implements XranController {
                 case HOST_MOVED: {
                     RnibUe ue = ueMap.get(hostIdtoMME(event.subject().id()));
                     if (ue != null) {
-                        ECGI ecgi_primary = linkMap.getPrimaryCell(ue);
+                        ECGI ecgi_primary = linkMap.getPrimaryCell(ue).getEcgi();
                         RnibCell primary = cellMap.get(ecgi_primary);
                         ue.setMeasConfig(null);
                         if (primary != null) {
@@ -797,7 +863,32 @@ public class XranControllerImpl implements XranController {
                     ctx.writeAndFlush(getSctpMessage(xrancPdu));
                     break;
                 }
-                // TODO: Case 26: ScellAdd 27: ScellAddStatus 28: ScellDelete
+                case 27: {
+                    //Decode ScellAddStatus
+                    ScellAddStatus scellAddStatus = recv_pdu.getBody().getScellAddStatus();
+                    try {
+                        scellAddQueue.get(scellAddStatus.getCrnti()).put("Scell's status: " + scellAddStatus.getStatus());
+                        if (scellAddStatus.getStatus().getBerEnum().get(0).value.intValue() == 0) {
+
+                            scellAddStatus.getScellsInd().getPCIARFCN().forEach(
+                                    pciarfcn -> {
+                                        RnibCell cell = cellMap.get(pciarfcn);
+                                        RnibLink link = linkMap.get(cell.getEcgi(), scellAddStatus.getCrnti());
+                                        link.setType(RnibLink.Type.SERVING_SECONDARY_CA);
+                                    }
+                            );
+                        } else {
+                            log.error("Scell addition failed.");
+                        }
+                    } catch (InterruptedException e) {
+                        log.error(ExceptionUtils.getFullStackTrace(e));
+                        e.printStackTrace();
+                    } finally {
+                        scellAddQueue.remove(scellAddStatus.getCrnti());
+                    }
+                    break;
+                }
+                // TODO: 28: ScellDelete
 
                 case 30: {
                     // Decode RRMConfig Status

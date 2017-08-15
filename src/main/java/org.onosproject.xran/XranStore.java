@@ -47,8 +47,6 @@ public interface XranStore extends Store {
 
     RnibLink getLinkBetweenCellIdUeId(String cellId, long euId);
 
-    boolean createLinkBetweenCellIdUeId(String cellId, long euId, String type);
-
     RnibLink getLink(ECGI ecgi, MMEUES1APID mme);
 
     void modifyLinkRrmConf(RnibLink link, JsonNode rrmConf);

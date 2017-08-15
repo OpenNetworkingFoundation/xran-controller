@@ -19,7 +19,6 @@ package org.onosproject.xran.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.felix.scr.annotations.*;
 import org.onosproject.core.ApplicationId;
 import org.onosproject.core.CoreService;
@@ -123,6 +122,7 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
         return list;
     }
 
+
     @Override
     public RnibLink getLinkBetweenCellIdUeId(String eciHex, long euId) {
         EUTRANCellIdentifier eci = hexToECI(eciHex);
@@ -138,38 +138,21 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
     }
 
     @Override
-    public boolean createLinkBetweenCellIdUeId(String eciHex, long euId, String type) {
-        RnibCell cell = getCell(eciHex);
-        RnibUe ue = getUe(euId);
-
-        if (cell != null && ue != null) {
-            RnibLink link = new RnibLink(cell, ue);
-
-            // TODO: check logic for each type
-            try {
-                RnibLink.Type linkType = RnibLink.Type.valueOf(type);
-                switch (linkType) {
-                    case NON_SERVING:
-                        break;
-                    case SERVING_PRIMARY:
-                        break;
-                    case SERVING_SECONDARY:
-                        break;
-                }
-            } catch (Exception e) {
-                log.error(ExceptionUtils.getFullStackTrace(e));
-            }
-            linkMap.put(link.getLinkId(), link);
-            return true;
-        }
-
-        return false;
-    }
-
-    @Override
     public void storeLink(RnibLink link) {
-        if (link.getLinkId() != null) {
-            linkMap.put(link.getLinkId(), link);
+        synchronized (this) {
+            if (link.getLinkId() != null) {
+                // if we add a primary link then change the primary to non serving
+                if (link.getType().equals(RnibLink.Type.SERVING_PRIMARY)) {
+                    RnibUe ue = link.getLinkId().getUe();
+                    getLinksByUeId(ue.getMmeS1apId().longValue())
+                            .forEach(l -> {
+                                if (l.getType().equals(RnibLink.Type.SERVING_PRIMARY)) {
+                                    l.setType(RnibLink.Type.NON_SERVING);
+                                }
+                            });
+                }
+                linkMap.put(link.getLinkId(), link);
+            }
         }
     }
 

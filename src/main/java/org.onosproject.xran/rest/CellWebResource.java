@@ -94,8 +94,8 @@ public class CellWebResource extends AbstractWebResource {
             try {
                 ObjectNode jsonTree = (ObjectNode) mapper().readTree(stream);
 
-                JsonNode rrmConf = jsonTree.get("RRMConf");
-                if (rrmConf != null) {
+                JsonNode rrmConf = jsonTree.path("RRMConf");
+                if (!rrmConf.isMissingNode()) {
                     final SynchronousQueue<String>[] queue = new SynchronousQueue[1];
                     get(XranStore.class).modifyCellRrmConf(cell, rrmConf);
 
@@ -122,7 +122,9 @@ public class CellWebResource extends AbstractWebResource {
             }
         }
 
-        return Response.serverError().entity("cell not found").build();
+        return Response.serverError()
+                .entity("cell not found")
+                .build();
     }
 
 }

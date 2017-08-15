@@ -37,7 +37,7 @@ public class XICICConfig implements Serializable {
 	private BerInteger startPrbUl = null;
 	private BerInteger endPrbUl = null;
 	private BerBitString subframeBitmaskUl = null;
-	
+
 	public XICICConfig() {
 	}
 
@@ -150,61 +150,79 @@ public class XICICConfig implements Serializable {
 		}
 
 		int codeLength = 0;
-		codeLength += subframeBitmaskUl.encode(os, false);
-		// write tag: CONTEXT_CLASS, PRIMITIVE, 10
-		os.write(0x8A);
-		codeLength += 1;
-		
-		codeLength += endPrbUl.encode(os, false);
-		// write tag: CONTEXT_CLASS, PRIMITIVE, 9
-		os.write(0x89);
-		codeLength += 1;
-		
-		codeLength += startPrbUl.encode(os, false);
-		// write tag: CONTEXT_CLASS, PRIMITIVE, 8
-		os.write(0x88);
-		codeLength += 1;
-		
-		codeLength += p0UePusch.encode(os, false);
-		// write tag: CONTEXT_CLASS, PRIMITIVE, 7
-		os.write(0x87);
-		codeLength += 1;
-		
-		codeLength += subframeBitmaskDl.encode(os, false);
-		// write tag: CONTEXT_CLASS, PRIMITIVE, 6
-		os.write(0x86);
-		codeLength += 1;
-		
-		codeLength += endPrbDl.encode(os, false);
-		// write tag: CONTEXT_CLASS, PRIMITIVE, 5
-		os.write(0x85);
-		codeLength += 1;
-		
-		codeLength += startPrbDl.encode(os, false);
-		// write tag: CONTEXT_CLASS, PRIMITIVE, 4
-		os.write(0x84);
-		codeLength += 1;
-		
-		codeLength += pa.encode(os, false);
-		// write tag: CONTEXT_CLASS, PRIMITIVE, 3
-		os.write(0x83);
-		codeLength += 1;
-		
+		if (subframeBitmaskUl != null) {
+			codeLength += subframeBitmaskUl.encode(os, false);
+			// write tag: CONTEXT_CLASS, PRIMITIVE, 10
+			os.write(0x8A);
+			codeLength += 1;
+		}
+
+		if (endPrbUl != null) {
+			codeLength += endPrbUl.encode(os, false);
+			// write tag: CONTEXT_CLASS, PRIMITIVE, 9
+			os.write(0x89);
+			codeLength += 1;
+		}
+
+		if (startPrbUl != null) {
+			codeLength += startPrbUl.encode(os, false);
+			// write tag: CONTEXT_CLASS, PRIMITIVE, 8
+			os.write(0x88);
+			codeLength += 1;
+		}
+
+		if (p0UePusch != null) {
+			codeLength += p0UePusch.encode(os, false);
+			// write tag: CONTEXT_CLASS, PRIMITIVE, 7
+			os.write(0x87);
+			codeLength += 1;
+		}
+
+		if (subframeBitmaskDl != null) {
+			codeLength += subframeBitmaskDl.encode(os, false);
+			// write tag: CONTEXT_CLASS, PRIMITIVE, 6
+			os.write(0x86);
+			codeLength += 1;
+		}
+
+		if (endPrbDl != null) {
+			codeLength += endPrbDl.encode(os, false);
+			// write tag: CONTEXT_CLASS, PRIMITIVE, 5
+			os.write(0x85);
+			codeLength += 1;
+		}
+
+		if (startPrbDl != null) {
+			codeLength += startPrbDl.encode(os, false);
+			// write tag: CONTEXT_CLASS, PRIMITIVE, 4
+			os.write(0x84);
+			codeLength += 1;
+		}
+
+		if (pa != null) {
+			codeLength += pa.encode(os, false);
+			// write tag: CONTEXT_CLASS, PRIMITIVE, 3
+			os.write(0x83);
+			codeLength += 1;
+		}
+
 		codeLength += crnti.encode(os, false);
 		// write tag: CONTEXT_CLASS, PRIMITIVE, 2
 		os.write(0x82);
 		codeLength += 1;
-		
-		codeLength += pciArfcn.encode(os, false);
-		// write tag: CONTEXT_CLASS, CONSTRUCTED, 1
-		os.write(0xA1);
-		codeLength += 1;
-		
+
+		if (pciArfcn != null) {
+			codeLength += pciArfcn.encode(os, false);
+			// write tag: CONTEXT_CLASS, CONSTRUCTED, 1
+			os.write(0xA1);
+			codeLength += 1;
+		}
+
 		codeLength += ecgi.encode(os, false);
 		// write tag: CONTEXT_CLASS, CONSTRUCTED, 0
 		os.write(0xA0);
 		codeLength += 1;
-		
+
 		codeLength += BerLength.encodeLength(os, codeLength);
 
 		if (withTag) {
@@ -243,88 +261,88 @@ public class XICICConfig implements Serializable {
 		else {
 			throw new IOException("Tag does not match the mandatory sequence element tag.");
 		}
-		
+
 		if (berTag.equals(BerTag.CONTEXT_CLASS, BerTag.CONSTRUCTED, 1)) {
 			pciArfcn = new PCIARFCN();
 			subCodeLength += pciArfcn.decode(is, false);
 			subCodeLength += berTag.decode(is);
 		}
-		else {
-			throw new IOException("Tag does not match the mandatory sequence element tag.");
-		}
-		
+
 		if (berTag.equals(BerTag.CONTEXT_CLASS, BerTag.PRIMITIVE, 2)) {
 			crnti = new CRNTI();
 			subCodeLength += crnti.decode(is, false);
+			if (subCodeLength == totalLength) {
+				return codeLength;
+			}
 			subCodeLength += berTag.decode(is);
 		}
 		else {
 			throw new IOException("Tag does not match the mandatory sequence element tag.");
 		}
-		
+
 		if (berTag.equals(BerTag.CONTEXT_CLASS, BerTag.PRIMITIVE, 3)) {
 			pa = new XICICPA();
 			subCodeLength += pa.decode(is, false);
+			if (subCodeLength == totalLength) {
+				return codeLength;
+			}
 			subCodeLength += berTag.decode(is);
 		}
-		else {
-			throw new IOException("Tag does not match the mandatory sequence element tag.");
-		}
-		
+
 		if (berTag.equals(BerTag.CONTEXT_CLASS, BerTag.PRIMITIVE, 4)) {
 			startPrbDl = new BerInteger();
 			subCodeLength += startPrbDl.decode(is, false);
+			if (subCodeLength == totalLength) {
+				return codeLength;
+			}
 			subCodeLength += berTag.decode(is);
 		}
-		else {
-			throw new IOException("Tag does not match the mandatory sequence element tag.");
-		}
-		
+
 		if (berTag.equals(BerTag.CONTEXT_CLASS, BerTag.PRIMITIVE, 5)) {
 			endPrbDl = new BerInteger();
 			subCodeLength += endPrbDl.decode(is, false);
+			if (subCodeLength == totalLength) {
+				return codeLength;
+			}
 			subCodeLength += berTag.decode(is);
 		}
-		else {
-			throw new IOException("Tag does not match the mandatory sequence element tag.");
-		}
-		
+
 		if (berTag.equals(BerTag.CONTEXT_CLASS, BerTag.PRIMITIVE, 6)) {
 			subframeBitmaskDl = new BerBitString();
 			subCodeLength += subframeBitmaskDl.decode(is, false);
+			if (subCodeLength == totalLength) {
+				return codeLength;
+			}
 			subCodeLength += berTag.decode(is);
 		}
-		else {
-			throw new IOException("Tag does not match the mandatory sequence element tag.");
-		}
-		
+
 		if (berTag.equals(BerTag.CONTEXT_CLASS, BerTag.PRIMITIVE, 7)) {
 			p0UePusch = new BerInteger();
 			subCodeLength += p0UePusch.decode(is, false);
+			if (subCodeLength == totalLength) {
+				return codeLength;
+			}
 			subCodeLength += berTag.decode(is);
 		}
-		else {
-			throw new IOException("Tag does not match the mandatory sequence element tag.");
-		}
-		
+
 		if (berTag.equals(BerTag.CONTEXT_CLASS, BerTag.PRIMITIVE, 8)) {
 			startPrbUl = new BerInteger();
 			subCodeLength += startPrbUl.decode(is, false);
+			if (subCodeLength == totalLength) {
+				return codeLength;
+			}
 			subCodeLength += berTag.decode(is);
 		}
-		else {
-			throw new IOException("Tag does not match the mandatory sequence element tag.");
-		}
-		
+
 		if (berTag.equals(BerTag.CONTEXT_CLASS, BerTag.PRIMITIVE, 9)) {
 			endPrbUl = new BerInteger();
 			subCodeLength += endPrbUl.decode(is, false);
+			if (subCodeLength == totalLength) {
+				return codeLength;
+			}
 			subCodeLength += berTag.decode(is);
 		}
-		else {
-			throw new IOException("Tag does not match the mandatory sequence element tag.");
-		}
-		
+
 		if (berTag.equals(BerTag.CONTEXT_CLASS, BerTag.PRIMITIVE, 10)) {
 			subframeBitmaskUl = new BerBitString();
 			subCodeLength += subframeBitmaskUl.decode(is, false);
@@ -334,7 +352,7 @@ public class XICICConfig implements Serializable {
 		}
 		throw new IOException("Unexpected end of sequence, length tag: " + totalLength + ", actual sequence length: " + subCodeLength);
 
-		
+
 	}
 
 	public void encodeAndSave(int encodingSizeGuess) throws IOException {

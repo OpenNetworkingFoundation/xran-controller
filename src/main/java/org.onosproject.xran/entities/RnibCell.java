@@ -55,8 +55,10 @@ public class RnibCell {
 
     public RnibCell() {
         prbUsage = new PrbUsageContainer();
-        setDefaultRRMConf();
         version = "3";
+
+        rrmConfig = new RRMConfig();
+        rrmConfig.setEcgi(ecgi);
     }
 
     public static URI uri(ECGI ecgi) {
@@ -109,45 +111,6 @@ public class RnibCell {
         this.prbUsage = prbUsage;
     }
 
-    private void setDefaultRRMConf() {
-        rrmConfig = new RRMConfig();
-
-        rrmConfig.setEcgi(ecgi);
-
-        RRMConfig.StartPrbDl startPrbDl = new RRMConfig.StartPrbDl();
-        startPrbDl.addBerInteger(new BerInteger(0));
-        startPrbDl.addBerInteger(new BerInteger(50));
-
-        rrmConfig.setStartPrbDl(startPrbDl);
-
-        RRMConfig.StartPrbUl startPrbUl = new RRMConfig.StartPrbUl();
-        startPrbUl.addBerInteger(new BerInteger(50));
-        startPrbUl.addBerInteger(new BerInteger(100));
-
-        rrmConfig.setStartPrbUl(startPrbUl);
-
-        RRMConfig.EndPrbDl endPrbDl = new RRMConfig.EndPrbDl();
-        endPrbDl.addBerInteger(new BerInteger(50));
-        endPrbDl.addBerInteger(new BerInteger(100));
-
-        rrmConfig.setEndPrbDl(endPrbDl);
-
-        RRMConfig.EndPrbUl endPrbUl = new RRMConfig.EndPrbUl();
-        endPrbUl.addBerInteger(new BerInteger(50));
-        endPrbUl.addBerInteger(new BerInteger(100));
-
-        rrmConfig.setEndPrbUl(endPrbUl);
-
-        RRMConfig.SubframeBitmaskDl subframeBitmaskDl = new RRMConfig.SubframeBitmaskDl();
-        BerBitString berBitString = new BerBitString(new byte[]{(byte) 0xAA, (byte) 0x80}, 10);
-        BerBitString berBitString1 = new BerBitString(new byte[]{(byte) 0x55, (byte) 0x40}, 10);
-
-        subframeBitmaskDl.addBerBitString(berBitString);
-        subframeBitmaskDl.addBerBitString(berBitString1);
-
-        rrmConfig.setSubframeBitmaskDl(subframeBitmaskDl);
-    }
-
     public ECGI getEcgi() {
         return ecgi;
     }
@@ -177,7 +140,7 @@ public class RnibCell {
             if (start_prb_dl != null) {
                 RRMConfig.StartPrbDl startPrbDl = new RRMConfig.StartPrbDl();
                 if (start_prb_dl.isArray()) {
-                    if (rrmConfig.getStartPrbDl().getSeqOf().size() == start_prb_dl.size()) {
+                    if (ueList.size() == start_prb_dl.size()) {
                         List<BerInteger> collect = Stream.of(start_prb_dl)
                                 .map(val -> new BerInteger(val.asInt()))
                                 .collect(Collectors.toList());
@@ -193,7 +156,7 @@ public class RnibCell {
             if (end_prb_dl != null) {
                 RRMConfig.EndPrbDl endPrbDl = new RRMConfig.EndPrbDl();
                 if (end_prb_dl.isArray()) {
-                    if (rrmConfig.getEndPrbDl().getSeqOf().size() == end_prb_dl.size()) {
+                    if (ueList.size() == end_prb_dl.size()) {
                         List<BerInteger> collect = Stream.of(end_prb_dl)
                                 .map(val -> new BerInteger(val.asInt()))
                                 .collect(Collectors.toList());
@@ -209,7 +172,7 @@ public class RnibCell {
             if (start_prb_ul != null) {
                 RRMConfig.StartPrbUl startPrbUl = new RRMConfig.StartPrbUl();
                 if (start_prb_ul.isArray()) {
-                    if (rrmConfig.getStartPrbUl().getSeqOf().size() == start_prb_ul.size()) {
+                    if (ueList.size() == start_prb_ul.size()) {
                         List<BerInteger> collect = Stream.of(start_prb_ul)
                                 .map(val -> new BerInteger(val.asInt()))
                                 .collect(Collectors.toList());
@@ -225,7 +188,7 @@ public class RnibCell {
             if (end_prb_ul != null) {
                 RRMConfig.EndPrbUl endPrbUl = new RRMConfig.EndPrbUl();
                 if (end_prb_ul.isArray()) {
-                    if (rrmConfig.getEndPrbUl().getSeqOf().size() == end_prb_ul.size()) {
+                    if (ueList.size() == end_prb_ul.size()) {
                         List<BerInteger> collect = Stream.of(end_prb_ul)
                                 .map(val -> new BerInteger(val.asInt()))
                                 .collect(Collectors.toList());
@@ -237,8 +200,6 @@ public class RnibCell {
         }
 
         rrmConfig.setCrnti(crnti);
-
-        // TODO
     }
 
     public SchedMeasReportPerCell.QciVals getQci() {
