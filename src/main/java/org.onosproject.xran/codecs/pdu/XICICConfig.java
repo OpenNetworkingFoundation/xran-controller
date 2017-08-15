@@ -368,98 +368,97 @@ public class XICICConfig implements Serializable {
 	}
 
 	public void appendAsString(StringBuilder sb, int indentLevel) {
-
 		sb.append("{");
 		sb.append("\n");
 		for (int i = 0; i < indentLevel + 1; i++) {
 			sb.append("\t");
 		}
 		if (ecgi != null) {
-			sb.append("\"ecgi\": ");
+			sb.append("\"ecgi: \"");
 			ecgi.appendAsString(sb, indentLevel + 1);
 		}
-		
-		sb.append(",\n");
-		for (int i = 0; i < indentLevel + 1; i++) {
-			sb.append("\t");
-		}
+
 		if (pciArfcn != null) {
-			sb.append("\"pciArfcn\": ");
+			sb.append(",\n");
+			for (int i = 0; i < indentLevel + 1; i++) {
+				sb.append("\t");
+			}
+			sb.append("\"pciArfcn: \"");
 			pciArfcn.appendAsString(sb, indentLevel + 1);
 		}
-		
+
 		sb.append(",\n");
 		for (int i = 0; i < indentLevel + 1; i++) {
 			sb.append("\t");
 		}
 		if (crnti != null) {
-			sb.append("\"crnti\": ").append(crnti);
+			sb.append("\"crnti: \"").append(crnti);
 		}
-		
-		sb.append(",\n");
-		for (int i = 0; i < indentLevel + 1; i++) {
-			sb.append("\t");
-		}
+
 		if (pa != null) {
-			sb.append("\"pa\": ").append(pa);
+			sb.append(",\n");
+			for (int i = 0; i < indentLevel + 1; i++) {
+				sb.append("\t");
+			}
+			sb.append("\"pa: \"").append(pa);
 		}
-		
-		sb.append(",\n");
-		for (int i = 0; i < indentLevel + 1; i++) {
-			sb.append("\t");
-		}
+
 		if (startPrbDl != null) {
-			sb.append("\"startPrbDl\": ").append(startPrbDl);
+			sb.append(",\n");
+			for (int i = 0; i < indentLevel + 1; i++) {
+				sb.append("\t");
+			}
+			sb.append("\"startPrbDl: \"").append(startPrbDl);
 		}
-		
-		sb.append(",\n");
-		for (int i = 0; i < indentLevel + 1; i++) {
-			sb.append("\t");
-		}
+
 		if (endPrbDl != null) {
-			sb.append("\"endPrbDl\": ").append(endPrbDl);
+			sb.append(",\n");
+			for (int i = 0; i < indentLevel + 1; i++) {
+				sb.append("\t");
+			}
+			sb.append("\"endPrbDl: \"").append(endPrbDl);
 		}
-		
-		sb.append(",\n");
-		for (int i = 0; i < indentLevel + 1; i++) {
-			sb.append("\t");
-		}
+
 		if (subframeBitmaskDl != null) {
-			sb.append("\"subframeBitmaskDl\": ").append(subframeBitmaskDl);
+			sb.append(",\n");
+			for (int i = 0; i < indentLevel + 1; i++) {
+				sb.append("\t");
+			}
+			sb.append("\"subframeBitmaskDl: \"").append(subframeBitmaskDl);
 		}
-		
-		sb.append(",\n");
-		for (int i = 0; i < indentLevel + 1; i++) {
-			sb.append("\t");
-		}
+
 		if (p0UePusch != null) {
-			sb.append("\"p0UePusch\": ").append(p0UePusch);
+			sb.append(",\n");
+			for (int i = 0; i < indentLevel + 1; i++) {
+				sb.append("\t");
+			}
+			sb.append("\"p0UePusch: \"").append(p0UePusch);
 		}
-		
-		sb.append(",\n");
-		for (int i = 0; i < indentLevel + 1; i++) {
-			sb.append("\t");
-		}
+
 		if (startPrbUl != null) {
-			sb.append("\"startPrbUl\": ").append(startPrbUl);
+			sb.append(",\n");
+			for (int i = 0; i < indentLevel + 1; i++) {
+				sb.append("\t");
+			}
+			sb.append("\"startPrbUl: \"").append(startPrbUl);
 		}
-		
-		sb.append(",\n");
-		for (int i = 0; i < indentLevel + 1; i++) {
-			sb.append("\t");
-		}
+
 		if (endPrbUl != null) {
-			sb.append("\"endPrbUl\": ").append(endPrbUl);
+			sb.append(",\n");
+			for (int i = 0; i < indentLevel + 1; i++) {
+				sb.append("\t");
+			}
+			sb.append("\"endPrbUl: \"").append(endPrbUl);
 		}
-		
-		sb.append(",\n");
-		for (int i = 0; i < indentLevel + 1; i++) {
-			sb.append("\t");
-		}
+
 		if (subframeBitmaskUl != null) {
-			sb.append("\"subframeBitmaskUl\": ").append(subframeBitmaskUl);
+			sb.append(",\n");
+			for (int i = 0; i < indentLevel + 1; i++) {
+				sb.append("\t");
+			}
+			sb.append("\"subframeBitmaskUl: \"").append(subframeBitmaskUl);
 		}
-		
+
 		sb.append("\n");
 		for (int i = 0; i < indentLevel; i++) {
 			sb.append("\t");
