@@ -107,6 +107,7 @@ public class XranControllerImpl implements XranController {
     private LinkMap linkMap;
     /* MAPS */
     private ConcurrentMap<String, ECGI> legitCells = new ConcurrentHashMap<>();
+    private ConcurrentMap<CRNTI, UEContextUpdate> hoContextUpdateMap = new ConcurrentHashMap<>();
     private ConcurrentMap<CRNTI, SynchronousQueue<String>> hoQueue = new ConcurrentHashMap<>();
     private ConcurrentMap<ECGI, SynchronousQueue<String>> RRMCellQueue = new ConcurrentHashMap<>();
     private ConcurrentMap<CRNTI, SynchronousQueue<String>> scellAddQueue = new ConcurrentHashMap<>();
@@ -595,18 +596,23 @@ public class XranControllerImpl implements XranController {
                     // Decode UE Admission Context Update.
                     UEContextUpdate ueContextUpdate = recv_pdu.getBody().getUEContextUpdate();
 
-                    RnibCell cell = xranStore.getCell(ueContextUpdate.getEcgi());
-
                     RnibUe ue = ueMap.get(ueContextUpdate.getMMEUES1APID());
-                    if (ueMap.get(ueContextUpdate.getMMEUES1APID()) == null) {
-                        ue = new RnibUe();
+                    if (hoQueue.keySet().contains(ue.getRanId())) {
+                        CRNTI crnti = ueContextUpdate.getCrnti();
+                        hoContextUpdateMap.put(crnti, ueContextUpdate);
+                        hoQueue.remove(ue.getRanId());
+                    } else {
+                        RnibCell cell = xranStore.getCell(ueContextUpdate.getEcgi());
+                        if (ueMap.get(ueContextUpdate.getMMEUES1APID()) == null) {
+                            ue = new RnibUe();
+                        }
+
+                        ue.setMmeS1apId(ueContextUpdate.getMMEUES1APID());
+                        ue.setEnbS1apId(ueContextUpdate.getENBUES1APID());
+                        ue.setRanId(ueContextUpdate.getCrnti());
+
+                        hostAgent.addConnectedHost(ue, cell, ctx);
                     }
-
-                    ue.setMmeS1apId(ueContextUpdate.getMMEUES1APID());
-                    ue.setEnbS1apId(ueContextUpdate.getENBUES1APID());
-                    ue.setRanId(ueContextUpdate.getCrnti());
-
-                    hostAgent.addConnectedHost(ue, cell, ctx);
                     break;
                 }
                 case 6: {
@@ -714,6 +720,20 @@ public class XranControllerImpl implements XranController {
                         e.printStackTrace();
                     } finally {
                         hoQueue.remove(hoComplete.getCrntiNew());
+
+                        UEContextUpdate ueContextUpdate = hoContextUpdateMap.get(hoComplete.getCrntiNew());
+
+                        RnibUe ue = ueMap.get(ueContextUpdate.getMMEUES1APID());
+                        RnibCell cell = xranStore.getCell(ueContextUpdate.getEcgi());
+                        if (ueMap.get(ueContextUpdate.getMMEUES1APID()) == null) {
+                            ue = new RnibUe();
+                        }
+
+                        ue.setMmeS1apId(ueContextUpdate.getMMEUES1APID());
+                        ue.setEnbS1apId(ueContextUpdate.getENBUES1APID());
+                        ue.setRanId(ueContextUpdate.getCrnti());
+
+                        hostAgent.addConnectedHost(ue, cell, ctx);
                     }
                     break;
                 }

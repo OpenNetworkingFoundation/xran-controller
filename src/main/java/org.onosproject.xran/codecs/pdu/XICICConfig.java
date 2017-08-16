@@ -468,7 +468,29 @@ public class XICICConfig implements Serializable {
 
 	public static XrancPdu constructPacket(RRMConfig config) {
 		XrancPduBody body = new XrancPduBody();
-		body.setRRMConfig(config);
+        
+		XICICConfig xicicConfig = new XICICConfig();
+
+		xicicConfig.setCrnti(config.getCrnti().getCRNTI().get(0));
+		xicicConfig.setEcgi(config.getEcgi());
+
+		try {
+            xicicConfig.setEndPrbDl(config.getEndPrbDl().getSeqOf().get(0));
+        } catch (Exception ignored) {}
+
+        try {
+            xicicConfig.setEndPrbUl(config.getEndPrbUl().getSeqOf().get(0));
+        } catch (Exception ignored) {}
+
+        try {
+            xicicConfig.setStartPrbDl(config.getStartPrbDl().getSeqOf().get(0));
+        } catch (Exception ignored) {}
+
+        try {
+            xicicConfig.setEndPrbUl(config.getStartPrbUl().getSeqOf().get(0));
+        } catch (Exception ignored) {}
+
+        body.setXICICConfig(xicicConfig);
 
 		BerUTF8String ver = null;
 		try {
