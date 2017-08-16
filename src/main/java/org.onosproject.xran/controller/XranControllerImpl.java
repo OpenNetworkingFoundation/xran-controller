@@ -597,13 +597,13 @@ public class XranControllerImpl implements XranController {
                     UEContextUpdate ueContextUpdate = recv_pdu.getBody().getUEContextUpdate();
 
                     RnibUe ue = ueMap.get(ueContextUpdate.getMMEUES1APID());
-                    if (hoQueue.keySet().contains(ue.getRanId())) {
+                    if (ue != null && hoQueue.keySet().contains(ue.getRanId())) {
                         CRNTI crnti = ueContextUpdate.getCrnti();
                         hoContextUpdateMap.put(crnti, ueContextUpdate);
                         hoQueue.remove(ue.getRanId());
                     } else {
                         RnibCell cell = xranStore.getCell(ueContextUpdate.getEcgi());
-                        if (ueMap.get(ueContextUpdate.getMMEUES1APID()) == null) {
+                        if (ue == null) {
                             ue = new RnibUe();
                         }
 
