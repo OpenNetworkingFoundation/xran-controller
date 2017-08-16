@@ -168,13 +168,23 @@ public class LinkWebResource extends AbstractWebResource {
 
             JsonNode type = jsonTree.path("type");
 
+            RnibLink link = new RnibLink(cell, ue);
+            // store it as non-serving when creating link
+            get(XranStore.class).storeLink(link);
             if (!type.isMissingNode()) {
-                RnibLink link = new RnibLink(cell, ue);
-                link.setType(RnibLink.Type.getEnum(type.asText()));
-                get(XranStore.class).storeLink(link);
-
-                // TODO: trigger the scell add
+                return handleTypeChange(link, RnibLink.Type.getEnum(type.asText()));
             }
+
+            JsonNode trafficpercent = jsonTree.path("trafficpercent");
+            if (!trafficpercent.isMissingNode()) {
+                return handleTrafficChange(link, trafficpercent);
+            }
+
+            JsonNode rrmConf = jsonTree.path("RRMConf");
+            if (!rrmConf.isMissingNode()) {
+                return handleRRMChange(link, rrmConf);
+            }
+
         } catch (Exception e) {
             log.error(ExceptionUtils.getFullStackTrace(e));
             e.printStackTrace();
@@ -192,29 +202,40 @@ public class LinkWebResource extends AbstractWebResource {
         final SynchronousQueue<String>[] queue = new SynchronousQueue[1];
 
         if (newType.equals(RnibLink.Type.SERVING_PRIMARY)) {
-            List<RnibLink> linksByUeId = get(XranStore.class).getLinksByUeId(link.getLinkId().getMmeues1apid().longValue());
-
-            Optional<RnibLink> primary = linksByUeId.stream()
-                    .filter(l -> l.getType().equals(RnibLink.Type.SERVING_PRIMARY))
-                    .findFirst();
-            if (primary.isPresent()) {
-                queue[0] = get(XranController.class).sendHORequest(link, primary.get());
-                String poll = queue[0].poll(5, TimeUnit.SECONDS);
-
-                if (poll != null) {
-                    return Response.ok()
-                            .entity(poll)
-                            .build();
-                } else {
+            switch (link.getType()) {
+                case SERVING_PRIMARY: {
                     return Response.serverError()
-                            .entity("did not receive response in time")
+                            .entity("link already a primary")
                             .build();
                 }
-            } else {
-                link.setType(RnibLink.Type.SERVING_PRIMARY);
-                return Response.ok()
-                        .entity("there was not another primary link")
-                        .build();
+                case SERVING_SECONDARY_CA:
+                case SERVING_SECONDARY_DC:
+                case NON_SERVING: {
+                    List<RnibLink> linksByUeId = get(XranStore.class).getLinksByUeId(link.getLinkId().getMmeues1apid().longValue());
+
+                    Optional<RnibLink> primary = linksByUeId.stream()
+                            .filter(l -> l.getType().equals(RnibLink.Type.SERVING_PRIMARY))
+                            .findFirst();
+                    if (primary.isPresent()) {
+                        queue[0] = get(XranController.class).sendHORequest(link, primary.get());
+                        String poll = queue[0].poll(5, TimeUnit.SECONDS);
+
+                        if (poll != null) {
+                            return Response.ok()
+                                    .entity(poll)
+                                    .build();
+                        } else {
+                            return Response.serverError()
+                                    .entity("did not receive response in time")
+                                    .build();
+                        }
+                    } else {
+                        link.setType(RnibLink.Type.SERVING_PRIMARY);
+                        return Response.ok()
+                                .entity("there was not another primary link")
+                                .build();
+                    }
+                }
             }
         } else if (newType.equals(RnibLink.Type.NON_SERVING)) {
             switch (link.getType()) {
