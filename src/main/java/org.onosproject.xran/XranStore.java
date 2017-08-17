@@ -59,9 +59,9 @@ public interface XranStore extends Store {
 
     List<Object> getNodes();
 
-    List<RnibCell> getCellNodes();
+    List<Object> getCellNodes();
 
-    List<RnibUe> getUeNodes();
+    List<Object> getUeNodes();
 
     Object getByNodeId(String nodeId);
 

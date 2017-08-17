@@ -16,6 +16,10 @@
 
 package org.onosproject.xran.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.onlab.packet.MacAddress;
 import org.onosproject.net.HostId;
 import org.onosproject.xran.codecs.api.CRNTI;
@@ -37,20 +41,38 @@ import static org.onosproject.net.HostId.hostId;
 /**
  * Created by dimitris on 7/22/17.
  */
+@JsonPropertyOrder({
+        "IMSI",
+        "ENBUES1APID",
+        "MMEUES1APID",
+        "CRNTI",
+        "State",
+        "Capability",
+        "MeasurementConfiguration"
+})
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RnibUe {
-
+    @JsonIgnore
     private static final String SCHEME = "xran";
-
+    @JsonIgnore
     private static final Logger log =
             LoggerFactory.getLogger(RnibUe.class);
 
+    @JsonProperty("IMSI")
     private String imsi;
+    @JsonProperty("ENBUES1APID")
     private ENBUES1APID enbS1apId;
+    @JsonProperty("MMEUES1APID")
     private MMEUES1APID mmeS1apId;
+    @JsonProperty("CRNTI")
     private CRNTI ranId;
+    @JsonProperty("State")
     private State state;
+    @JsonProperty("Capability")
     private UECapabilityInfo capability;
+    @JsonProperty("MeasurementConfiguration")
     private RXSigMeasConfig measConfig;
+    @JsonIgnore
     private Timer timer;
 
     public RnibUe() {
@@ -77,48 +99,59 @@ public class RnibUe {
         return new MMEUES1APID(l);
     }
 
+    @JsonIgnore
     public Timer getTimer() {
         return timer;
     }
 
+    @JsonIgnore
     public void setTimer(Timer timer) {
         this.timer.cancel();
         this.timer.purge();
         this.timer = timer;
     }
 
+    @JsonProperty("MMEUES1APID")
     public MMEUES1APID getMmeS1apId() {
         return mmeS1apId;
     }
 
+    @JsonProperty("MMEUES1APID")
     public void setMmeS1apId(MMEUES1APID mmeS1apId) {
         this.mmeS1apId = mmeS1apId;
     }
 
+    @JsonProperty("ENBUES1APID")
     public ENBUES1APID getEnbS1apId() {
         return enbS1apId;
     }
 
+    @JsonProperty("ENBUES1APID")
     public void setEnbS1apId(ENBUES1APID enbS1apId) {
         this.enbS1apId = enbS1apId;
     }
 
+    @JsonProperty("CRNTI")
     public CRNTI getRanId() {
         return ranId;
     }
 
+    @JsonProperty("CRNTI")
     public void setRanId(CRNTI ranId) {
         this.ranId = ranId;
     }
 
+    @JsonProperty("IMSI")
     public String getImsi() {
         return imsi;
     }
 
+    @JsonProperty("IMSI")
     public void setImsi(String imsi) {
         this.imsi = imsi;
     }
 
+    @JsonIgnore
     public HostId getHostId() {
         try {
             String text = this.mmeS1apId.value.toString(16),
@@ -157,44 +190,48 @@ public class RnibUe {
         return null;
     }
 
-
+    @JsonProperty("MeasurementConfiguration")
     public RXSigMeasConfig getMeasConfig() {
         return measConfig;
     }
 
+    @JsonProperty("MeasurementConfiguration")
     public void setMeasConfig(RXSigMeasConfig measConfig) {
         this.measConfig = measConfig;
     }
 
+    @JsonProperty("Capability")
     public UECapabilityInfo getCapability() {
         return capability;
     }
 
+    @JsonProperty("Capability")
     public void setCapability(UECapabilityInfo capability) {
         this.capability = capability;
     }
 
+    @JsonProperty("State")
     public State getState() {
         return state;
     }
 
+    @JsonProperty("State")
     public void setState(State state) {
         this.state = state;
     }
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{\n")
-                .append(mmeS1apId != null ? "\n\"mme-s1-ap-id\":" + mmeS1apId : "")
-                .append(enbS1apId != null ? ",\n\"enb-s1-ap-id\":" + enbS1apId : "")
-                .append(imsi != null ? ",\"imsi\":" + imsi : "")
-                .append(ranId != null ? ",\n\"ran-id\":" + ranId : "")
-                .append(state != null ? ",\n\"state\":" + state : "")
-                .append(capability != null ? ",\n\"capability\":" + capability : "")
-                .append(measConfig != null ? ",\n\"meas-config\":" + measConfig : "")
-                .append("\n}\n");
-        return sb.toString();
+        return "RnibUe{" +
+                "imsi='" + imsi + '\'' +
+                ", enbS1apId=" + enbS1apId +
+                ", mmeS1apId=" + mmeS1apId +
+                ", ranId=" + ranId +
+                ", state=" + state +
+                ", capability=" + capability +
+                ", measConfig=" + measConfig +
+                ", timer=" + timer +
+                '}';
     }
 
     @Override

@@ -4,10 +4,11 @@
 
 package org.onosproject.xran.codecs.pdu;
 
-import org.openmuc.jasn1.ber.BerByteArrayOutputStream;
-import org.openmuc.jasn1.ber.BerLength;
-import org.openmuc.jasn1.ber.BerTag;
-import org.openmuc.jasn1.ber.types.string.BerUTF8String;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.onosproject.xran.codecs.ber.BerByteArrayOutputStream;
+import org.onosproject.xran.codecs.ber.BerLength;
+import org.onosproject.xran.codecs.ber.BerTag;
+import org.onosproject.xran.codecs.ber.types.string.BerUTF8String;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +20,7 @@ public class XrancPduHdr implements Serializable {
 
 	public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
 
+	@JsonIgnore
 	public byte[] code = null;
 	private BerUTF8String ver = null;
 	private XrancApiID apiId = null;
@@ -144,7 +146,7 @@ public class XrancPduHdr implements Serializable {
 			sb.append("\t");
 		}
 		if (ver != null) {
-			sb.append("\"ver\": ").append(ver);
+			sb.append("ver: ").append(ver);
 		}
 		
 		sb.append(",\n");
@@ -152,7 +154,7 @@ public class XrancPduHdr implements Serializable {
 			sb.append("\t");
 		}
 		if (apiId != null) {
-			sb.append("\"apiId\": ").append(apiId);
+			sb.append("apiId: ").append(apiId);
 		}
 		
 		sb.append("\n");

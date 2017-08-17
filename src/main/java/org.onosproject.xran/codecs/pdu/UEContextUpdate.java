@@ -4,13 +4,14 @@
 
 package org.onosproject.xran.codecs.pdu;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.onosproject.xran.codecs.api.CRNTI;
 import org.onosproject.xran.codecs.api.ECGI;
 import org.onosproject.xran.codecs.api.ENBUES1APID;
 import org.onosproject.xran.codecs.api.MMEUES1APID;
-import org.openmuc.jasn1.ber.BerByteArrayOutputStream;
-import org.openmuc.jasn1.ber.BerLength;
-import org.openmuc.jasn1.ber.BerTag;
+import org.onosproject.xran.codecs.ber.BerByteArrayOutputStream;
+import org.onosproject.xran.codecs.ber.BerLength;
+import org.onosproject.xran.codecs.ber.BerTag;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,6 +23,7 @@ public class UEContextUpdate implements Serializable {
 
 	public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
 
+	@JsonIgnore
 	public byte[] code = null;
 	private CRNTI crnti = null;
 	private ECGI ecgi = null;
@@ -193,7 +195,7 @@ public class UEContextUpdate implements Serializable {
 			sb.append("\t");
 		}
 		if (crnti != null) {
-			sb.append("\"crnti\": ").append(crnti);
+			sb.append("crnti: ").append(crnti);
 		}
 		
 		sb.append(",\n");
@@ -201,7 +203,7 @@ public class UEContextUpdate implements Serializable {
 			sb.append("\t");
 		}
 		if (ecgi != null) {
-			sb.append("\"ecgi\": ");
+			sb.append("ecgi: ");
 			ecgi.appendAsString(sb, indentLevel + 1);
 		}
 		
@@ -210,7 +212,7 @@ public class UEContextUpdate implements Serializable {
 			sb.append("\t");
 		}
 		if (mMEUES1APID != null) {
-			sb.append("\"mMEUES1APID\": ").append(mMEUES1APID);
+			sb.append("mMEUES1APID: ").append(mMEUES1APID);
 		}
 		
 		sb.append(",\n");
@@ -218,7 +220,7 @@ public class UEContextUpdate implements Serializable {
 			sb.append("\t");
 		}
 		if (eNBUES1APID != null) {
-			sb.append("\"eNBUES1APID\": ").append(eNBUES1APID);
+			sb.append("eNBUES1APID: ").append(eNBUES1APID);
 		}
 		
 		sb.append("\n");

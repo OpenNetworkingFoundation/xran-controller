@@ -3,16 +3,17 @@
  */
 package org.onosproject.xran.codecs.pdu;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.onosproject.xran.codecs.api.CRNTI;
 import org.onosproject.xran.codecs.api.ECGI;
 import org.onosproject.xran.codecs.api.PCIARFCN;
 import org.onosproject.xran.codecs.api.XICICPA;
-import org.openmuc.jasn1.ber.BerByteArrayOutputStream;
-import org.openmuc.jasn1.ber.BerLength;
-import org.openmuc.jasn1.ber.BerTag;
-import org.openmuc.jasn1.ber.types.BerBitString;
-import org.openmuc.jasn1.ber.types.BerInteger;
-import org.openmuc.jasn1.ber.types.string.BerUTF8String;
+import org.onosproject.xran.codecs.ber.BerByteArrayOutputStream;
+import org.onosproject.xran.codecs.ber.BerLength;
+import org.onosproject.xran.codecs.ber.BerTag;
+import org.onosproject.xran.codecs.ber.types.BerBitString;
+import org.onosproject.xran.codecs.ber.types.BerInteger;
+import org.onosproject.xran.codecs.ber.types.string.BerUTF8String;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,6 +26,7 @@ public class XICICConfig implements Serializable {
 
 	public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
 
+	@JsonIgnore
 	public byte[] code = null;
 	private ECGI ecgi = null;
 	private PCIARFCN pciArfcn = null;
@@ -374,7 +376,7 @@ public class XICICConfig implements Serializable {
 			sb.append("\t");
 		}
 		if (ecgi != null) {
-			sb.append("\"ecgi: \"");
+			sb.append("ecgi: ");
 			ecgi.appendAsString(sb, indentLevel + 1);
 		}
 
@@ -383,7 +385,7 @@ public class XICICConfig implements Serializable {
 			for (int i = 0; i < indentLevel + 1; i++) {
 				sb.append("\t");
 			}
-			sb.append("\"pciArfcn: \"");
+			sb.append("pciArfcn: ");
 			pciArfcn.appendAsString(sb, indentLevel + 1);
 		}
 
@@ -392,7 +394,7 @@ public class XICICConfig implements Serializable {
 			sb.append("\t");
 		}
 		if (crnti != null) {
-			sb.append("\"crnti: \"").append(crnti);
+			sb.append("crnti: ").append(crnti);
 		}
 
 		if (pa != null) {
@@ -400,7 +402,7 @@ public class XICICConfig implements Serializable {
 			for (int i = 0; i < indentLevel + 1; i++) {
 				sb.append("\t");
 			}
-			sb.append("\"pa: \"").append(pa);
+			sb.append("pa: ").append(pa);
 		}
 
 		if (startPrbDl != null) {
@@ -408,7 +410,7 @@ public class XICICConfig implements Serializable {
 			for (int i = 0; i < indentLevel + 1; i++) {
 				sb.append("\t");
 			}
-			sb.append("\"startPrbDl: \"").append(startPrbDl);
+			sb.append("startPrbDl: ").append(startPrbDl);
 		}
 
 		if (endPrbDl != null) {
@@ -416,7 +418,7 @@ public class XICICConfig implements Serializable {
 			for (int i = 0; i < indentLevel + 1; i++) {
 				sb.append("\t");
 			}
-			sb.append("\"endPrbDl: \"").append(endPrbDl);
+			sb.append("endPrbDl: ").append(endPrbDl);
 		}
 
 		if (subframeBitmaskDl != null) {
@@ -424,7 +426,7 @@ public class XICICConfig implements Serializable {
 			for (int i = 0; i < indentLevel + 1; i++) {
 				sb.append("\t");
 			}
-			sb.append("\"subframeBitmaskDl: \"").append(subframeBitmaskDl);
+			sb.append("subframeBitmaskDl: ").append(subframeBitmaskDl);
 		}
 
 		if (p0UePusch != null) {
@@ -432,7 +434,7 @@ public class XICICConfig implements Serializable {
 			for (int i = 0; i < indentLevel + 1; i++) {
 				sb.append("\t");
 			}
-			sb.append("\"p0UePusch: \"").append(p0UePusch);
+			sb.append("p0UePusch: ").append(p0UePusch);
 		}
 
 		if (startPrbUl != null) {
@@ -440,7 +442,7 @@ public class XICICConfig implements Serializable {
 			for (int i = 0; i < indentLevel + 1; i++) {
 				sb.append("\t");
 			}
-			sb.append("\"startPrbUl: \"").append(startPrbUl);
+			sb.append("startPrbUl: ").append(startPrbUl);
 		}
 
 		if (endPrbUl != null) {
@@ -448,7 +450,7 @@ public class XICICConfig implements Serializable {
 			for (int i = 0; i < indentLevel + 1; i++) {
 				sb.append("\t");
 			}
-			sb.append("\"endPrbUl: \"").append(endPrbUl);
+			sb.append("endPrbUl: ").append(endPrbUl);
 		}
 
 		if (subframeBitmaskUl != null) {
@@ -456,7 +458,7 @@ public class XICICConfig implements Serializable {
 			for (int i = 0; i < indentLevel + 1; i++) {
 				sb.append("\t");
 			}
-			sb.append("\"subframeBitmaskUl: \"").append(subframeBitmaskUl);
+			sb.append("subframeBitmaskUl: ").append(subframeBitmaskUl);
 		}
 
 		sb.append("\n");

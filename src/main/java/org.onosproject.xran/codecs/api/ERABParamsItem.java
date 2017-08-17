@@ -13,9 +13,11 @@ import java.util.Iterator;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.io.Serializable;
-import org.openmuc.jasn1.ber.*;
-import org.openmuc.jasn1.ber.types.*;
-import org.openmuc.jasn1.ber.types.string.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.onosproject.xran.codecs.ber.*;
+import org.onosproject.xran.codecs.ber.types.*;
+import org.onosproject.xran.codecs.ber.types.string.*;
 
 
 public class ERABParamsItem implements Serializable {
@@ -24,6 +26,7 @@ public class ERABParamsItem implements Serializable {
 
 	public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
 
+	@JsonIgnore
 	public byte[] code = null;
 	private ERABID id = null;
 	private ERABDirection direction = null;
@@ -310,21 +313,21 @@ public class ERABParamsItem implements Serializable {
 			sb.append("\t");
 		}
 		if (id != null) {
-			sb.append("\"id\": ").append(id);
+			sb.append("id: ").append(id);
 		}
 		sb.append(",\n");
 		for (int i = 0; i < indentLevel + 1; i++) {
 			sb.append("\t");
 		}
 		if (direction != null) {
-			sb.append("\"direction\": ").append(direction);
+			sb.append("direction: ").append(direction);
 		}
 		sb.append(",\n");
 		for (int i = 0; i < indentLevel + 1; i++) {
 			sb.append("\t");
 		}
 		if (type != null) {
-			sb.append("\"type\": ").append(type);
+			sb.append("type: ").append(type);
 		}
 		
 		sb.append(",\n");
@@ -332,7 +335,7 @@ public class ERABParamsItem implements Serializable {
 			sb.append("\t");
 		}
 		if (qci != null) {
-			sb.append("\"qci\": ").append(qci);
+			sb.append("qci: ").append(qci);
 		}
 		
 		sb.append(",\n");
@@ -340,7 +343,7 @@ public class ERABParamsItem implements Serializable {
 			sb.append("\t");
 		}
 		if (arp != null) {
-			sb.append("\"arp\": ").append(arp);
+			sb.append("arp: ").append(arp);
 		}
 		
 		sb.append(",\n");
@@ -348,7 +351,7 @@ public class ERABParamsItem implements Serializable {
 			sb.append("\t");
 		}
 		if (gbrDl != null) {
-			sb.append("\"gbrDl\": ").append(gbrDl);
+			sb.append("gbrDl: ").append(gbrDl);
 		}
 		
 		sb.append(",\n");
@@ -356,7 +359,7 @@ public class ERABParamsItem implements Serializable {
 			sb.append("\t");
 		}
 		if (gbrUl != null) {
-			sb.append("\"gbrUl\": ").append(gbrUl);
+			sb.append("gbrUl: ").append(gbrUl);
 		}
 		
 		sb.append(",\n");
@@ -364,7 +367,7 @@ public class ERABParamsItem implements Serializable {
 			sb.append("\t");
 		}
 		if (mbrDl != null) {
-			sb.append("\"mbrDl\": ").append(mbrDl);
+			sb.append("mbrDl: ").append(mbrDl);
 		}
 		
 		sb.append(",\n");
@@ -372,7 +375,7 @@ public class ERABParamsItem implements Serializable {
 			sb.append("\t");
 		}
 		if (mbrUl != null) {
-			sb.append("\"mbrUl\": ").append(mbrUl);
+			sb.append("mbrUl: ").append(mbrUl);
 		}
 		
 		sb.append("\n");

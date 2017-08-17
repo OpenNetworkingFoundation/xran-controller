@@ -13,9 +13,11 @@ import java.util.Iterator;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.io.Serializable;
-import org.openmuc.jasn1.ber.*;
-import org.openmuc.jasn1.ber.types.*;
-import org.openmuc.jasn1.ber.types.string.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.onosproject.xran.codecs.ber.*;
+import org.onosproject.xran.codecs.ber.types.*;
+import org.onosproject.xran.codecs.ber.types.string.*;
 
 
 public class RXSigReport implements Serializable {
@@ -24,6 +26,7 @@ public class RXSigReport implements Serializable {
 
 	public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
 
+	@JsonIgnore
 	public byte[] code = null;
 	private PCIARFCN pciArfcn = null;
 	private RSRPRange rsrp = null;
@@ -172,7 +175,7 @@ public class RXSigReport implements Serializable {
 			sb.append("\t");
 		}
 		if (pciArfcn != null) {
-			sb.append("\"pciArfcn\": ");
+			sb.append("pciArfcn: ");
 			pciArfcn.appendAsString(sb, indentLevel + 1);
 		}
 		
@@ -181,14 +184,14 @@ public class RXSigReport implements Serializable {
 			sb.append("\t");
 		}
 		if (rsrp != null) {
-			sb.append("\"rsrp\": ").append(rsrp);
+			sb.append("rsrp: ").append(rsrp);
 		}
 		sb.append(",\n");
 		for (int i = 0; i < indentLevel + 1; i++) {
 			sb.append("\t");
 		}
 		if (rsrq != null) {
-			sb.append("\"rsrq\": ").append(rsrq);
+			sb.append("rsrq: ").append(rsrq);
 		}
 		
 		sb.append("\n");

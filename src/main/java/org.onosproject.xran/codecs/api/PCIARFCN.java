@@ -4,9 +4,10 @@
 
 package org.onosproject.xran.codecs.api;
 
-import org.openmuc.jasn1.ber.BerByteArrayOutputStream;
-import org.openmuc.jasn1.ber.BerLength;
-import org.openmuc.jasn1.ber.BerTag;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.onosproject.xran.codecs.ber.BerByteArrayOutputStream;
+import org.onosproject.xran.codecs.ber.BerLength;
+import org.onosproject.xran.codecs.ber.BerTag;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +20,7 @@ public class PCIARFCN implements Serializable {
 
 	public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
 
+	@JsonIgnore
 	public byte[] code = null;
 	private PhysCellId pci = null;
 	private ARFCNValue earfcnDl = null;
@@ -144,7 +146,7 @@ public class PCIARFCN implements Serializable {
 			sb.append("\t");
 		}
 		if (pci != null) {
-			sb.append("\"pci\": ").append(pci);
+			sb.append("pci: ").append(pci);
 		}
 		
 		sb.append(",\n");
@@ -152,7 +154,7 @@ public class PCIARFCN implements Serializable {
 			sb.append("\t");
 		}
 		if (earfcnDl != null) {
-			sb.append("\"earfcnDl\": ").append(earfcnDl);
+			sb.append("earfcnDl: ").append(earfcnDl);
 		}
 		
 		sb.append("\n");

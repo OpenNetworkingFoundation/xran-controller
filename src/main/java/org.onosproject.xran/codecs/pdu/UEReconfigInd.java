@@ -4,9 +4,10 @@
 
 package org.onosproject.xran.codecs.pdu;
 
-import org.openmuc.jasn1.ber.BerByteArrayOutputStream;
-import org.openmuc.jasn1.ber.BerLength;
-import org.openmuc.jasn1.ber.BerTag;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.onosproject.xran.codecs.ber.BerByteArrayOutputStream;
+import org.onosproject.xran.codecs.ber.BerLength;
+import org.onosproject.xran.codecs.ber.BerTag;
 import org.onosproject.xran.codecs.api.CRNTI;
 import org.onosproject.xran.codecs.api.ECGI;
 import org.onosproject.xran.codecs.api.ReconfIndReason;
@@ -21,6 +22,7 @@ public class UEReconfigInd implements Serializable {
 
 	public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
 
+	@JsonIgnore
 	public byte[] code = null;
 	private CRNTI crntiOld = null;
 	private ECGI ecgi = null;
@@ -192,7 +194,7 @@ public class UEReconfigInd implements Serializable {
 			sb.append("\t");
 		}
 		if (crntiOld != null) {
-			sb.append("\"crntiOld\": ").append(crntiOld);
+			sb.append("crntiOld: ").append(crntiOld);
 		}
 		
 		sb.append(",\n");
@@ -200,7 +202,7 @@ public class UEReconfigInd implements Serializable {
 			sb.append("\t");
 		}
 		if (ecgi != null) {
-			sb.append("\"ecgi\": ");
+			sb.append("ecgi: ");
 			ecgi.appendAsString(sb, indentLevel + 1);
 		}
 		
@@ -209,7 +211,7 @@ public class UEReconfigInd implements Serializable {
 			sb.append("\t");
 		}
 		if (crntiNew != null) {
-			sb.append("\"crntiNew\": ").append(crntiNew);
+			sb.append("crntiNew: ").append(crntiNew);
 		}
 		
 		sb.append(",\n");
@@ -217,7 +219,7 @@ public class UEReconfigInd implements Serializable {
 			sb.append("\t");
 		}
 		if (reconfigCause != null) {
-			sb.append("\"reconfigCause\": ").append(reconfigCause);
+			sb.append("reconfigCause: ").append(reconfigCause);
 		}
 		
 		sb.append("\n");

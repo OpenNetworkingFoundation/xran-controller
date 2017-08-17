@@ -182,15 +182,15 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
     }
 
     @Override
-    public List<RnibCell> getCellNodes() {
-        List<RnibCell> list = Lists.newArrayList();
+    public List<Object> getCellNodes() {
+        List<Object> list = Lists.newArrayList();
         list.addAll(cellMap.values());
         return list;
     }
 
     @Override
-    public List<RnibUe> getUeNodes() {
-        List<RnibUe> list = Lists.newArrayList();
+    public List<Object> getUeNodes() {
+        List<Object> list = Lists.newArrayList();
         list.addAll(ueMap.values());
         return list;
     }

@@ -13,9 +13,12 @@ import java.util.Iterator;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.io.Serializable;
-import org.openmuc.jasn1.ber.*;
-import org.openmuc.jasn1.ber.types.*;
-import org.openmuc.jasn1.ber.types.string.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonValue;
+import org.onosproject.xran.codecs.ber.*;
+import org.onosproject.xran.codecs.ber.types.*;
+import org.onosproject.xran.codecs.ber.types.string.*;
 
 
 public class ERABParams implements Serializable {
@@ -23,6 +26,7 @@ public class ERABParams implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
+	@JsonIgnore
 	public byte[] code = null;
 	private List<ERABParamsItem> seqOf = null;
 
@@ -34,6 +38,7 @@ public class ERABParams implements Serializable {
 		this.code = code;
 	}
 
+	@JsonValue
 	public List<ERABParamsItem> getERABParamsItem() {
 		if (seqOf == null) {
 			seqOf = new ArrayList<ERABParamsItem>();

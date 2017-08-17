@@ -4,10 +4,11 @@
 
 package org.onosproject.xran.codecs.pdu;
 
-import org.openmuc.jasn1.ber.BerByteArrayOutputStream;
-import org.openmuc.jasn1.ber.BerLength;
-import org.openmuc.jasn1.ber.BerTag;
-import org.openmuc.jasn1.ber.types.BerInteger;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.onosproject.xran.codecs.ber.BerByteArrayOutputStream;
+import org.onosproject.xran.codecs.ber.BerLength;
+import org.onosproject.xran.codecs.ber.BerTag;
+import org.onosproject.xran.codecs.ber.types.BerInteger;
 import org.onosproject.xran.codecs.api.CRNTI;
 import org.onosproject.xran.codecs.api.ECGI;
 import org.onosproject.xran.codecs.api.ERABResponse;
@@ -22,6 +23,7 @@ public class BearerAdmissionStatus implements Serializable {
 
 	public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
 
+	@JsonIgnore
 	public byte[] code = null;
 	private CRNTI crnti = null;
 	private ECGI ecgi = null;
@@ -193,7 +195,7 @@ public class BearerAdmissionStatus implements Serializable {
 			sb.append("\t");
 		}
 		if (crnti != null) {
-			sb.append("\"crnti\": ").append(crnti);
+			sb.append("crnti: ").append(crnti);
 		}
 		
 		sb.append(",\n");
@@ -201,7 +203,7 @@ public class BearerAdmissionStatus implements Serializable {
 			sb.append("\t");
 		}
 		if (ecgi != null) {
-			sb.append("\"ecgi\": ");
+			sb.append("ecgi: ");
 			ecgi.appendAsString(sb, indentLevel + 1);
 		}
 		
@@ -210,7 +212,7 @@ public class BearerAdmissionStatus implements Serializable {
 			sb.append("\t");
 		}
 		if (numErabs != null) {
-			sb.append("\"numErabs\": ").append(numErabs);
+			sb.append("numErabs: ").append(numErabs);
 		}
 		
 		sb.append(",\n");
@@ -218,7 +220,7 @@ public class BearerAdmissionStatus implements Serializable {
 			sb.append("\t");
 		}
 		if (erabResponse != null) {
-			sb.append("\"erabResponse\": ");
+			sb.append("erabResponse: ");
 			erabResponse.appendAsString(sb, indentLevel + 1);
 		}
 		

@@ -15,6 +15,7 @@
  */
 package org.onosproject.xran.rest;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -23,6 +24,7 @@ import org.onosproject.xran.XranStore;
 import org.onosproject.xran.annotations.Patch;
 import org.onosproject.xran.controller.XranController;
 import org.onosproject.xran.entities.RnibCell;
+import org.onosproject.xran.rest.ResponseHelper.statusCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +35,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
@@ -46,6 +47,9 @@ public class CellWebResource extends AbstractWebResource {
 
     private static final Logger log =
             LoggerFactory.getLogger(CellWebResource.class);
+
+    public CellWebResource() {
+    }
 
     /**
      * test.
@@ -61,20 +65,34 @@ public class CellWebResource extends AbstractWebResource {
 
         if (cell != null) {
             try {
-                ObjectNode rootNode = mapper().createObjectNode();
+                JsonNode jsonNode = mapper().valueToTree(cell);
 
-                JsonNode jsonNode = mapper().readTree(cell.toString());
-                rootNode.put("cell", jsonNode);
-            } catch (IOException e) {
-                log.error(ExceptionUtils.getFullStackTrace(e));
+                return ResponseHelper.getResponse(
+                        mapper(),
+                        statusCode.OK,
+                        jsonNode
+                );
+
+            } catch (Exception e) {
+                String fullStackTrace = ExceptionUtils.getFullStackTrace(e);
+                log.error(fullStackTrace);
                 e.printStackTrace();
-                return Response.serverError()
-                        .entity(ExceptionUtils.getFullStackTrace(e))
-                        .build();
+
+                return ResponseHelper.getResponse(
+                        mapper(),
+                        statusCode.INTERNAL_SERVER_ERROR,
+                        "Exception",
+                        fullStackTrace
+                );
             }
         }
 
-        return Response.serverError().entity("cell not found").build();
+        return ResponseHelper.getResponse(
+                mapper(),
+                statusCode.NOT_FOUND,
+                "Not Found",
+                "Cell with " + eciHex + " was not found"
+        );
     }
 
     /**
@@ -87,6 +105,7 @@ public class CellWebResource extends AbstractWebResource {
     @Patch
     @Path("{cellid}")
     @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response patchCell(@PathParam("cellid") String eciHex, InputStream stream) {
         RnibCell cell = get(XranStore.class).getCell(eciHex);
 
@@ -104,27 +123,41 @@ public class CellWebResource extends AbstractWebResource {
                     String poll = queue[0].poll(5, TimeUnit.SECONDS);
 
                     if (poll != null) {
-                        return Response.ok()
-                                .entity(poll)
-                                .build();
+                        return ResponseHelper.getResponse(
+                                mapper(),
+                                statusCode.OK,
+                                "Handoff Response",
+                                poll
+                        );
                     } else {
-                        return Response.serverError()
-                                .entity("did not receive response in time")
-                                .build();
+                        return ResponseHelper.getResponse(
+                                mapper(),
+                                statusCode.REQUEST_TIMEOUT,
+                                "Handoff Timeout",
+                                "eNodeB did not send a HOComplete/HOFailure on time"
+                        );
                     }
                 }
             } catch (Exception e) {
-                log.error(ExceptionUtils.getFullStackTrace(e));
+                String fullStackTrace = ExceptionUtils.getFullStackTrace(e);
+                log.error(fullStackTrace);
                 e.printStackTrace();
-                return Response.serverError()
-                        .entity(ExceptionUtils.getFullStackTrace(e))
-                        .build();
+
+                return ResponseHelper.getResponse(
+                        mapper(),
+                        statusCode.INTERNAL_SERVER_ERROR,
+                        "Exception",
+                        fullStackTrace
+                );
             }
         }
 
-        return Response.serverError()
-                .entity("cell not found")
-                .build();
+        return ResponseHelper.getResponse(
+                mapper(),
+                statusCode.NOT_FOUND,
+                "Not Found",
+                "Cell " + eciHex + " was not found"
+        );
     }
 
 }

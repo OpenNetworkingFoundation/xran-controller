@@ -16,13 +16,24 @@
 
 package org.onosproject.xran.identifiers;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.onosproject.xran.codecs.api.ECGI;
 import org.onosproject.xran.codecs.api.MMEUES1APID;
 import org.onosproject.xran.entities.RnibCell;
 import org.onosproject.xran.entities.RnibUe;
 
+@JsonPropertyOrder({
+        "ECGI",
+        "MMEUES1APID"
+})
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class LinkId {
+    @JsonIgnore
     private RnibCell cell;
+    @JsonIgnore
     private RnibUe ue;
 
     private LinkId(RnibCell cell, RnibUe ue) {
@@ -43,34 +54,42 @@ public class LinkId {
         return new LinkId(cell, ue);
     }
 
+    @JsonProperty("ECGI")
     public ECGI getEcgi() {
         return cell.getEcgi();
     }
 
+    @JsonProperty("ECGI")
     public void setEcgi(ECGI sourceId) {
         cell.setEcgi(sourceId);
     }
 
+    @JsonProperty("MMEUES1APID")
     public MMEUES1APID getMmeues1apid() {
         return ue.getMmeS1apId();
     }
 
+    @JsonProperty("MMEUES1APID")
     public void setMmeues1apid(MMEUES1APID destinationId) {
         ue.setMmeS1apId(destinationId);
     }
 
+    @JsonIgnore
     public RnibCell getCell() {
         return cell;
     }
 
+    @JsonIgnore
     public void setCell(RnibCell cell) {
         this.cell = cell;
     }
 
+    @JsonIgnore
     public RnibUe getUe() {
         return ue;
     }
 
+    @JsonIgnore
     public void setUe(RnibUe ue) {
         this.ue = ue;
     }

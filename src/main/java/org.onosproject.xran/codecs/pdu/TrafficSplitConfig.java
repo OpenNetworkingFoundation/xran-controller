@@ -3,12 +3,14 @@
  */
 package org.onosproject.xran.codecs.pdu;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonValue;
 import org.onosproject.xran.codecs.api.CRNTI;
 import org.onosproject.xran.codecs.api.ECGI;
 import org.onosproject.xran.codecs.api.TrafficSplitPercentage;
-import org.openmuc.jasn1.ber.BerByteArrayOutputStream;
-import org.openmuc.jasn1.ber.BerLength;
-import org.openmuc.jasn1.ber.BerTag;
+import org.onosproject.xran.codecs.ber.BerByteArrayOutputStream;
+import org.onosproject.xran.codecs.ber.BerLength;
+import org.onosproject.xran.codecs.ber.BerTag;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,6 +28,7 @@ public class TrafficSplitConfig implements Serializable {
 		private static final long serialVersionUID = 1L;
 
 		public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
+		@JsonIgnore
 		public byte[] code = null;
 		private List<TrafficSplitPercentage> seqOf = null;
 
@@ -37,6 +40,7 @@ public class TrafficSplitConfig implements Serializable {
 			this.code = code;
 		}
 
+		@JsonValue
 		public List<TrafficSplitPercentage> getTrafficSplitPercentage() {
 			if (seqOf == null) {
 				seqOf = new ArrayList<TrafficSplitPercentage>();
@@ -149,7 +153,7 @@ public class TrafficSplitConfig implements Serializable {
 
 	public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
 
-	public byte[] code = null;
+	@JsonIgnore public byte[] code = null;
 	private CRNTI crnti = null;
 	private ECGI ecgi = null;
 	private TrafficSplitPercent trafficSplitPercent = null;
@@ -297,7 +301,7 @@ public class TrafficSplitConfig implements Serializable {
 			sb.append("\t");
 		}
 		if (crnti != null) {
-			sb.append("\"crnti\": ").append(crnti);
+			sb.append("crnti: ").append(crnti);
 		}
 		
 		sb.append(",\n");
@@ -305,7 +309,7 @@ public class TrafficSplitConfig implements Serializable {
 			sb.append("\t");
 		}
 		if (ecgi != null) {
-			sb.append("\"ecgi\": ");
+			sb.append("ecgi: ");
 			ecgi.appendAsString(sb, indentLevel + 1);
 		}
 		
@@ -314,7 +318,7 @@ public class TrafficSplitConfig implements Serializable {
 			sb.append("\t");
 		}
 		if (trafficSplitPercent != null) {
-			sb.append("\"trafficSplitPercent\": ");
+			sb.append("trafficSplitPercent: ");
 			trafficSplitPercent.appendAsString(sb, indentLevel + 1);
 		}
 		

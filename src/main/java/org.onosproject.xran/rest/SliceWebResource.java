@@ -15,8 +15,8 @@
  */
 package org.onosproject.xran.rest;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.onosproject.rest.AbstractWebResource;
 import org.onosproject.xran.XranStore;
@@ -44,6 +44,10 @@ public class SliceWebResource extends AbstractWebResource {
     private static final Logger log =
             LoggerFactory.getLogger(SliceWebResource.class);
 
+    public SliceWebResource() {
+
+    }
+
     /**
      * test.
      *
@@ -58,20 +62,33 @@ public class SliceWebResource extends AbstractWebResource {
 
         if (slice != null) {
             try {
-                ObjectNode rootNode = mapper().createObjectNode();
-                JsonNode jsonNode = mapper().readTree(slice.toString());
-                rootNode.put("slice", jsonNode);
-                return ok(rootNode.toString()).build();
-            } catch (IOException e) {
-                log.error(ExceptionUtils.getFullStackTrace(e));
+                JsonNode jsonNode = mapper().valueToTree(slice);
+
+                return ResponseHelper.getResponse(
+                        mapper(),
+                        ResponseHelper.statusCode.OK,
+                        jsonNode
+                );
+            } catch (Exception e) {
+                String fullStackTrace = ExceptionUtils.getFullStackTrace(e);
+                log.error(fullStackTrace);
                 e.printStackTrace();
-                return Response.serverError()
-                        .entity(ExceptionUtils.getFullStackTrace(e))
-                        .build();
+
+                return ResponseHelper.getResponse(
+                        mapper(),
+                        ResponseHelper.statusCode.INTERNAL_SERVER_ERROR,
+                        "Exception",
+                        fullStackTrace
+                );
             }
         }
 
-        return Response.serverError().entity("slice not found").build();
+        return ResponseHelper.getResponse(
+                mapper(),
+                ResponseHelper.statusCode.NOT_FOUND,
+                "Not Found",
+                "Slice " + sliceid + " not found"
+        );
     }
 
     /**
@@ -82,19 +99,30 @@ public class SliceWebResource extends AbstractWebResource {
      */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response postSlice(InputStream stream) {
         try {
-            boolean b;
-            ObjectNode jsonTree = (ObjectNode) mapper().readTree(stream);
+//            ObjectNode jsonTree = (ObjectNode) mapper().readTree(stream);
+//            get(XranStore.class).createSlice(jsonTree);
 
-            b = get(XranStore.class).createSlice(jsonTree);
-            return ok(b).build();
+            // FIXME: change when implemented
+            return ResponseHelper.getResponse(
+                    mapper(),
+                    ResponseHelper.statusCode.NOT_IMPLEMENTED,
+                    "Not Implemented",
+                    "POST Slice not implemented"
+            );
         } catch (Exception e) {
-            log.error(ExceptionUtils.getFullStackTrace(e));
+            String fullStackTrace = ExceptionUtils.getFullStackTrace(e);
+            log.error(fullStackTrace);
             e.printStackTrace();
-            return Response.serverError()
-                    .entity(ExceptionUtils.getFullStackTrace(e))
-                    .build();
+
+            return ResponseHelper.getResponse(
+                    mapper(),
+                    ResponseHelper.statusCode.INTERNAL_SERVER_ERROR,
+                    "Exception",
+                    fullStackTrace
+            );
         }
     }
 

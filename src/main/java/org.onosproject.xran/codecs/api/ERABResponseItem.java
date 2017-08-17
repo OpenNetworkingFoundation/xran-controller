@@ -13,9 +13,11 @@ import java.util.Iterator;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.io.Serializable;
-import org.openmuc.jasn1.ber.*;
-import org.openmuc.jasn1.ber.types.*;
-import org.openmuc.jasn1.ber.types.string.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.onosproject.xran.codecs.ber.*;
+import org.onosproject.xran.codecs.ber.types.*;
+import org.onosproject.xran.codecs.ber.types.string.*;
 
 
 public class ERABResponseItem implements Serializable {
@@ -24,6 +26,7 @@ public class ERABResponseItem implements Serializable {
 
 	public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
 
+	@JsonIgnore
 	public byte[] code = null;
 	private ERABID id = null;
 	private ERABDecision decision = null;
@@ -149,7 +152,7 @@ public class ERABResponseItem implements Serializable {
 			sb.append("\t");
 		}
 		if (id != null) {
-			sb.append("\"id\": ").append(id);
+			sb.append("id: ").append(id);
 		}
 		
 		sb.append(",\n");
@@ -157,7 +160,7 @@ public class ERABResponseItem implements Serializable {
 			sb.append("\t");
 		}
 		if (decision != null) {
-			sb.append("\"decision\": ").append(decision);
+			sb.append("decision: ").append(decision);
 		}
 		
 		sb.append("\n");

@@ -4,12 +4,13 @@
 
 package org.onosproject.xran.codecs.api;
 
-import org.openmuc.jasn1.ber.BerByteArrayOutputStream;
-import org.openmuc.jasn1.ber.BerLength;
-import org.openmuc.jasn1.ber.BerTag;
-import org.openmuc.jasn1.ber.types.BerBoolean;
-import org.openmuc.jasn1.ber.types.BerEnum;
-import org.openmuc.jasn1.ber.types.BerInteger;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.onosproject.xran.codecs.ber.BerByteArrayOutputStream;
+import org.onosproject.xran.codecs.ber.BerLength;
+import org.onosproject.xran.codecs.ber.BerTag;
+import org.onosproject.xran.codecs.ber.types.BerBoolean;
+import org.onosproject.xran.codecs.ber.types.BerEnum;
+import org.onosproject.xran.codecs.ber.types.BerInteger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,6 +23,7 @@ public class PropScell implements Serializable {
 
 	public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
 
+	@JsonIgnore
 	public byte[] code = null;
 	private PCIARFCN pciArfcn = null;
 	private BerBoolean crossCarrierSchedEnable = null;

@@ -4,12 +4,13 @@
 
 package org.onosproject.xran.codecs.pdu;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.onosproject.xran.codecs.api.*;
-import org.openmuc.jasn1.ber.BerByteArrayOutputStream;
-import org.openmuc.jasn1.ber.BerLength;
-import org.openmuc.jasn1.ber.BerTag;
-import org.openmuc.jasn1.ber.types.BerInteger;
-import org.openmuc.jasn1.ber.types.string.BerUTF8String;
+import org.onosproject.xran.codecs.ber.BerByteArrayOutputStream;
+import org.onosproject.xran.codecs.ber.BerLength;
+import org.onosproject.xran.codecs.ber.BerTag;
+import org.onosproject.xran.codecs.ber.types.BerInteger;
+import org.onosproject.xran.codecs.ber.types.string.BerUTF8String;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,6 +23,7 @@ public class BearerAdmissionResponse implements Serializable {
 
 	public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
 
+	@JsonIgnore
 	public byte[] code = null;
 	private CRNTI crnti = null;
 	private ECGI ecgi = null;
@@ -193,7 +195,7 @@ public class BearerAdmissionResponse implements Serializable {
 			sb.append("\t");
 		}
 		if (crnti != null) {
-			sb.append("\"crnti\": ").append(crnti);
+			sb.append("crnti: ").append(crnti);
 		}
 		
 		sb.append(",\n");
@@ -201,7 +203,7 @@ public class BearerAdmissionResponse implements Serializable {
 			sb.append("\t");
 		}
 		if (ecgi != null) {
-			sb.append("\"ecgi\": ");
+			sb.append("ecgi: ");
 			ecgi.appendAsString(sb, indentLevel + 1);
 		}
 		
@@ -210,7 +212,7 @@ public class BearerAdmissionResponse implements Serializable {
 			sb.append("\t");
 		}
 		if (numErabList != null) {
-			sb.append("\"numErabList\": ").append(numErabList);
+			sb.append("numErabList: ").append(numErabList);
 		}
 		
 		sb.append(",\n");
@@ -218,7 +220,7 @@ public class BearerAdmissionResponse implements Serializable {
 			sb.append("\t");
 		}
 		if (erabResponse != null) {
-			sb.append("\"erabResponse\": ");
+			sb.append("erabResponse: ");
 			erabResponse.appendAsString(sb, indentLevel + 1);
 		}
 		

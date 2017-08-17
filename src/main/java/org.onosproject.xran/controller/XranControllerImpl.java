@@ -44,7 +44,7 @@ import org.onosproject.xran.providers.XranHostListener;
 import org.onosproject.xran.wrapper.CellMap;
 import org.onosproject.xran.wrapper.LinkMap;
 import org.onosproject.xran.wrapper.UeMap;
-import org.openmuc.jasn1.ber.types.BerInteger;
+import org.onosproject.xran.codecs.ber.types.BerInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -412,7 +412,7 @@ public class XranControllerImpl implements XranController {
                                                         ChannelHandlerContext ctx = cellMap.getCtx(primary.getEcgi());
                                                         RXSigMeasConfig.MeasCells measCells = new RXSigMeasConfig.MeasCells();
                                                         xranStore.getCellNodes().forEach(cell -> {
-                                                            CellConfigReport cellReport = cell.getConf();
+                                                            CellConfigReport cellReport = ((RnibCell) cell).getConf();
                                                             if (cellReport != null) {
                                                                 PCIARFCN pciarfcn = new PCIARFCN();
                                                                 pciarfcn.setPci(cellReport.getPci());
@@ -821,8 +821,8 @@ public class XranControllerImpl implements XranController {
                         if (cell != null) {
                             RnibLink link = linkMap.get(cell.getEcgi(), schedMeasReportPerUE.getCrnti());
                             if (link != null) {
-                                link.getQuality().setMcs_dl(servCell.getMcsDl());
-                                link.getQuality().setMcs_ul(servCell.getMcsUl());
+                                link.getQuality().setMcsDl(servCell.getMcsDl());
+                                link.getQuality().setMcsUl(servCell.getMcsUl());
 
                                 link.getResourceUsage().setDl(servCell.getPrbUsage().getPrbUsageDl());
                                 link.getResourceUsage().setUl(servCell.getPrbUsage().getPrbUsageUl());
@@ -946,7 +946,7 @@ public class XranControllerImpl implements XranController {
                     break;
                 }
                 default: {
-                    log.warn("Wrong API ID");
+                    log.warn("Wrong API ID: {}", recv_pdu);
                     break;
                 }
             }

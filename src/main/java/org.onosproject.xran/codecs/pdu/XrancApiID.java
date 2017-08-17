@@ -4,7 +4,7 @@
 
 package org.onosproject.xran.codecs.pdu;
 
-import org.openmuc.jasn1.ber.types.BerEnum;
+import org.onosproject.xran.codecs.ber.types.BerEnum;
 
 import java.math.BigInteger;
 

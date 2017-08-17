@@ -16,38 +16,58 @@
 
 package org.onosproject.xran.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Lists;
 import org.onosproject.xran.codecs.api.*;
 import org.onosproject.xran.codecs.pdu.PDCPMeasReportPerUe;
 import org.onosproject.xran.codecs.pdu.RRMConfig;
 import org.onosproject.xran.identifiers.LinkId;
-import org.openmuc.jasn1.ber.types.BerBitString;
-import org.openmuc.jasn1.ber.types.BerInteger;
+import org.onosproject.xran.codecs.ber.types.BerInteger;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Timer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Created by dimitris on 7/22/17.
  */
+@JsonPropertyOrder({
+        "Link-ID",
+        "Type",
+        "RRMConfiguration",
+        "TrafficPercent",
+        "BearerParameters",
+        "Quality",
+        "PDCP-Throughput",
+        "PDCP-Packet-Delay",
+        "Resource-Usage"
+})
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RnibLink {
+    @JsonProperty("Link-ID")
     private LinkId linkId;
-    //    private String type;
+    @JsonProperty("RRMConfiguration")
     private RRMConfig rrmParameters;
-
+    @JsonProperty("TrafficPercent")
     private TrafficSplitPercentage trafficPercent;
+    @JsonProperty("BearerParameters")
     private ERABParams bearerParameters;
-
+    @JsonProperty("Quality")
     private LinkQuality quality;
+    @JsonProperty("PDCP-Throughput")
     private PDCPThroughput pdcpThroughput;
+    @JsonProperty("PDCP-Packet-Delay")
     private PDCPPacketDelay pdcpPackDelay;
+    @JsonProperty("Resource-Usage")
     private ResourceUsage resourceUsage;
+    @JsonProperty("Type")
     private Type type;
+    @JsonIgnore
     private Timer timer;
 
     public RnibLink(RnibCell cell, RnibUe ue) {
@@ -83,10 +103,12 @@ public class RnibLink {
         this.timer = timer;
     }
 
+    @JsonProperty("Link-ID")
     public LinkId getLinkId() {
         return linkId;
     }
 
+    @JsonProperty("Link-ID")
     public void setLinkId(LinkId linkId) {
         this.linkId = linkId;
     }
@@ -96,42 +118,52 @@ public class RnibLink {
         trafficPercent.setEcgi(cell.getEcgi());
     }
 
+    @JsonProperty("Type")
     public Type getType() {
         return type;
     }
 
+    @JsonProperty("Type")
     public void setType(Type type) {
         this.type = type;
     }
 
+    @JsonProperty("TrafficPercent")
     public TrafficSplitPercentage getTrafficPercent() {
         return trafficPercent;
     }
 
+    @JsonProperty("TrafficPercent")
     public void setTrafficPercent(TrafficSplitPercentage trafficPercent) {
         this.trafficPercent = trafficPercent;
     }
 
+    @JsonProperty("BearerParameters")
     public ERABParams getBearerParameters() {
         return bearerParameters;
     }
 
+    @JsonProperty("BearerParameters")
     public void setBearerParameters(ERABParams bearerParameters) {
         this.bearerParameters = bearerParameters;
     }
 
+    @JsonProperty("Quality")
     public LinkQuality getQuality() {
         return quality;
     }
 
+    @JsonProperty("Quality")
     public void setQuality(LinkQuality quality) {
         this.quality = quality;
     }
 
+    @JsonProperty("RRMConfiguration")
     public RRMConfig getRrmParameters() {
         return rrmParameters;
     }
 
+    @JsonProperty("RRMConfiguration")
     public void setRrmParameters(RRMConfig rrmParameters) {
         this.rrmParameters = rrmParameters;
     }
@@ -151,7 +183,7 @@ public class RnibLink {
         }
 
         {
-            JsonNode end_prb_dl = rrmConfigNode.get("end_prb_dl");
+            JsonNode end_prb_dl = rrmConfigNode.path("end_prb_dl");
             if (!end_prb_dl.isMissingNode()) {
                 RRMConfig.EndPrbDl endPrbDl = new RRMConfig.EndPrbDl();
 
@@ -164,7 +196,7 @@ public class RnibLink {
         }
 
         {
-            JsonNode start_prb_ul = rrmConfigNode.get("start_prb_ul");
+            JsonNode start_prb_ul = rrmConfigNode.path("start_prb_ul");
             if (!start_prb_ul.isMissingNode()) {
                 RRMConfig.StartPrbUl startPrbUl = new RRMConfig.StartPrbUl();
 
@@ -177,7 +209,7 @@ public class RnibLink {
         }
 
         {
-            JsonNode end_prb_ul = rrmConfigNode.get("end_prb_ul");
+            JsonNode end_prb_ul = rrmConfigNode.path("end_prb_ul");
             if (!end_prb_ul.isMissingNode()) {
                 RRMConfig.EndPrbUl endPrbUl = new RRMConfig.EndPrbUl();
 
@@ -190,45 +222,50 @@ public class RnibLink {
         }
     }
 
+    @JsonProperty("PDCP-Throughput")
     public PDCPThroughput getPdcpThroughput() {
         return pdcpThroughput;
     }
 
+    @JsonProperty("PDCP-Throughput")
     public void setPdcpThroughput(PDCPThroughput pdcpThroughput) {
         this.pdcpThroughput = pdcpThroughput;
     }
 
+    @JsonProperty("PDCP-Packet-Delay")
     public PDCPPacketDelay getPdcpPackDelay() {
         return pdcpPackDelay;
     }
 
+    @JsonProperty("PDCP-Packet-Delay")
     public void setPdcpPackDelay(PDCPPacketDelay pdcpPackDelay) {
         this.pdcpPackDelay = pdcpPackDelay;
     }
 
+    @JsonProperty("Resource-Usage")
     public ResourceUsage getResourceUsage() {
         return resourceUsage;
     }
 
+    @JsonProperty("Resource-Usage")
     public void setResourceUsage(ResourceUsage resourceUsage) {
         this.resourceUsage = resourceUsage;
     }
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{\n")
-                .append(linkId != null ? "\"link-id\":" + linkId : "")
-                .append(type != null ? ",\n\"type\":" + type : "")
-                .append(rrmParameters != null ? ",\n\"rrm-params\":" + rrmParameters : "")
-                .append(trafficPercent != null ? ",\n\"traffic-percent\":" + trafficPercent : "")
-                .append(bearerParameters != null ? ",\n\"bearer-params\":" + bearerParameters : "")
-                .append(quality != null ? ",\n\"quality\":" + quality : "")
-                .append(pdcpThroughput != null ? ",\n\"pdcp-throughput\":" + pdcpThroughput : "")
-                .append(pdcpPackDelay != null ? ",\n\"pdcp-packet-delay\":" + pdcpPackDelay : "")
-                .append(resourceUsage != null ? ",\n\"resource-usage\":" + resourceUsage : "")
-                .append("\n}\n");
-        return sb.toString();
+        return "RnibLink{" +
+                "linkId=" + linkId +
+                ", rrmParameters=" + rrmParameters +
+                ", trafficPercent=" + trafficPercent +
+                ", bearerParameters=" + bearerParameters +
+                ", quality=" + quality +
+                ", pdcpThroughput=" + pdcpThroughput +
+                ", pdcpPackDelay=" + pdcpPackDelay +
+                ", resourceUsage=" + resourceUsage +
+                ", type=" + type +
+                ", timer=" + timer +
+                '}';
     }
 
     @Override
@@ -288,6 +325,11 @@ public class RnibLink {
         }
     }
 
+    @JsonPropertyOrder({
+            "dl",
+            "ul"
+    })
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public class PDCPThroughput {
         private PDCPMeasReportPerUe.ThroughputDl dl;
         private PDCPMeasReportPerUe.ThroughputUl ul;
@@ -310,15 +352,18 @@ public class RnibLink {
 
         @Override
         public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("{\n")
-                    .append(dl != null ? "\"dl\":" + dl : "")
-                    .append(ul != null ? ",\n\"ul\":" + ul : "")
-                    .append("\n}\n");
-            return sb.toString();
+            return "PDCPThroughput{" +
+                    "dl=" + dl +
+                    ", ul=" + ul +
+                    '}';
         }
     }
 
+    @JsonPropertyOrder({
+            "dl",
+            "ul"
+    })
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public class PDCPPacketDelay {
         PDCPMeasReportPerUe.PktDelayDl dl;
         PDCPMeasReportPerUe.PktDelayUl ul;
@@ -341,15 +386,18 @@ public class RnibLink {
 
         @Override
         public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("{\n")
-                    .append(dl != null ? "\"dl\":" + dl : "")
-                    .append(ul != null ? ",\n\"ul\":" + ul : "")
-                    .append("\n}\n");
-            return sb.toString();
+            return "PDCPPacketDelay{" +
+                    "dl=" + dl +
+                    ", ul=" + ul +
+                    '}';
         }
     }
 
+    @JsonPropertyOrder({
+            "dl",
+            "ul"
+    })
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public class ResourceUsage {
         PRBUsage.PrbUsageDl dl;
         PRBUsage.PrbUsageUl ul;
@@ -372,23 +420,31 @@ public class RnibLink {
 
         @Override
         public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("{\n")
-                    .append(dl != null ? "\"dl\":" + dl : "")
-                    .append(ul != null ? ",\n\"ul\":" + ul : "")
-                    .append("\n}\n");
-            return sb.toString();
+            return "ResourceUsage{" +
+                    "dl=" + dl +
+                    ", ul=" + ul +
+                    '}';
         }
     }
 
+    @JsonPropertyOrder({
+            "rsrp",
+            "rsrq",
+            "cqiHist",
+            "cqiMode",
+            "cqiMean",
+            "mcsDl",
+            "mcsUl"
+    })
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public class LinkQuality {
         double rsrp;
         double rsrq;
         RadioRepPerServCell.CqiHist cqiHist;
         double cqiMode;
         double cqiMean;
-        SchedMeasRepPerServCell.McsDl mcs_dl;
-        SchedMeasRepPerServCell.McsUl mcs_ul;
+        SchedMeasRepPerServCell.McsDl mcsDl;
+        SchedMeasRepPerServCell.McsUl mcsUl;
 
         public double getRsrp() {
             return rsrp;
@@ -430,34 +486,33 @@ public class RnibLink {
             this.cqiMean = cqiMean;
         }
 
-        public SchedMeasRepPerServCell.McsDl getMcs_dl() {
-            return mcs_dl;
+        public SchedMeasRepPerServCell.McsDl getMcsDl() {
+            return mcsDl;
         }
 
-        public void setMcs_dl(SchedMeasRepPerServCell.McsDl mcs_dl) {
-            this.mcs_dl = mcs_dl;
+        public void setMcsDl(SchedMeasRepPerServCell.McsDl mcsDl) {
+            this.mcsDl = mcsDl;
         }
 
-        public SchedMeasRepPerServCell.McsUl getMcs_ul() {
-            return mcs_ul;
+        public SchedMeasRepPerServCell.McsUl getMcsUl() {
+            return mcsUl;
         }
 
-        public void setMcs_ul(SchedMeasRepPerServCell.McsUl mcs_ul) {
-            this.mcs_ul = mcs_ul;
+        public void setMcsUl(SchedMeasRepPerServCell.McsUl mcsUl) {
+            this.mcsUl = mcsUl;
         }
 
         @Override
         public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("{\n")
-                    .append("\"rsrp\":" + rsrp)
-                    .append(",\n\"rsrq\":" + rsrq)
-                    .append(",\n\"cqiMode\":" + cqiMode)
-                    .append(",\n\"cqiMean\":" + cqiMean)
-                    .append(mcs_dl != null ? ",\n\"mcs-dl\":" + mcs_dl : "")
-                    .append(mcs_ul != null ? ",\n\"mcs-ul\":" + mcs_ul : "")
-                    .append("\n}\n");
-            return sb.toString();
+            return "LinkQuality{" +
+                    "rsrp=" + rsrp +
+                    ", rsrq=" + rsrq +
+                    ", cqiHist=" + cqiHist +
+                    ", cqiMode=" + cqiMode +
+                    ", cqiMean=" + cqiMean +
+                    ", mcsDl=" + mcsDl +
+                    ", mcsUl=" + mcsUl +
+                    '}';
         }
     }
 }

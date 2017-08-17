@@ -4,10 +4,12 @@
 
 package org.onosproject.xran.codecs.api;
 
-import org.openmuc.jasn1.ber.BerByteArrayOutputStream;
-import org.openmuc.jasn1.ber.BerLength;
-import org.openmuc.jasn1.ber.BerTag;
-import org.openmuc.jasn1.ber.types.BerInteger;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonValue;
+import org.onosproject.xran.codecs.ber.BerByteArrayOutputStream;
+import org.onosproject.xran.codecs.ber.BerLength;
+import org.onosproject.xran.codecs.ber.BerTag;
+import org.onosproject.xran.codecs.ber.types.BerInteger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,6 +28,7 @@ public class RadioRepPerServCell implements Serializable {
 		private static final long serialVersionUID = 1L;
 
 		public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
+		@JsonIgnore
 		public byte[] code = null;
 		private List<BerInteger> seqOf = null;
 
@@ -37,7 +40,7 @@ public class RadioRepPerServCell implements Serializable {
 			this.code = code;
 		}
 
-		public List<BerInteger> getBerInteger() {
+		@JsonValue public List<BerInteger> getBerInteger() {
 			if (seqOf == null) {
 				seqOf = new ArrayList<BerInteger>();
 			}
@@ -156,7 +159,7 @@ public class RadioRepPerServCell implements Serializable {
 		private static final long serialVersionUID = 1L;
 
 		public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
-		public byte[] code = null;
+		@JsonIgnore public byte[] code = null;
 		private List<BerInteger> seqOf = null;
 
 		public RiHist() {
@@ -167,7 +170,7 @@ public class RadioRepPerServCell implements Serializable {
 			this.code = code;
 		}
 
-		public List<BerInteger> getBerInteger() {
+		@JsonValue public List<BerInteger> getBerInteger() {
 			if (seqOf == null) {
 				seqOf = new ArrayList<BerInteger>();
 			}
@@ -287,7 +290,7 @@ public void appendAsString(StringBuilder sb, int indentLevel) {
 		private static final long serialVersionUID = 1L;
 
 		public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
-		public byte[] code = null;
+		@JsonIgnore public byte[] code = null;
 		private List<BerInteger> seqOf = null;
 
 		public PuschSinrHist() {
@@ -298,7 +301,7 @@ public void appendAsString(StringBuilder sb, int indentLevel) {
 			this.code = code;
 		}
 
-		public List<BerInteger> getBerInteger() {
+		@JsonValue public List<BerInteger> getBerInteger() {
 			if (seqOf == null) {
 				seqOf = new ArrayList<BerInteger>();
 			}
@@ -418,7 +421,7 @@ public void appendAsString(StringBuilder sb, int indentLevel) {
 		private static final long serialVersionUID = 1L;
 
 		public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
-		public byte[] code = null;
+		@JsonIgnore public byte[] code = null;
 		private List<BerInteger> seqOf = null;
 
 		public PucchSinrHist() {
@@ -429,6 +432,7 @@ public void appendAsString(StringBuilder sb, int indentLevel) {
 			this.code = code;
 		}
 
+		@JsonValue
 		public List<BerInteger> getBerInteger() {
 			if (seqOf == null) {
 				seqOf = new ArrayList<BerInteger>();
@@ -545,7 +549,7 @@ public void appendAsString(StringBuilder sb, int indentLevel) {
 
 	public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
 
-	public byte[] code = null;
+	@JsonIgnore public byte[] code = null;
 	private PCIARFCN pciArfcn = null;
 	private CqiHist cqiHist = null;
 	private RiHist riHist = null;
@@ -739,7 +743,7 @@ public void appendAsString(StringBuilder sb, int indentLevel) {
 			sb.append("\t");
 		}
 		if (pciArfcn != null) {
-			sb.append("\"pciArfcn\": ");
+			sb.append("pciArfcn: ");
 			pciArfcn.appendAsString(sb, indentLevel + 1);
 		}
 		
@@ -748,7 +752,7 @@ public void appendAsString(StringBuilder sb, int indentLevel) {
 			sb.append("\t");
 		}
 		if (cqiHist != null) {
-			sb.append("\"cqiHist\": ");
+			sb.append("cqiHist: ");
 			cqiHist.appendAsString(sb, indentLevel + 1);
 		}
 		
@@ -757,7 +761,7 @@ public void appendAsString(StringBuilder sb, int indentLevel) {
 			sb.append("\t");
 		}
 		if (riHist != null) {
-			sb.append("\"riHist\": ");
+			sb.append("riHist: ");
 			riHist.appendAsString(sb, indentLevel + 1);
 		}
 		
@@ -766,7 +770,7 @@ public void appendAsString(StringBuilder sb, int indentLevel) {
 			sb.append("\t");
 		}
 		if (puschSinrHist != null) {
-			sb.append("\"puschSinrHist\": ");
+			sb.append("puschSinrHist: ");
 			puschSinrHist.appendAsString(sb, indentLevel + 1);
 		}
 		
@@ -775,7 +779,7 @@ public void appendAsString(StringBuilder sb, int indentLevel) {
 			sb.append("\t");
 		}
 		if (pucchSinrHist != null) {
-			sb.append("\"pucchSinrHist\": ");
+			sb.append("pucchSinrHist: ");
 			pucchSinrHist.appendAsString(sb, indentLevel + 1);
 		}
 		

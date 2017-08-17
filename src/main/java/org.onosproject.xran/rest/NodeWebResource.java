@@ -15,8 +15,9 @@
  */
 package org.onosproject.xran.rest;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.onosproject.rest.AbstractWebResource;
@@ -34,7 +35,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -46,6 +46,10 @@ public class NodeWebResource extends AbstractWebResource {
     private static final Logger log =
             LoggerFactory.getLogger(NodeWebResource.class);
 
+    public NodeWebResource() {
+
+    }
+
     /**
      * test.
      *
@@ -55,40 +59,52 @@ public class NodeWebResource extends AbstractWebResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getNodes(@DefaultValue("") @QueryParam("type") String type) {
-        ObjectNode rootNode = mapper().createObjectNode();
-
+        JsonNode jsonNode;
         try {
+            List<Object> nodes;
             if (StringUtils.isBlank(type)) {
-                List<Object> nodes = get(XranStore.class).getNodes();
-
-                JsonNode jsonNode = mapper().readTree(nodes.get(0).toString());
-                JsonNode jsonNode2 = mapper().readTree(nodes.get(1).toString());
-
-                ObjectNode arrayNode = rootNode.putObject("nodes");
-                arrayNode.put("cells", jsonNode);
-                arrayNode.put("ues", jsonNode2);
+                nodes = get(XranStore.class).getNodes();
             } else if (type.equals("cell")) {
-                List<RnibCell> cellNodes = get(XranStore.class).getCellNodes();
-                JsonNode jsonNode = mapper().readTree(cellNodes.toString());
-
-                ObjectNode arrayNode = rootNode.putObject("nodes");
-                arrayNode.put("cells", jsonNode);
+                nodes = get(XranStore.class).getCellNodes();
             } else if (type.equals("ue")) {
-                List<RnibUe> ueNodes = get(XranStore.class).getUeNodes();
-                JsonNode jsonNode = mapper().readTree(ueNodes.toString());
-
-                ObjectNode arrayNode = rootNode.putObject("nodes");
-                arrayNode.put("ues", jsonNode);
+                nodes = get(XranStore.class).getUeNodes();
+            } else {
+                return ResponseHelper.getResponse(
+                        mapper(),
+                        ResponseHelper.statusCode.NOT_FOUND,
+                        "Not Found",
+                        "Type of node was not found"
+                );
             }
-        } catch (IOException e) {
-            log.error(ExceptionUtils.getFullStackTrace(e));
+
+            if (nodes.size() == 0) {
+                return ResponseHelper.getResponse(
+                        mapper(),
+                        ResponseHelper.statusCode.NOT_FOUND,
+                        "Not Found",
+                        "No nodes found"
+                );
+            }
+
+            jsonNode = mapper().valueToTree(nodes);
+        } catch (Exception e) {
+            String fullStackTrace = ExceptionUtils.getFullStackTrace(e);
+            log.error(fullStackTrace);
             e.printStackTrace();
-            return Response.serverError()
-                    .entity(ExceptionUtils.getFullStackTrace(e))
-                    .build();
+
+            return ResponseHelper.getResponse(
+                    mapper(),
+                    ResponseHelper.statusCode.INTERNAL_SERVER_ERROR,
+                    "Exception",
+                    fullStackTrace
+            );
         }
 
-        return ok(rootNode.toString()).build();
+        return ResponseHelper.getResponse(
+                mapper(),
+                ResponseHelper.statusCode.OK,
+                jsonNode
+        );
     }
 
     /**
@@ -105,20 +121,33 @@ public class NodeWebResource extends AbstractWebResource {
 
         if (node != null) {
             try {
-                ObjectNode rootNode = mapper().createObjectNode();
-                JsonNode jsonNode = mapper().readTree(node.toString());
-                rootNode.put("node", jsonNode);
-                return ok(rootNode.toString()).build();
-            } catch (IOException e) {
-                log.error(ExceptionUtils.getFullStackTrace(e));
+                JsonNode jsonNode = mapper().valueToTree(node);
+
+                return ResponseHelper.getResponse(
+                        mapper(),
+                        ResponseHelper.statusCode.OK,
+                        jsonNode
+                );
+            } catch (Exception e) {
+                String fullStackTrace = ExceptionUtils.getFullStackTrace(e);
+                log.error(fullStackTrace);
                 e.printStackTrace();
-                return Response.serverError()
-                        .entity(ExceptionUtils.getFullStackTrace(e))
-                        .build();
+
+                return ResponseHelper.getResponse(
+                        mapper(),
+                        ResponseHelper.statusCode.INTERNAL_SERVER_ERROR,
+                        "Exception",
+                        fullStackTrace
+                );
             }
         }
 
-        return Response.serverError().entity("node not found").build();
+        return ResponseHelper.getResponse(
+                mapper(),
+                ResponseHelper.statusCode.NOT_FOUND,
+                "Not Found",
+                "Node " + nodeid + " was not found"
+        );
     }
 
 }

@@ -16,12 +16,15 @@
 
 package org.onosproject.xran.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.util.Map;
 import java.util.Set;
 
 /**
  * Created by dimitris on 7/22/17.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RnibSlice {
     private long sliceId;
     private Set<RnibLink> links;

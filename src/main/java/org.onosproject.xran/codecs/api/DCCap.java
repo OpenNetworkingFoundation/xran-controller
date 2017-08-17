@@ -4,10 +4,11 @@
 
 package org.onosproject.xran.codecs.api;
 
-import org.openmuc.jasn1.ber.BerByteArrayOutputStream;
-import org.openmuc.jasn1.ber.BerLength;
-import org.openmuc.jasn1.ber.BerTag;
-import org.openmuc.jasn1.ber.types.BerEnum;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.onosproject.xran.codecs.ber.BerByteArrayOutputStream;
+import org.onosproject.xran.codecs.ber.BerLength;
+import org.onosproject.xran.codecs.ber.BerTag;
+import org.onosproject.xran.codecs.ber.types.BerEnum;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,6 +21,7 @@ public class DCCap implements Serializable {
 
 	public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
 
+	@JsonIgnore
 	public byte[] code = null;
 	private BerEnum drbTypeSplit = null;
 	
@@ -122,7 +124,7 @@ public class DCCap implements Serializable {
 			sb.append("\t");
 		}
 		if (drbTypeSplit != null) {
-			sb.append("\"drbTypeSplit\": ").append(drbTypeSplit);
+			sb.append("drbTypeSplit: ").append(drbTypeSplit);
 		}
 		
 		sb.append("\n");

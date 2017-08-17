@@ -15,9 +15,9 @@ import java.math.BigInteger;
 import java.io.Serializable;
 import java.util.Objects;
 
-import org.openmuc.jasn1.ber.*;
-import org.openmuc.jasn1.ber.types.*;
-import org.openmuc.jasn1.ber.types.string.*;
+import org.onosproject.xran.codecs.ber.*;
+import org.onosproject.xran.codecs.ber.types.*;
+import org.onosproject.xran.codecs.ber.types.string.*;
 
 
 public class MMEUES1APID extends BerInteger {

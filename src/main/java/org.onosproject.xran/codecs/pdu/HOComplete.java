@@ -4,11 +4,12 @@
 
 package org.onosproject.xran.codecs.pdu;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.onosproject.xran.codecs.api.CRNTI;
 import org.onosproject.xran.codecs.api.ECGI;
-import org.openmuc.jasn1.ber.BerByteArrayOutputStream;
-import org.openmuc.jasn1.ber.BerLength;
-import org.openmuc.jasn1.ber.BerTag;
+import org.onosproject.xran.codecs.ber.BerByteArrayOutputStream;
+import org.onosproject.xran.codecs.ber.BerLength;
+import org.onosproject.xran.codecs.ber.BerTag;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,6 +22,7 @@ public class HOComplete implements Serializable {
 
 	public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
 
+	@JsonIgnore
 	public byte[] code = null;
 	private ECGI ecgiT = null;
 	private ECGI ecgiS = null;
@@ -169,7 +171,7 @@ public class HOComplete implements Serializable {
 			sb.append("\t");
 		}
 		if (ecgiT != null) {
-			sb.append("\"ecgiT\": ");
+			sb.append("ecgiT: ");
 			ecgiT.appendAsString(sb, indentLevel + 1);
 		}
 		
@@ -178,7 +180,7 @@ public class HOComplete implements Serializable {
 			sb.append("\t");
 		}
 		if (ecgiS != null) {
-			sb.append("\"ecgiS\": ");
+			sb.append("ecgiS: ");
 			ecgiS.appendAsString(sb, indentLevel + 1);
 		}
 		
@@ -187,7 +189,7 @@ public class HOComplete implements Serializable {
 			sb.append("\t");
 		}
 		if (crntiNew != null) {
-			sb.append("\"crntiNew\": ").append(crntiNew);
+			sb.append("crntiNew: ").append(crntiNew);
 		}
 		
 		sb.append("\n");

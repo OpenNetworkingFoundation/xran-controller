@@ -16,6 +16,10 @@
 
 package org.onosproject.xran.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.onosproject.net.DeviceId;
 import org.onosproject.xran.codecs.api.ECGI;
@@ -24,9 +28,9 @@ import org.onosproject.xran.codecs.pdu.CellConfigReport;
 import org.onosproject.xran.codecs.pdu.L2MeasConfig;
 import org.onosproject.xran.codecs.pdu.RRMConfig;
 import org.onosproject.xran.codecs.pdu.SchedMeasReportPerCell;
-import org.openmuc.jasn1.ber.BerByteArrayOutputStream;
-import org.openmuc.jasn1.ber.types.BerBitString;
-import org.openmuc.jasn1.ber.types.BerInteger;
+import org.onosproject.xran.codecs.ber.BerByteArrayOutputStream;
+import org.onosproject.xran.codecs.ber.types.BerBitString;
+import org.onosproject.xran.codecs.ber.types.BerInteger;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.ByteArrayInputStream;
@@ -41,16 +45,34 @@ import java.util.stream.Stream;
 /**
  * Created by dimitris on 7/22/17.
  */
+
+@JsonPropertyOrder({
+        "ECGI",
+        "Configuration",
+        "PRB-Usage",
+        "QCI",
+        "RRMConfiguration",
+        "MeasurementConfiguration"
+})
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RnibCell {
+    @JsonIgnore
     private static final String SCHEME = "xran";
 
+    @JsonProperty("ECGI")
     private ECGI ecgi;
+    @JsonProperty("Configuration")
     private CellConfigReport conf;
+    @JsonProperty("PRB-Usage")
     private PrbUsageContainer prbUsage;
+    @JsonProperty("QCI")
     private SchedMeasReportPerCell.QciVals qci;
+    @JsonProperty("RRMConfiguration")
     private RRMConfig rrmConfig;
+    @JsonProperty("MeasurementConfiguration")
     private L2MeasConfig measConfig;
 
+    @JsonIgnore
     private String version;
 
     public RnibCell() {
@@ -95,30 +117,37 @@ public class RnibCell {
         this.version = version;
     }
 
+    @JsonProperty("RRMConfiguration")
     public RRMConfig getRrmConfig() {
         return rrmConfig;
     }
 
+    @JsonProperty("RRMConfiguration")
     public void setRrmConfig(RRMConfig rrmConfig) {
         this.rrmConfig = rrmConfig;
     }
 
+    @JsonProperty("PRB-Usage")
     public PrbUsageContainer getPrbUsage() {
         return prbUsage;
     }
 
+    @JsonProperty("PRB-Usage")
     public void setPrbUsage(PrbUsageContainer prbUsage) {
         this.prbUsage = prbUsage;
     }
 
+    @JsonProperty("ECGI")
     public ECGI getEcgi() {
         return ecgi;
     }
 
+    @JsonProperty("ECGI")
     public void setEcgi(ECGI ecgi) {
         this.ecgi = ecgi;
     }
 
+    @JsonProperty("Configuration")
     public CellConfigReport getConf() {
         return conf;
     }
@@ -127,6 +156,7 @@ public class RnibCell {
         return rrmConfig;
     }*/
 
+    @JsonProperty("Configuration")
     public void setConf(CellConfigReport conf) {
         this.conf = conf;
     }
@@ -136,8 +166,8 @@ public class RnibCell {
         ueList.forEach(ue -> crnti.addCRNTI(ue.getRanId()));
 
         {
-            JsonNode start_prb_dl = rrmConfigNode.get("start_prb_dl");
-            if (start_prb_dl != null) {
+            JsonNode start_prb_dl = rrmConfigNode.path("start_prb_dl");
+            if (!start_prb_dl.isMissingNode()) {
                 RRMConfig.StartPrbDl startPrbDl = new RRMConfig.StartPrbDl();
                 if (start_prb_dl.isArray()) {
                     if (ueList.size() == start_prb_dl.size()) {
@@ -152,8 +182,8 @@ public class RnibCell {
         }
 
         {
-            JsonNode end_prb_dl = rrmConfigNode.get("end_prb_dl");
-            if (end_prb_dl != null) {
+            JsonNode end_prb_dl = rrmConfigNode.path("end_prb_dl");
+            if (!end_prb_dl.isMissingNode()) {
                 RRMConfig.EndPrbDl endPrbDl = new RRMConfig.EndPrbDl();
                 if (end_prb_dl.isArray()) {
                     if (ueList.size() == end_prb_dl.size()) {
@@ -168,8 +198,8 @@ public class RnibCell {
         }
 
         {
-            JsonNode start_prb_ul = rrmConfigNode.get("start_prb_ul");
-            if (start_prb_ul != null) {
+            JsonNode start_prb_ul = rrmConfigNode.path("start_prb_ul");
+            if (!start_prb_ul.isMissingNode()) {
                 RRMConfig.StartPrbUl startPrbUl = new RRMConfig.StartPrbUl();
                 if (start_prb_ul.isArray()) {
                     if (ueList.size() == start_prb_ul.size()) {
@@ -184,8 +214,8 @@ public class RnibCell {
         }
 
         {
-            JsonNode end_prb_ul = rrmConfigNode.get("end_prb_ul");
-            if (end_prb_ul != null) {
+            JsonNode end_prb_ul = rrmConfigNode.path("end_prb_ul");
+            if (!end_prb_ul.isMissingNode()) {
                 RRMConfig.EndPrbUl endPrbUl = new RRMConfig.EndPrbUl();
                 if (end_prb_ul.isArray()) {
                     if (ueList.size() == end_prb_ul.size()) {
@@ -202,10 +232,12 @@ public class RnibCell {
         rrmConfig.setCrnti(crnti);
     }
 
+    @JsonProperty("QCI")
     public SchedMeasReportPerCell.QciVals getQci() {
         return qci;
     }
 
+    @JsonProperty("QCI")
     public void setQci(SchedMeasReportPerCell.QciVals qci) {
         this.qci = qci;
     }
@@ -218,26 +250,27 @@ public class RnibCell {
         this.prbUsage.secondary = secondary;
     }
 
+    @JsonProperty("MeasurementConfiguration")
     public L2MeasConfig getMeasConfig() {
         return measConfig;
     }
 
+    @JsonProperty("MeasurementConfiguration")
     public void setMeasConfig(L2MeasConfig measConfig) {
         this.measConfig = measConfig;
     }
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{\n")
-                .append(ecgi != null ? "\"ecgi\":" + ecgi : "")
-                .append(conf != null ? ",\n\"config-report\":" + conf : "")
-                .append(prbUsage != null ? ",\n\"prb-usage\":" + prbUsage : "")
-                .append(qci != null ? ",\n\"qci-vals\":" + qci : "")
-                .append(rrmConfig != null ? ",\n\"rrm-config\":" + rrmConfig : "")
-                .append(measConfig != null ? ",\n\"l2-meas-config\":" + measConfig : "")
-                .append("\n}\n");
-        return sb.toString();
+        return "RnibCell{" +
+                "ecgi=" + ecgi +
+                ", conf=" + conf +
+                ", prbUsage=" + prbUsage +
+                ", qci=" + qci +
+                ", rrmConfig=" + rrmConfig +
+                ", measConfig=" + measConfig +
+                ", version='" + version + '\'' +
+                '}';
     }
 
     @Override
@@ -255,18 +288,37 @@ public class RnibCell {
         return ecgi.hashCode();
     }
 
+    @JsonPropertyOrder({
+            "primary",
+            "secondary"
+    })
+    @JsonIgnoreProperties(ignoreUnknown = true)
     class PrbUsageContainer {
         PRBUsage primary;
         PRBUsage secondary;
 
+        public PRBUsage getPrimary() {
+            return primary;
+        }
+
+        public void setPrimary(PRBUsage primary) {
+            this.primary = primary;
+        }
+
+        public PRBUsage getSecondary() {
+            return secondary;
+        }
+
+        public void setSecondary(PRBUsage secondary) {
+            this.secondary = secondary;
+        }
+
         @Override
         public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("{\n")
-                    .append(primary != null ? "\"primary\":" + primary : "")
-                    .append(secondary != null ? ",\n\"secondary\":" + secondary : "")
-                    .append("\n}\n");
-            return sb.toString();
+            return "PrbUsageContainer{" +
+                    "primary=" + primary +
+                    ", secondary=" + secondary +
+                    '}';
         }
     }
 }

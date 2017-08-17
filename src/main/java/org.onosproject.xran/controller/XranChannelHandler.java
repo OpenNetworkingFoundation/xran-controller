@@ -25,7 +25,7 @@ import io.netty.channel.sctp.SctpMessage;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.onosproject.net.DeviceId;
 import org.onosproject.xran.codecs.pdu.XrancPdu;
-import org.openmuc.jasn1.ber.BerByteArrayOutputStream;
+import org.onosproject.xran.codecs.ber.BerByteArrayOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

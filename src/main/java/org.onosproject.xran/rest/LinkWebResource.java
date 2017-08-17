@@ -15,6 +15,7 @@
  */
 package org.onosproject.xran.rest;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
@@ -26,14 +27,20 @@ import org.onosproject.xran.controller.XranController;
 import org.onosproject.xran.entities.RnibCell;
 import org.onosproject.xran.entities.RnibLink;
 import org.onosproject.xran.entities.RnibUe;
-import org.openmuc.jasn1.ber.types.BerInteger;
+import org.onosproject.xran.codecs.ber.types.BerInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
@@ -48,6 +55,10 @@ public class LinkWebResource extends AbstractWebResource {
 
     private static final Logger log =
             LoggerFactory.getLogger(LinkWebResource.class);
+
+    public LinkWebResource() {
+
+    }
 
     /**
      * test.
@@ -74,18 +85,35 @@ public class LinkWebResource extends AbstractWebResource {
             list.addAll(get(XranStore.class).getLinks());
         }
 
-        try {
-            ObjectNode rootNode = mapper().createObjectNode();
-            JsonNode jsonNode = mapper().readTree(list.toString());
-            rootNode.put("links", jsonNode);
-            return Response.ok(rootNode.toString()).build();
-        } catch (IOException e) {
-            log.error(ExceptionUtils.getFullStackTrace(e));
-            e.printStackTrace();
-            return Response.serverError()
-                    .entity(ExceptionUtils.getFullStackTrace(e))
-                    .build();
+        if (list.size() > 0) {
+            try {
+                JsonNode jsonNode = mapper().valueToTree(list);
+
+                return ResponseHelper.getResponse(
+                        mapper(),
+                        ResponseHelper.statusCode.OK,
+                        jsonNode
+                );
+            } catch (Exception e) {
+                String fullStackTrace = ExceptionUtils.getFullStackTrace(e);
+                log.error(fullStackTrace);
+                e.printStackTrace();
+
+                return ResponseHelper.getResponse(
+                        mapper(),
+                        ResponseHelper.statusCode.INTERNAL_SERVER_ERROR,
+                        "Exception",
+                        fullStackTrace
+                );
+            }
         }
+
+        return ResponseHelper.getResponse(
+                mapper(),
+                ResponseHelper.statusCode.NOT_FOUND,
+                "Not Found",
+                "Specified links not found"
+        );
     }
 
     /**
@@ -99,6 +127,7 @@ public class LinkWebResource extends AbstractWebResource {
     @Patch
     @Path("{src},{dst}")
     @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response patchLinks(@PathParam("src") String src, @PathParam("dst") long dst, InputStream stream) {
         RnibLink link = get(XranStore.class).getLinkBetweenCellIdUeId(src, dst);
         if (link != null) {
@@ -122,12 +151,25 @@ public class LinkWebResource extends AbstractWebResource {
                 }
 
             } catch (Exception e) {
-                log.error(ExceptionUtils.getFullStackTrace(e));
+                String fullStackTrace = ExceptionUtils.getFullStackTrace(e);
+                log.error(fullStackTrace);
                 e.printStackTrace();
-                return Response.serverError().entity(ExceptionUtils.getFullStackTrace(e)).build();
+
+                return ResponseHelper.getResponse(
+                        mapper(),
+                        ResponseHelper.statusCode.INTERNAL_SERVER_ERROR,
+                        "Exception",
+                        fullStackTrace
+                );
             }
         }
-        return Response.serverError().entity("link not found use POST request").build();
+
+        return ResponseHelper.getResponse(
+                mapper(),
+                ResponseHelper.statusCode.NOT_FOUND,
+                "Not Found",
+                "Link not found use POST request"
+        );
     }
 
     /**
@@ -141,26 +183,36 @@ public class LinkWebResource extends AbstractWebResource {
     @POST
     @Path("{src},{dst}")
     @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response postLinks(@PathParam("src") String src, @PathParam("dst") long dst, InputStream stream) {
         RnibCell cell = get(XranStore.class).getCell(src);
         RnibUe ue = get(XranStore.class).getUe(dst);
 
         if (cell == null) {
-            return Response.serverError()
-                    .entity("cell not found")
-                    .build();
+            return ResponseHelper.getResponse(
+                    mapper(),
+                    ResponseHelper.statusCode.NOT_FOUND,
+                    "Not Found",
+                    "Cell " + src + " was not found"
+            );
         }
 
         if (ue == null) {
-            return Response.serverError()
-                    .entity("ue not found")
-                    .build();
+            return ResponseHelper.getResponse(
+                    mapper(),
+                    ResponseHelper.statusCode.NOT_FOUND,
+                    "Not Found",
+                    "Ue with " + dst + " was not found"
+            );
         }
 
         if (get(XranStore.class).getLink(cell.getEcgi(), ue.getMmeS1apId()) != null) {
-            return Response.serverError()
-                    .entity("link exists use PATCH request")
-                    .build();
+            return ResponseHelper.getResponse(
+                    mapper(),
+                    ResponseHelper.statusCode.BAD_REQUEST,
+                    "Bad Request",
+                    "Link already exists use PATCH to modify"
+            );
         }
 
         try {
@@ -186,16 +238,24 @@ public class LinkWebResource extends AbstractWebResource {
             }
 
         } catch (Exception e) {
-            log.error(ExceptionUtils.getFullStackTrace(e));
+            String fullStackTrace = ExceptionUtils.getFullStackTrace(e);
+            log.error(fullStackTrace);
             e.printStackTrace();
-            return Response.serverError()
-                    .entity(ExceptionUtils.getFullStackTrace(e))
-                    .build();
+
+            return ResponseHelper.getResponse(
+                    mapper(),
+                    ResponseHelper.statusCode.INTERNAL_SERVER_ERROR,
+                    "Exception",
+                    fullStackTrace
+            );
         }
 
-        return Response.serverError()
-                .entity("unreachable code")
-                .build();
+        return ResponseHelper.getResponse(
+                mapper(),
+                ResponseHelper.statusCode.NOT_IMPLEMENTED,
+                "Not Implemented",
+                "This request is not implemented"
+        );
     }
 
     private Response handleTypeChange(RnibLink link, RnibLink.Type newType) throws InterruptedException {
@@ -204,9 +264,12 @@ public class LinkWebResource extends AbstractWebResource {
         if (newType.equals(RnibLink.Type.SERVING_PRIMARY)) {
             switch (link.getType()) {
                 case SERVING_PRIMARY: {
-                    return Response.serverError()
-                            .entity("link already a primary")
-                            .build();
+                    return ResponseHelper.getResponse(
+                            mapper(),
+                            ResponseHelper.statusCode.BAD_REQUEST,
+                            "Bad Request",
+                            "Link is already a primary link"
+                    );
                 }
                 case SERVING_SECONDARY_CA:
                 case SERVING_SECONDARY_DC:
@@ -221,73 +284,109 @@ public class LinkWebResource extends AbstractWebResource {
                         String poll = queue[0].poll(5, TimeUnit.SECONDS);
 
                         if (poll != null) {
-                            return Response.ok()
-                                    .entity(poll)
-                                    .build();
+                            return ResponseHelper.getResponse(
+                                    mapper(),
+                                    ResponseHelper.statusCode.OK,
+                                    "Handoff Response",
+                                    poll
+                            );
                         } else {
-                            return Response.serverError()
-                                    .entity("did not receive response in time")
-                                    .build();
+                            return ResponseHelper.getResponse(
+                                    mapper(),
+                                    ResponseHelper.statusCode.REQUEST_TIMEOUT,
+                                    "Handoff Timeout",
+                                    "eNodeB did not send a HOComplete/HOFailure on time"
+                            );
                         }
                     } else {
                         link.setType(RnibLink.Type.SERVING_PRIMARY);
-                        return Response.ok()
-                                .entity("there was not another primary link")
-                                .build();
+                        return ResponseHelper.getResponse(
+                                mapper(),
+                                ResponseHelper.statusCode.OK,
+                                "OK",
+                                "Link set to primary"
+                        );
                     }
                 }
             }
         } else if (newType.equals(RnibLink.Type.NON_SERVING)) {
             switch (link.getType()) {
                 case NON_SERVING:
-                    return Response.ok()
-                            .entity("It's already a non serving link!" + link)
-                            .build();
+                    return ResponseHelper.getResponse(
+                            mapper(),
+                            ResponseHelper.statusCode.BAD_REQUEST,
+                            "Bad Request",
+                            "Link is already a primary link"
+                    );
                 case SERVING_PRIMARY:
-                    return Response.serverError()
-                            .entity("Cannot change a Primary link.")
-                            .build();
+                    return ResponseHelper.getResponse(
+                            mapper(),
+                            ResponseHelper.statusCode.BAD_REQUEST,
+                            "Bad Request",
+                            "Cannot modify a primary link"
+                    );
                 case SERVING_SECONDARY_CA:
                 case SERVING_SECONDARY_DC:
                     if (get(XranController.class).sendScellDelete(link)) {
-                        return Response.ok()
-                                .entity("Successfully changed link type to " + link.getType())
-                                .build();
+                        return ResponseHelper.getResponse(
+                                mapper(),
+                                ResponseHelper.statusCode.OK,
+                                "OK",
+                                "Link set to non-serving"
+                        );
                     } else {
-                        return Response.serverError()
-                                .entity("Could not change link type.")
-                                .build();
+                        return ResponseHelper.getResponse(
+                                mapper(),
+                                ResponseHelper.statusCode.NOT_FOUND,
+                                "Not Found",
+                                "Could not find cell config report to construct Scell Delete"
+                        );
                     }
             }
         } else if (newType.equals(RnibLink.Type.SERVING_SECONDARY_CA)) {
             switch (link.getType()) {
                 case SERVING_PRIMARY:
-                    return Response.serverError()
-                            .entity("Cannot change a Primary link.")
-                            .build();
+                    return ResponseHelper.getResponse(
+                            mapper(),
+                            ResponseHelper.statusCode.BAD_REQUEST,
+                            "Bad Request",
+                            "Cannot modify a primary link"
+                    );
                 case SERVING_SECONDARY_DC:
                 case NON_SERVING:
                     queue[0] = get(XranController.class).sendScellAdd(link);
                     String poll = queue[0].poll(5, TimeUnit.SECONDS);
                     if (poll != null) {
-                        return Response.ok()
-                                .entity("Successfully changed link type to " + link.getType())
-                                .build();
+                        return ResponseHelper.getResponse(
+                                mapper(),
+                                ResponseHelper.statusCode.OK,
+                                "ScellAdd Response",
+                                poll
+                        );
                     } else {
-                        return Response.serverError()
-                                .entity("did not receive response in time")
-                                .build();
+                        return ResponseHelper.getResponse(
+                                mapper(),
+                                ResponseHelper.statusCode.REQUEST_TIMEOUT,
+                                "ScellAdd Timeout",
+                                "eNodeB did not send a ScellAddStatus on time"
+                        );
                     }
                 case SERVING_SECONDARY_CA:
-                    return Response.ok()
-                            .entity("It's already a service secondary ca link!")
-                            .build();
+                    return ResponseHelper.getResponse(
+                            mapper(),
+                            ResponseHelper.statusCode.BAD_REQUEST,
+                            "Bad Request",
+                            "Link is already a secondary CA link"
+                    );
             }
         }
 
-        return Response.serverError()
-                .entity("Unknown type")
-                .build();
+        return ResponseHelper.getResponse(
+                mapper(),
+                ResponseHelper.statusCode.NOT_IMPLEMENTED,
+                "Not Implemented",
+                "This request is not implemented"
+        );
     }
 
     private Response handleTrafficChange(RnibLink link, JsonNode trafficpercent) {
@@ -301,7 +400,12 @@ public class LinkWebResource extends AbstractWebResource {
             link.getTrafficPercent().setTrafficPercentUl(new BerInteger(jsonNode.asInt()));
         }
 
-        return Response.ok("trafficpercent changed successfully").build();
+        return ResponseHelper.getResponse(
+                mapper(),
+                ResponseHelper.statusCode.OK,
+                "OK",
+                "Traffic Percent changed"
+        );
     }
 
     private Response handleRRMChange(RnibLink link, JsonNode rrmConf) throws InterruptedException {
@@ -312,13 +416,19 @@ public class LinkWebResource extends AbstractWebResource {
         String poll = queue[0].poll(5, TimeUnit.SECONDS);
 
         if (poll != null) {
-            return Response.ok()
-                    .entity(poll)
-                    .build();
+            return ResponseHelper.getResponse(
+                    mapper(),
+                    ResponseHelper.statusCode.OK,
+                    "RRMConfig Response",
+                    poll
+            );
         } else {
-            return Response.serverError()
-                    .entity("did not receive response in time")
-                    .build();
+            return ResponseHelper.getResponse(
+                    mapper(),
+                    ResponseHelper.statusCode.REQUEST_TIMEOUT,
+                    "RRMConfig Timeout",
+                    "eNodeB did not send a RRMConfingStatus on time"
+            );
         }
     }
 }

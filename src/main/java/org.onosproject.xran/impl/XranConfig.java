@@ -24,7 +24,7 @@ import org.onosproject.net.config.Config;
 import org.onosproject.xran.codecs.api.ECGI;
 import org.onosproject.xran.codecs.api.EUTRANCellIdentifier;
 import org.onosproject.xran.codecs.api.PLMNIdentity;
-import org.openmuc.jasn1.util.HexConverter;
+import org.onosproject.xran.codecs.util.HexConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
