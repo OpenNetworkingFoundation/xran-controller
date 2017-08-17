@@ -260,8 +260,8 @@ public class LinkWebResource extends AbstractWebResource {
 
         return ResponseHelper.getResponse(
                 mapper(),
-                ResponseHelper.statusCode.NOT_IMPLEMENTED,
-                "Not Implemented",
+                ResponseHelper.statusCode.BAD_REQUEST,
+                "Bad Request",
                 "The command you specified is not implemented or doesn't exist. We support " +
                         "type/RRMConf/traficpercent commands."
         );
@@ -392,9 +392,9 @@ public class LinkWebResource extends AbstractWebResource {
 
         return ResponseHelper.getResponse(
                 mapper(),
-                ResponseHelper.statusCode.NOT_IMPLEMENTED,
-                "Not Implemented",
-                "This request is not implemented"
+                ResponseHelper.statusCode.BAD_REQUEST,
+                "Bad Request",
+                "The command you specified is not implemented or doesn't exist."
         );
     }
 
@@ -420,24 +420,36 @@ public class LinkWebResource extends AbstractWebResource {
     private Response handleRRMChange(RnibLink link, JsonNode rrmConf) throws InterruptedException {
         final SynchronousQueue<String>[] queue = new SynchronousQueue[1];
         get(XranStore.class).modifyLinkRrmConf(link, rrmConf);
-        queue[0] = get(XranController.class).sendModifiedRRMConf(link.getRrmParameters(),
-                link.getLinkId().getCell().getVersion() <= 3);
-        String poll = queue[0].poll(5, TimeUnit.SECONDS);
+        boolean isxICIC = link.getLinkId().getCell().getVersion() <= 3;
 
-        if (poll != null) {
+        queue[0] = get(XranController.class).sendModifiedRRMConf(link.getRrmParameters(),
+                isxICIC);
+
+        if (isxICIC) {
             return ResponseHelper.getResponse(
                     mapper(),
                     ResponseHelper.statusCode.OK,
-                    "RRMConfig Response",
-                    poll
+                    "OK",
+                    "xICIC was sent successfully"
             );
         } else {
-            return ResponseHelper.getResponse(
-                    mapper(),
-                    ResponseHelper.statusCode.REQUEST_TIMEOUT,
-                    "RRMConfig Timeout",
-                    "eNodeB did not send a RRMConfingStatus on time"
-            );
+            String poll = queue[0].poll(5, TimeUnit.SECONDS);
+
+            if (poll != null) {
+                return ResponseHelper.getResponse(
+                        mapper(),
+                        ResponseHelper.statusCode.OK,
+                        "RRMConfig Response",
+                        poll
+                );
+            } else {
+                return ResponseHelper.getResponse(
+                        mapper(),
+                        ResponseHelper.statusCode.REQUEST_TIMEOUT,
+                        "RRMConfig Timeout",
+                        "eNodeB did not send a RRMConfingStatus on time"
+                );
+            }
         }
     }
 }

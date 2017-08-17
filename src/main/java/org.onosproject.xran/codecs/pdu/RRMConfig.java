@@ -48,6 +48,28 @@ public class RRMConfig implements Serializable {
         this.code = code;
     }
 
+    public static XrancPdu constructPacket(RRMConfig config) {
+        XrancPduBody body = new XrancPduBody();
+        body.setRRMConfig(config);
+
+        BerUTF8String ver = null;
+        try {
+            ver = new BerUTF8String("3");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        XrancApiID apiID = new XrancApiID(29);
+        XrancPduHdr hdr = new XrancPduHdr();
+        hdr.setVer(ver);
+        hdr.setApiId(apiID);
+
+        XrancPdu pdu = new XrancPdu();
+        pdu.setHdr(hdr);
+        pdu.setBody(body);
+        return pdu;
+    }
+
     public ECGI getEcgi() {
         return ecgi;
     }
@@ -454,7 +476,8 @@ public class RRMConfig implements Serializable {
 
         public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
         private static final long serialVersionUID = 1L;
-        @JsonIgnore public byte[] code = null;
+        @JsonIgnore
+        public byte[] code = null;
         private List<CRNTI> seqOf = null;
 
         public Crnti() {
@@ -583,7 +606,8 @@ public class RRMConfig implements Serializable {
 
         public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
         private static final long serialVersionUID = 1L;
-        @JsonIgnore public byte[] code = null;
+        @JsonIgnore
+        public byte[] code = null;
         private List<XICICPA> seqOf = null;
 
         public Pa() {
@@ -600,6 +624,10 @@ public class RRMConfig implements Serializable {
                 seqOf = new ArrayList<XICICPA>();
             }
             return seqOf;
+        }
+
+        public void setXICICPA(List<XICICPA> seqOf) {
+            this.seqOf = seqOf;
         }
 
         public int encode(BerByteArrayOutputStream os) throws IOException {
@@ -701,14 +729,14 @@ public class RRMConfig implements Serializable {
             }
             sb.append("]");
         }
-
     }
 
     public static class StartPrbDl implements Serializable {
 
         public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
         private static final long serialVersionUID = 1L;
-        @JsonIgnore public byte[] code = null;
+        @JsonIgnore
+        public byte[] code = null;
         private List<BerInteger> seqOf = null;
 
         public StartPrbDl() {
@@ -727,7 +755,8 @@ public class RRMConfig implements Serializable {
             this.seqOf = seqOf;
         }
 
-        @JsonValue public List<BerInteger> getBerInteger() {
+        @JsonValue
+        public List<BerInteger> getBerInteger() {
             if (seqOf == null) {
                 seqOf = new ArrayList<BerInteger>();
             }
@@ -843,7 +872,8 @@ public class RRMConfig implements Serializable {
 
         public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
         private static final long serialVersionUID = 1L;
-        @JsonIgnore public byte[] code = null;
+        @JsonIgnore
+        public byte[] code = null;
         private List<BerInteger> seqOf = null;
 
         public EndPrbDl() {
@@ -854,7 +884,8 @@ public class RRMConfig implements Serializable {
             this.code = code;
         }
 
-        @JsonValue public List<BerInteger> getBerInteger() {
+        @JsonValue
+        public List<BerInteger> getBerInteger() {
             if (seqOf == null) {
                 seqOf = new ArrayList<BerInteger>();
             }
@@ -978,7 +1009,8 @@ public class RRMConfig implements Serializable {
 
         public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
         private static final long serialVersionUID = 1L;
-        @JsonIgnore public byte[] code = null;
+        @JsonIgnore
+        public byte[] code = null;
         private List<BerBitString> seqOf = null;
 
         public SubframeBitmaskDl() {
@@ -989,6 +1021,10 @@ public class RRMConfig implements Serializable {
             this.code = code;
         }
 
+        public void setSeqOf(List<BerBitString> seqOf) {
+            this.seqOf = seqOf;
+        }
+
         @JsonValue
         public List<BerBitString> getBerBitString() {
             if (seqOf == null) {
@@ -996,6 +1032,7 @@ public class RRMConfig implements Serializable {
             }
             return seqOf;
         }
+
 
         public void addBerBitString(BerBitString berBitString) {
             seqOf.add(berBitString);
@@ -1100,14 +1137,14 @@ public class RRMConfig implements Serializable {
             }
             sb.append("]");
         }
-
     }
 
     public static class P0UePusch implements Serializable {
 
         public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
         private static final long serialVersionUID = 1L;
-        @JsonIgnore public byte[] code = null;
+        @JsonIgnore
+        public byte[] code = null;
         private List<BerInteger> seqOf = null;
 
         public P0UePusch() {
@@ -1118,7 +1155,8 @@ public class RRMConfig implements Serializable {
             this.code = code;
         }
 
-        @JsonValue public List<BerInteger> getBerInteger() {
+        @JsonValue
+        public List<BerInteger> getBerInteger() {
             if (seqOf == null) {
                 seqOf = new ArrayList<BerInteger>();
             }
@@ -1225,13 +1263,17 @@ public class RRMConfig implements Serializable {
             sb.append("]");
         }
 
+        public void setSeqOf(List<BerInteger> seqOf) {
+            this.seqOf = seqOf;
+        }
     }
 
     public static class StartPrbUl implements Serializable {
 
         public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
         private static final long serialVersionUID = 1L;
-        @JsonIgnore public byte[] code = null;
+        @JsonIgnore
+        public byte[] code = null;
         private List<BerInteger> seqOf = null;
 
         public StartPrbUl() {
@@ -1242,7 +1284,8 @@ public class RRMConfig implements Serializable {
             this.code = code;
         }
 
-        @JsonValue public List<BerInteger> getBerInteger() {
+        @JsonValue
+        public List<BerInteger> getBerInteger() {
             if (seqOf == null) {
                 seqOf = new ArrayList<BerInteger>();
             }
@@ -1366,7 +1409,8 @@ public class RRMConfig implements Serializable {
 
         public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
         private static final long serialVersionUID = 1L;
-        @JsonIgnore public byte[] code = null;
+        @JsonIgnore
+        public byte[] code = null;
         private List<BerInteger> seqOf = null;
 
         public EndPrbUl() {
@@ -1502,7 +1546,8 @@ public class RRMConfig implements Serializable {
 
         public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
         private static final long serialVersionUID = 1L;
-        @JsonIgnore public byte[] code = null;
+        @JsonIgnore
+        public byte[] code = null;
         private List<BerBitString> seqOf = null;
 
         public SubframeBitmaskUl() {
@@ -1511,6 +1556,10 @@ public class RRMConfig implements Serializable {
 
         public SubframeBitmaskUl(byte[] code) {
             this.code = code;
+        }
+
+        public void setSeqOf(List<BerBitString> seqOf) {
+            this.seqOf = seqOf;
         }
 
         @JsonValue
@@ -1621,28 +1670,6 @@ public class RRMConfig implements Serializable {
             sb.append("]");
         }
 
-    }
-
-    public static XrancPdu constructPacket(RRMConfig config) {
-        XrancPduBody body = new XrancPduBody();
-        body.setRRMConfig(config);
-
-        BerUTF8String ver = null;
-        try {
-            ver = new BerUTF8String("3");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-
-        XrancApiID apiID = new XrancApiID(29);
-        XrancPduHdr hdr = new XrancPduHdr();
-        hdr.setVer(ver);
-        hdr.setApiId(apiID);
-
-        XrancPdu pdu = new XrancPdu();
-        pdu.setHdr(hdr);
-        pdu.setBody(body);
-        return pdu;
     }
 
 }

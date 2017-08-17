@@ -468,25 +468,48 @@ public class XICICConfig implements Serializable {
 		sb.append("}");
 	}
 
-	public static XrancPdu constructPacket(RRMConfig config) {
+	public static XrancPdu constructPacket(RRMConfig config, CellConfigReport cellConfigReport) {
 		XrancPduBody body = new XrancPduBody();
         
 		XICICConfig xicicConfig = new XICICConfig();
 
-		xicicConfig.setCrnti(config.getCrnti().getCRNTI().get(0));
 		xicicConfig.setEcgi(config.getEcgi());
+		xicicConfig.setCrnti(config.getCrnti().getCRNTI().get(0));
 
 		try {
-            xicicConfig.setEndPrbDl(config.getEndPrbDl().getSeqOf().get(0));
-        } catch (Exception ignored) {}
+			PCIARFCN pciarfcn = new PCIARFCN();
+			pciarfcn.setPci(cellConfigReport.getPci());
+			pciarfcn.setEarfcnDl(cellConfigReport.getEarfcnDl());
+			xicicConfig.setPciArfcn(pciarfcn);
+		} catch (Exception ignored) {}
 
-        try {
-            xicicConfig.setEndPrbUl(config.getEndPrbUl().getSeqOf().get(0));
-        } catch (Exception ignored) {}
+		try {
+			xicicConfig.setPa(config.getPa().getXICICPA().get(0));
+		} catch (Exception ignored) {}
 
-        try {
-            xicicConfig.setStartPrbDl(config.getStartPrbDl().getSeqOf().get(0));
-        } catch (Exception ignored) {}
+		try {
+			xicicConfig.setStartPrbDl(config.getStartPrbDl().getSeqOf().get(0));
+		} catch (Exception ignored) {}
+
+		try {
+			xicicConfig.setEndPrbDl(config.getEndPrbDl().getSeqOf().get(0));
+		} catch (Exception ignored) {}
+
+		try {
+			xicicConfig.setSubframeBitmaskDl(config.getSubframeBitmaskDl().getBerBitString().get(0));
+		} catch (Exception ignored) {}
+
+		try {
+			xicicConfig.setSubframeBitmaskUl(config.getSubframeBitmaskUl().getBerBitString().get(0));
+		} catch (Exception ignored) {}
+
+		try {
+			xicicConfig.setP0UePusch(config.getP0UePusch().getBerInteger().get(0));
+		} catch (Exception ignored) {}
+
+		try {
+			xicicConfig.setEndPrbUl(config.getEndPrbUl().getSeqOf().get(0));
+		} catch (Exception ignored) {}
 
         try {
             xicicConfig.setEndPrbUl(config.getStartPrbUl().getSeqOf().get(0));

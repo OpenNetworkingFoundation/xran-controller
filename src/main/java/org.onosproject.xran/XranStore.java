@@ -71,7 +71,7 @@ public interface XranStore extends Store {
 
     RnibCell getCell(ECGI cellId);
 
-    void modifyCellRrmConf(RnibCell cell, JsonNode rrmConf);
+    void modifyCellRrmConf(RnibCell cell, JsonNode rrmConf) throws Exception;
 
     void storeCell(RnibCell cell);
 

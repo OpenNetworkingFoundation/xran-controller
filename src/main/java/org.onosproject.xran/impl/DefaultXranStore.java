@@ -230,7 +230,7 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
     }
 
     @Override
-    public void modifyCellRrmConf(RnibCell cell, JsonNode rrmConf) {
+    public void modifyCellRrmConf(RnibCell cell, JsonNode rrmConf) throws Exception {
         List<RnibLink> linkList = getLinksByECGI(cell.getEcgi());
         List<RnibUe> ueList = linkList.stream().map(link -> link.getLinkId().getUe()).collect(Collectors.toList());
 

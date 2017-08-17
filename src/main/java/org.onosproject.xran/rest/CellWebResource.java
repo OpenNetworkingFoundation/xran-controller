@@ -15,7 +15,6 @@
  */
 package org.onosproject.xran.rest;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -141,8 +140,8 @@ public class CellWebResource extends AbstractWebResource {
 
                 return ResponseHelper.getResponse(
                         mapper(),
-                        ResponseHelper.statusCode.NOT_IMPLEMENTED,
-                        "Not Implemented",
+                        ResponseHelper.statusCode.BAD_REQUEST,
+                        "Bad Request",
                         "The command you specified is not implemented or doesn't exist. We support " +
                                 "RRMConf commands."
                 );

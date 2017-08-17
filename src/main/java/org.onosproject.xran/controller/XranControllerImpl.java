@@ -107,8 +107,7 @@ public class XranControllerImpl implements XranController {
     private LinkMap linkMap;
     /* MAPS */
     private ConcurrentMap<String, ECGI> legitCells = new ConcurrentHashMap<>();
-    private ConcurrentMap<CRNTI, UEContextUpdate> hoContextUpdateMap = new ConcurrentHashMap<>();
-    private ConcurrentMap<CRNTI, SynchronousQueue<String>> hoQueue = new ConcurrentHashMap<>();
+    private ConcurrentMap<ECGI, SynchronousQueue<String>> hoQueue = new ConcurrentHashMap<>();
     private ConcurrentMap<ECGI, SynchronousQueue<String>> RRMCellQueue = new ConcurrentHashMap<>();
     private ConcurrentMap<CRNTI, SynchronousQueue<String>> scellAddQueue = new ConcurrentHashMap<>();
     private ConcurrentMap<CRNTI, SynchronousQueue<String>> scellDeleteQueue = new ConcurrentHashMap<>();
@@ -156,23 +155,24 @@ public class XranControllerImpl implements XranController {
     }
 
     @Override
-    public SynchronousQueue<String> sendHORequest(RnibLink newLink, RnibLink oldLink) {
-        ECGI newEcgi = newLink.getLinkId().getEcgi(),
-                oldEcgi = oldLink.getLinkId().getEcgi();
-        CRNTI crnti = linkMap.getCrnti(newLink.getLinkId().getMmeues1apid());
-        ChannelHandlerContext newCtx = cellMap.getCtx(newEcgi),
-                oldCtx = cellMap.getCtx(oldEcgi);
+    public SynchronousQueue<String> sendHORequest(RnibLink link_t, RnibLink link_s) {
+        ECGI ecgi_t = link_t.getLinkId().getEcgi(),
+                ecgi_s = link_s.getLinkId().getEcgi();
+
+        CRNTI crnti = linkMap.getCrnti(link_t.getLinkId().getMmeues1apid());
+        ChannelHandlerContext ctx_t = cellMap.getCtx(ecgi_t),
+                ctx_s = cellMap.getCtx(ecgi_s);
 
         try {
-            XrancPdu xrancPdu = HORequest.constructPacket(crnti, oldEcgi, newEcgi);
-            newCtx.writeAndFlush(getSctpMessage(xrancPdu));
-            oldCtx.writeAndFlush(getSctpMessage(xrancPdu));
+            XrancPdu xrancPdu = HORequest.constructPacket(crnti, ecgi_s, ecgi_t);
+            ctx_t.writeAndFlush(getSctpMessage(xrancPdu));
+            ctx_s.writeAndFlush(getSctpMessage(xrancPdu));
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         SynchronousQueue<String> queue = new SynchronousQueue<>();
-        hoQueue.put(crnti, queue);
+        hoQueue.put(ecgi_s, queue);
 
         return queue;
     }
@@ -202,20 +202,26 @@ public class XranControllerImpl implements XranController {
         ECGI ecgi = rrmConfig.getEcgi();
         ChannelHandlerContext ctx = cellMap.getCtx(ecgi);
         try {
-            XrancPdu pdu;
+            XrancPdu pdu = null;
+
             if (xICIC) {
-                pdu = XICICConfig.constructPacket(rrmConfig);
+                CellConfigReport cellConfigReport = cellMap.get(ecgi).getConf();
+                if (cellConfigReport != null) {
+                    pdu = XICICConfig.constructPacket(rrmConfig, cellConfigReport);
+                    ctx.writeAndFlush(getSctpMessage(pdu));
+                }
             } else {
                 pdu = RRMConfig.constructPacket(rrmConfig);
+                ctx.writeAndFlush(getSctpMessage(pdu));
+                SynchronousQueue<String> queue = new SynchronousQueue<>();
+                RRMCellQueue.put(ecgi, queue);
+                return queue;
             }
-            ctx.writeAndFlush(getSctpMessage(pdu));
         } catch (IOException e) {
             e.printStackTrace();
         }
-        SynchronousQueue<String> queue = new SynchronousQueue<>();
-        RRMCellQueue.put(ecgi, queue);
 
-        return queue;
+        return null;
     }
 
     @Override
@@ -597,22 +603,17 @@ public class XranControllerImpl implements XranController {
                     UEContextUpdate ueContextUpdate = recv_pdu.getBody().getUEContextUpdate();
 
                     RnibUe ue = ueMap.get(ueContextUpdate.getMMEUES1APID());
-                    if (ue != null && hoQueue.keySet().contains(ue.getRanId())) {
-                        CRNTI crnti = ueContextUpdate.getCrnti();
-                        hoContextUpdateMap.put(crnti, ueContextUpdate);
-                        hoQueue.remove(ue.getRanId());
-                    } else {
-                        RnibCell cell = xranStore.getCell(ueContextUpdate.getEcgi());
-                        if (ue == null) {
-                            ue = new RnibUe();
-                        }
-
-                        ue.setMmeS1apId(ueContextUpdate.getMMEUES1APID());
-                        ue.setEnbS1apId(ueContextUpdate.getENBUES1APID());
-                        ue.setRanId(ueContextUpdate.getCrnti());
-
-                        hostAgent.addConnectedHost(ue, cell, ctx);
+                    RnibCell cell = xranStore.getCell(ueContextUpdate.getEcgi());
+                    if (ue == null) {
+                        ue = new RnibUe();
                     }
+
+                    ue.setMmeS1apId(ueContextUpdate.getMMEUES1APID());
+                    ue.setEnbS1apId(ueContextUpdate.getENBUES1APID());
+                    ue.setRanId(ueContextUpdate.getCrnti());
+
+                    hostAgent.addConnectedHost(ue, cell, ctx);
+
                     break;
                 }
                 case 6: {
@@ -692,13 +693,13 @@ public class XranControllerImpl implements XranController {
                     HOFailure hoFailure = recv_pdu.getBody().getHOFailure();
 
                     try {
-                        hoQueue.get(hoFailure.getCrnti())
+                        hoQueue.get(hoFailure.getEcgi())
                                 .put("Hand Over Failed with cause: " + hoFailure.getCause());
                     } catch (InterruptedException e) {
                         log.error(ExceptionUtils.getFullStackTrace(e));
                         e.printStackTrace();
                     } finally {
-                        hoQueue.remove(hoFailure.getCrnti());
+                        hoQueue.remove(hoFailure.getEcgi());
                     }
                     break;
 
@@ -706,34 +707,14 @@ public class XranControllerImpl implements XranController {
                 case 14: {
                     HOComplete hoComplete = recv_pdu.getBody().getHOComplete();
 
-                    RnibLink oldLink = linkMap.get(hoComplete.getEcgiS(), hoComplete.getCrntiNew()),
-                            newLink = linkMap.get(hoComplete.getEcgiT(), hoComplete.getCrntiNew());
-
-                    oldLink.setType(RnibLink.Type.NON_SERVING);
-                    newLink.setType(RnibLink.Type.SERVING_PRIMARY);
-
                     try {
-                        hoQueue.get(hoComplete.getCrntiNew())
+                        hoQueue.get(hoComplete.getEcgiS())
                                 .put("Hand Over Completed");
                     } catch (InterruptedException e) {
                         log.error(ExceptionUtils.getFullStackTrace(e));
                         e.printStackTrace();
                     } finally {
-                        hoQueue.remove(hoComplete.getCrntiNew());
-
-                        UEContextUpdate ueContextUpdate = hoContextUpdateMap.get(hoComplete.getCrntiNew());
-
-                        RnibUe ue = ueMap.get(ueContextUpdate.getMMEUES1APID());
-                        RnibCell cell = xranStore.getCell(ueContextUpdate.getEcgi());
-                        if (ueMap.get(ueContextUpdate.getMMEUES1APID()) == null) {
-                            ue = new RnibUe();
-                        }
-
-                        ue.setMmeS1apId(ueContextUpdate.getMMEUES1APID());
-                        ue.setEnbS1apId(ueContextUpdate.getENBUES1APID());
-                        ue.setRanId(ueContextUpdate.getCrnti());
-
-                        hostAgent.addConnectedHost(ue, cell, ctx);
+                        hoQueue.remove(hoComplete.getEcgiS());
                     }
                     break;
                 }

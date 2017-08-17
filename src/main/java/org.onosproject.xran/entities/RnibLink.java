@@ -21,11 +21,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Lists;
 import org.onosproject.store.service.WallClockTimestamp;
 import org.onosproject.xran.codecs.api.*;
+import org.onosproject.xran.codecs.ber.types.BerBitString;
 import org.onosproject.xran.codecs.ber.types.BerInteger;
 import org.onosproject.xran.codecs.pdu.PDCPMeasReportPerUe;
 import org.onosproject.xran.codecs.pdu.RRMConfig;
 import org.onosproject.xran.identifiers.LinkId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -47,6 +51,10 @@ import java.util.Timer;
 })
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RnibLink {
+    @JsonIgnore
+    private static final Logger log =
+            LoggerFactory.getLogger(RnibLink.class);
+
     @JsonProperty("Link-ID")
     private LinkId linkId;
     @JsonProperty("RRMConfiguration")
@@ -166,6 +174,18 @@ public class RnibLink {
 
     public void modifyRrmParameters(JsonNode rrmConfigNode) {
         {
+            JsonNode p_a = rrmConfigNode.path("p_a");
+            if (!p_a.isMissingNode()) {
+                RRMConfig.Pa pa = new RRMConfig.Pa();
+
+                List<XICICPA> collect = Lists.newArrayList();
+                collect.add(new XICICPA(p_a.asInt()));
+                pa.setXICICPA(collect);
+                rrmParameters.setPa(pa);
+            }
+        }
+
+        {
             JsonNode start_prb_dl = rrmConfigNode.path("start_prb_dl");
             if (!start_prb_dl.isMissingNode()) {
                 RRMConfig.StartPrbDl startPrbDl = new RRMConfig.StartPrbDl();
@@ -192,6 +212,19 @@ public class RnibLink {
         }
 
         {
+            JsonNode sub_frame_bitmask_dl = rrmConfigNode.path("sub_frame_bitmask_dl");
+            if (!sub_frame_bitmask_dl.isMissingNode()) {
+                RRMConfig.SubframeBitmaskDl subframeBitmaskDl = new RRMConfig.SubframeBitmaskDl();
+                List<BerBitString> collect = Lists.newArrayList();
+                
+                byte[] hexString = DatatypeConverter.parseHexBinary(sub_frame_bitmask_dl.asText());
+                collect.add(new BerBitString(hexString, 10));
+                subframeBitmaskDl.setSeqOf(collect);
+                rrmParameters.setSubframeBitmaskDl(subframeBitmaskDl);
+            }
+        }
+
+        {
             JsonNode start_prb_ul = rrmConfigNode.path("start_prb_ul");
             if (!start_prb_ul.isMissingNode()) {
                 RRMConfig.StartPrbUl startPrbUl = new RRMConfig.StartPrbUl();
@@ -214,6 +247,32 @@ public class RnibLink {
                 endPrbUl.setSeqOf(collect);
 
                 rrmParameters.setEndPrbUl(endPrbUl);
+            }
+        }
+
+        {
+            JsonNode p0_ue_pusch = rrmConfigNode.path("p0_ue_pusch");
+            if (!p0_ue_pusch.isMissingNode()) {
+                RRMConfig.P0UePusch p0UePusch = new RRMConfig.P0UePusch();
+
+                List<BerInteger> collect = Lists.newArrayList();
+                collect.add(new BerInteger(p0_ue_pusch.asInt()));
+                p0UePusch.setSeqOf(collect);
+
+                rrmParameters.setP0UePusch(p0UePusch);
+            }
+        }
+
+        {
+            JsonNode sub_frame_bitmask_ul = rrmConfigNode.path("sub_frame_bitmask_ul");
+            if (!sub_frame_bitmask_ul.isMissingNode()) {
+                RRMConfig.SubframeBitmaskUl subframeBitmaskUl = new RRMConfig.SubframeBitmaskUl();
+                List<BerBitString> collect = Lists.newArrayList();
+
+                byte[] hexString = DatatypeConverter.parseHexBinary(sub_frame_bitmask_ul.asText());
+                collect.add(new BerBitString(hexString, 10));
+                subframeBitmaskUl.setSeqOf(collect);
+                rrmParameters.setSubframeBitmaskUl(subframeBitmaskUl);
             }
         }
     }

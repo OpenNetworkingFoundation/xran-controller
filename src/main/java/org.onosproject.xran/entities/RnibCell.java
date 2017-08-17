@@ -18,12 +18,15 @@ package org.onosproject.xran.entities;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.collect.Lists;
 import org.onosproject.net.DeviceId;
 import org.onosproject.store.Timestamp;
 import org.onosproject.store.service.WallClockTimestamp;
 import org.onosproject.xran.codecs.api.ECGI;
 import org.onosproject.xran.codecs.api.PRBUsage;
+import org.onosproject.xran.codecs.api.XICICPA;
 import org.onosproject.xran.codecs.ber.BerByteArrayOutputStream;
+import org.onosproject.xran.codecs.ber.types.BerBitString;
 import org.onosproject.xran.codecs.ber.types.BerInteger;
 import org.onosproject.xran.codecs.pdu.CellConfigReport;
 import org.onosproject.xran.codecs.pdu.L2MeasConfig;
@@ -154,9 +157,27 @@ public class RnibCell {
         this.conf = conf;
     }
 
-    public void modifyRrmConfig(JsonNode rrmConfigNode, List<RnibUe> ueList) {
+    public void modifyRrmConfig(JsonNode rrmConfigNode, List<RnibUe> ueList) throws Exception {
         RRMConfig.Crnti crnti = new RRMConfig.Crnti();
         ueList.forEach(ue -> crnti.addCRNTI(ue.getRanId()));
+
+        {
+            JsonNode p_a = rrmConfigNode.path("p_a");
+            if (!p_a.isMissingNode()) {
+                RRMConfig.Pa pa = new RRMConfig.Pa();
+                if (p_a.isArray()) {
+                    if (ueList.size() == p_a.size()) {
+                        List<XICICPA> collect = Stream.of(p_a)
+                                .map(val -> new XICICPA(val.asInt()))
+                                .collect(Collectors.toList());
+                        pa.setXICICPA(collect);
+                    } else {
+                        throw new Exception("p_a size is not the same as UE size");
+                    }
+                }
+                rrmConfig.setPa(pa);
+            }
+        }
 
         {
             JsonNode start_prb_dl = rrmConfigNode.path("start_prb_dl");
@@ -168,6 +189,8 @@ public class RnibCell {
                                 .map(val -> new BerInteger(val.asInt()))
                                 .collect(Collectors.toList());
                         startPrbDl.setSeqOf(collect);
+                    } else {
+                        throw new Exception("start_prb_dl size is not the same as UE size");
                     }
                 }
                 rrmConfig.setStartPrbDl(startPrbDl);
@@ -184,9 +207,28 @@ public class RnibCell {
                                 .map(val -> new BerInteger(val.asInt()))
                                 .collect(Collectors.toList());
                         endPrbDl.setSeqOf(collect);
+                    } else {
+                        throw new Exception("end_prb_dl size is not the same as UE size");
                     }
                 }
                 rrmConfig.setEndPrbDl(endPrbDl);
+            }
+        }
+
+        {
+            JsonNode sub_frame_bitmask_dl = rrmConfigNode.path("sub_frame_bitmask_dl");
+            if (!sub_frame_bitmask_dl.isMissingNode()) {
+                RRMConfig.SubframeBitmaskDl subframeBitmaskDl = new RRMConfig.SubframeBitmaskDl();
+                if (sub_frame_bitmask_dl.isArray()) {
+                    List<BerBitString> collect = Stream.of(sub_frame_bitmask_dl)
+                            .map(val -> new BerBitString(DatatypeConverter.parseHexBinary(val.asText()), 10))
+                            .collect(Collectors.toList());
+
+                    subframeBitmaskDl.setSeqOf(collect);
+                } else {
+                    throw new Exception("sub_frame_bitmask_dl size is not the same as UE size");
+                }
+                rrmConfig.setSubframeBitmaskDl(subframeBitmaskDl);
             }
         }
 
@@ -200,6 +242,8 @@ public class RnibCell {
                                 .map(val -> new BerInteger(val.asInt()))
                                 .collect(Collectors.toList());
                         startPrbUl.setSeqOf(collect);
+                    } else {
+                        throw new Exception("start_prb_ul size is not the same as UE size");
                     }
                 }
                 rrmConfig.setStartPrbUl(startPrbUl);
@@ -216,9 +260,46 @@ public class RnibCell {
                                 .map(val -> new BerInteger(val.asInt()))
                                 .collect(Collectors.toList());
                         endPrbUl.setSeqOf(collect);
+                    } else {
+                        throw new Exception("end_prb_ul size is not the same as UE size");
                     }
                 }
                 rrmConfig.setEndPrbUl(endPrbUl);
+            }
+        }
+
+        {
+            JsonNode p0_ue_pusch = rrmConfigNode.path("p0_ue_pusch");
+            if (!p0_ue_pusch.isMissingNode()) {
+                RRMConfig.P0UePusch p0UePusch = new RRMConfig.P0UePusch();
+                if (p0_ue_pusch.isArray()) {
+                    if (ueList.size() == p0_ue_pusch.size()) {
+                        List<BerInteger> collect = Stream.of(p0_ue_pusch)
+                                .map(val -> new BerInteger(val.asInt()))
+                                .collect(Collectors.toList());
+                        p0UePusch.setSeqOf(collect);
+                    } else {
+                        throw new Exception("p0_ue_pusch size is not the same as UE size");
+                    }
+                }
+                rrmConfig.setP0UePusch(p0UePusch);
+            }
+        }
+
+        {
+            JsonNode sub_frame_bitmask_ul = rrmConfigNode.path("sub_frame_bitmask_ul");
+            if (!sub_frame_bitmask_ul.isMissingNode()) {
+                RRMConfig.SubframeBitmaskUl subframeBitmaskUl = new RRMConfig.SubframeBitmaskUl();
+                if (sub_frame_bitmask_ul.isArray()) {
+                    List<BerBitString> collect = Stream.of(sub_frame_bitmask_ul)
+                            .map(val -> new BerBitString(DatatypeConverter.parseHexBinary(val.asText()), 10))
+                            .collect(Collectors.toList());
+
+                    subframeBitmaskUl.setSeqOf(collect);
+                } else {
+                    throw new Exception("sub_frame_bitmask_ul size is not the same as UE size");
+                }
+                rrmConfig.setSubframeBitmaskUl(subframeBitmaskUl);
             }
         }
 
