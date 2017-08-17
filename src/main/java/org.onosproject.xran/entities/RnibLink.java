@@ -16,17 +16,15 @@
 
 package org.onosproject.xran.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Lists;
+import org.onosproject.store.service.WallClockTimestamp;
 import org.onosproject.xran.codecs.api.*;
+import org.onosproject.xran.codecs.ber.types.BerInteger;
 import org.onosproject.xran.codecs.pdu.PDCPMeasReportPerUe;
 import org.onosproject.xran.codecs.pdu.RRMConfig;
 import org.onosproject.xran.identifiers.LinkId;
-import org.onosproject.xran.codecs.ber.types.BerInteger;
 
 import java.util.Arrays;
 import java.util.List;
@@ -76,15 +74,13 @@ public class RnibLink {
         trafficPercent.setTrafficPercentDl(new BerInteger(100));
         trafficPercent.setTrafficPercentUl(new BerInteger(100));
 
-        pdcpThroughput = new PDCPThroughput();
-        quality = new LinkQuality();
-        pdcpPackDelay = new PDCPPacketDelay();
-        resourceUsage = new ResourceUsage();
         timer = new Timer();
 
         type = Type.NON_SERVING;
 
         linkId = LinkId.valueOf(cell, ue);
+
+        quality = new LinkQuality();
 
         rrmParameters = new RRMConfig();
         RRMConfig.Crnti crnti = new RRMConfig.Crnti();
@@ -326,13 +322,226 @@ public class RnibLink {
     }
 
     @JsonPropertyOrder({
+            "RX",
+            "CQI",
+            "MCS"
+    })
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class LinkQuality {
+        RX RX = null;
+        CQI CQI = null;
+        MCS MCS = null;
+
+        public LinkQuality.RX getRX() {
+            return RX;
+        }
+
+        public void setRX(LinkQuality.RX RX) {
+            this.RX = RX;
+        }
+
+        public LinkQuality.CQI getCQI() {
+            return CQI;
+        }
+
+        public void setCQI(LinkQuality.CQI CQI) {
+            this.CQI = CQI;
+        }
+
+        public LinkQuality.MCS getMCS() {
+            return MCS;
+        }
+
+        public void setMCS(LinkQuality.MCS MCS) {
+            this.MCS = MCS;
+        }
+
+        @JsonPropertyOrder({
+                "RSRP",
+                "RSRQ",
+                "timesincelastupdate"
+        })
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        public static class RX {
+            double RSRP;
+            double RSRQ;
+            WallClockTimestamp timesincelastupdate;
+
+            @JsonCreator
+            public RX(@JsonProperty("RSRP") double RSRP, @JsonProperty("RSRQ") double RSRQ) {
+                this.RSRP = RSRP;
+                this.RSRQ = RSRQ;
+                this.timesincelastupdate = new WallClockTimestamp();
+            }
+
+            public double getRSRP() {
+                return RSRP;
+            }
+
+            public void setRSRP(double RSRP) {
+                this.RSRP = RSRP;
+            }
+
+            public double getRSRQ() {
+                return RSRQ;
+            }
+
+            public void setRSRQ(double RSRQ) {
+                this.RSRQ = RSRQ;
+            }
+
+            public long getTimesincelastupdate() {
+                return timesincelastupdate.unixTimestamp();
+            }
+
+            public void setTimesincelastupdate(WallClockTimestamp timesincelastupdate) {
+                this.timesincelastupdate = timesincelastupdate;
+            }
+
+            @Override
+            public String toString() {
+                return "RX{" +
+                        "RSRP=" + RSRP +
+                        ", RSRQ=" + RSRQ +
+                        ", timesincelastupdate=" + timesincelastupdate +
+                        '}';
+            }
+        }
+
+        @JsonPropertyOrder({
+                "Hist",
+                "Mode",
+                "Mean",
+                "timesincelastupdate"
+        })
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        public static class CQI {
+            RadioRepPerServCell.CqiHist Hist;
+            double Mode;
+            double Mean;
+            WallClockTimestamp timesincelastupdate;
+
+            @JsonCreator
+            public CQI(@JsonProperty("Hist") RadioRepPerServCell.CqiHist hist, @JsonProperty("Mode") double mode, @JsonProperty("Mean") double mean) {
+                Hist = hist;
+                Mode = mode;
+                Mean = mean;
+                this.timesincelastupdate = new WallClockTimestamp();
+            }
+
+            public RadioRepPerServCell.CqiHist getHist() {
+                return Hist;
+            }
+
+            public void setHist(RadioRepPerServCell.CqiHist hist) {
+                Hist = hist;
+            }
+
+            public double getMode() {
+                return Mode;
+            }
+
+            public void setMode(double mode) {
+                Mode = mode;
+            }
+
+            public double getMean() {
+                return Mean;
+            }
+
+            public void setMean(double mean) {
+                Mean = mean;
+            }
+
+            public long getTimesincelastupdate() {
+                return timesincelastupdate.unixTimestamp();
+            }
+
+            public void setTimesincelastupdate(WallClockTimestamp timesincelastupdate) {
+                this.timesincelastupdate = timesincelastupdate;
+            }
+
+            @Override
+            public String toString() {
+                return "CQI{" +
+                        "Hist=" + Hist +
+                        ", Mode=" + Mode +
+                        ", Mean=" + Mean +
+                        ", timesincelastupdate=" + timesincelastupdate +
+                        '}';
+            }
+        }
+
+        @JsonPropertyOrder({
+                "dl",
+                "ul",
+                "timesincelastupdate"
+        })
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        public static class MCS {
+            SchedMeasRepPerServCell.McsDl dl;
+            SchedMeasRepPerServCell.McsUl ul;
+            WallClockTimestamp timesincelastupdate;
+
+            @JsonCreator
+            public MCS(@JsonProperty("dl") SchedMeasRepPerServCell.McsDl dl, @JsonProperty("ul") SchedMeasRepPerServCell.McsUl ul) {
+                this.dl = dl;
+                this.ul = ul;
+                this.timesincelastupdate = new WallClockTimestamp();
+            }
+
+            public SchedMeasRepPerServCell.McsDl getDl() {
+                return dl;
+            }
+
+            public void setDl(SchedMeasRepPerServCell.McsDl dl) {
+                this.dl = dl;
+            }
+
+            public SchedMeasRepPerServCell.McsUl getUl() {
+                return ul;
+            }
+
+            public void setUl(SchedMeasRepPerServCell.McsUl ul) {
+                this.ul = ul;
+            }
+
+            public long getTimesincelastupdate() {
+                return timesincelastupdate.unixTimestamp();
+            }
+
+            public void setTimesincelastupdate(WallClockTimestamp timesincelastupdate) {
+                this.timesincelastupdate = timesincelastupdate;
+            }
+
+            @Override
+            public String toString() {
+                return "MCS{" +
+                        "dl=" + dl +
+                        ", ul=" + ul +
+                        ", timesincelastupdate=" + timesincelastupdate +
+                        '}';
+            }
+        }
+
+    }
+
+    @JsonPropertyOrder({
             "dl",
             "ul"
     })
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public class PDCPThroughput {
+    public static class PDCPThroughput {
+        WallClockTimestamp timesincelastupdate;
         private PDCPMeasReportPerUe.ThroughputDl dl;
         private PDCPMeasReportPerUe.ThroughputUl ul;
+
+        @JsonCreator
+        public PDCPThroughput(@JsonProperty("dl") PDCPMeasReportPerUe.ThroughputDl dl, @JsonProperty("ul") PDCPMeasReportPerUe.ThroughputUl ul) {
+            this.dl = dl;
+            this.ul = ul;
+            this.timesincelastupdate = new WallClockTimestamp();
+        }
 
         public PDCPMeasReportPerUe.ThroughputDl getDl() {
             return dl;
@@ -350,11 +559,21 @@ public class RnibLink {
             this.ul = ul;
         }
 
+        public long getTimesincelastupdate() {
+            return timesincelastupdate.unixTimestamp();
+        }
+
+        public void setTimesincelastupdate(WallClockTimestamp timesincelastupdate) {
+            this.timesincelastupdate = timesincelastupdate;
+        }
+
         @Override
-        public String toString() {
+        public String
+        toString() {
             return "PDCPThroughput{" +
                     "dl=" + dl +
                     ", ul=" + ul +
+                    ", timesincelastupdate=" + timesincelastupdate +
                     '}';
         }
     }
@@ -364,9 +583,17 @@ public class RnibLink {
             "ul"
     })
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public class PDCPPacketDelay {
+    public static class PDCPPacketDelay {
         PDCPMeasReportPerUe.PktDelayDl dl;
         PDCPMeasReportPerUe.PktDelayUl ul;
+        WallClockTimestamp timesincelastupdate;
+
+        @JsonCreator
+        public PDCPPacketDelay(@JsonProperty("dl") PDCPMeasReportPerUe.PktDelayDl dl, @JsonProperty("ul") PDCPMeasReportPerUe.PktDelayUl ul) {
+            this.dl = dl;
+            this.ul = ul;
+            this.timesincelastupdate = new WallClockTimestamp();
+        }
 
         public PDCPMeasReportPerUe.PktDelayDl getDl() {
             return dl;
@@ -384,11 +611,20 @@ public class RnibLink {
             this.ul = ul;
         }
 
+        public long getTimesincelastupdate() {
+            return timesincelastupdate.unixTimestamp();
+        }
+
+        public void setTimesincelastupdate(WallClockTimestamp timesincelastupdate) {
+            this.timesincelastupdate = timesincelastupdate;
+        }
+
         @Override
         public String toString() {
             return "PDCPPacketDelay{" +
                     "dl=" + dl +
                     ", ul=" + ul +
+                    ", timesincelastupdate=" + timesincelastupdate +
                     '}';
         }
     }
@@ -398,9 +634,17 @@ public class RnibLink {
             "ul"
     })
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public class ResourceUsage {
+    public static class ResourceUsage {
         PRBUsage.PrbUsageDl dl;
         PRBUsage.PrbUsageUl ul;
+        WallClockTimestamp timesincelastupdate;
+
+        @JsonCreator
+        public ResourceUsage(@JsonProperty("dl") PRBUsage.PrbUsageDl dl, @JsonProperty("ul") PRBUsage.PrbUsageUl ul) {
+            this.dl = dl;
+            this.ul = ul;
+            this.timesincelastupdate = new WallClockTimestamp();
+        }
 
         public PRBUsage.PrbUsageDl getDl() {
             return dl;
@@ -418,100 +662,20 @@ public class RnibLink {
             this.ul = ul;
         }
 
+        public long getTimesincelastupdate() {
+            return timesincelastupdate.unixTimestamp();
+        }
+
+        public void setTimesincelastupdate(WallClockTimestamp timesincelastupdate) {
+            this.timesincelastupdate = timesincelastupdate;
+        }
+
         @Override
         public String toString() {
             return "ResourceUsage{" +
                     "dl=" + dl +
                     ", ul=" + ul +
-                    '}';
-        }
-    }
-
-    @JsonPropertyOrder({
-            "rsrp",
-            "rsrq",
-            "cqiHist",
-            "cqiMode",
-            "cqiMean",
-            "mcsDl",
-            "mcsUl"
-    })
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public class LinkQuality {
-        double rsrp;
-        double rsrq;
-        RadioRepPerServCell.CqiHist cqiHist;
-        double cqiMode;
-        double cqiMean;
-        SchedMeasRepPerServCell.McsDl mcsDl;
-        SchedMeasRepPerServCell.McsUl mcsUl;
-
-        public double getRsrp() {
-            return rsrp;
-        }
-
-        public void setRsrp(double rsrp) {
-            this.rsrp = rsrp;
-        }
-
-        public double getRsrq() {
-            return rsrq;
-        }
-
-        public void setRsrq(double rsrq) {
-            this.rsrq = rsrq;
-        }
-
-        public RadioRepPerServCell.CqiHist getCqiHist() {
-            return cqiHist;
-        }
-
-        public void setCqiHist(RadioRepPerServCell.CqiHist cqiHist) {
-            this.cqiHist = cqiHist;
-        }
-
-        public double getCqiMode() {
-            return cqiMode;
-        }
-
-        public void setCqiMode(double cqiMode) {
-            this.cqiMode = cqiMode;
-        }
-
-        public double getCqiMean() {
-            return cqiMean;
-        }
-
-        public void setCqiMean(double cqiMean) {
-            this.cqiMean = cqiMean;
-        }
-
-        public SchedMeasRepPerServCell.McsDl getMcsDl() {
-            return mcsDl;
-        }
-
-        public void setMcsDl(SchedMeasRepPerServCell.McsDl mcsDl) {
-            this.mcsDl = mcsDl;
-        }
-
-        public SchedMeasRepPerServCell.McsUl getMcsUl() {
-            return mcsUl;
-        }
-
-        public void setMcsUl(SchedMeasRepPerServCell.McsUl mcsUl) {
-            this.mcsUl = mcsUl;
-        }
-
-        @Override
-        public String toString() {
-            return "LinkQuality{" +
-                    "rsrp=" + rsrp +
-                    ", rsrq=" + rsrq +
-                    ", cqiHist=" + cqiHist +
-                    ", cqiMode=" + cqiMode +
-                    ", cqiMean=" + cqiMean +
-                    ", mcsDl=" + mcsDl +
-                    ", mcsUl=" + mcsUl +
+                    ", timesincelastupdate=" + timesincelastupdate +
                     '}';
         }
     }

@@ -33,6 +33,7 @@ import org.onosproject.net.host.HostListener;
 import org.onosproject.net.host.HostService;
 import org.onosproject.xran.XranStore;
 import org.onosproject.xran.codecs.api.*;
+import org.onosproject.xran.codecs.ber.types.BerInteger;
 import org.onosproject.xran.codecs.pdu.*;
 import org.onosproject.xran.entities.RnibCell;
 import org.onosproject.xran.entities.RnibLink;
@@ -44,7 +45,6 @@ import org.onosproject.xran.providers.XranHostListener;
 import org.onosproject.xran.wrapper.CellMap;
 import org.onosproject.xran.wrapper.LinkMap;
 import org.onosproject.xran.wrapper.UeMap;
-import org.onosproject.xran.codecs.ber.types.BerInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -763,8 +763,10 @@ public class XranControllerImpl implements XranController {
                                     RSRPRange rsrp = rxSigReport.getRsrp();
 
                                     RnibLink.LinkQuality quality = link.getQuality();
-                                    quality.setRsrp(rsrp.value.intValue() - 140);
-                                    quality.setRsrq((rsrq.value.intValue() * 0.5) - 19.5);
+                                    quality.setRX(new RnibLink.LinkQuality.RX(
+                                            rsrp.value.intValue() - 140,
+                                            (rsrq.value.intValue() * 0.5) - 19.5
+                                    ));
                                 }
                             } else {
                                 log.warn("Could not find cell with PCI-ARFCN: {}", rxSigReport.getPciArfcn());
@@ -785,7 +787,6 @@ public class XranControllerImpl implements XranController {
                             if (link != null) {
                                 RadioRepPerServCell.CqiHist cqiHist = servCell.getCqiHist();
                                 RnibLink.LinkQuality quality = link.getQuality();
-                                quality.setCqiHist(cqiHist);
 
                                 final double[] values = {0, 0, 0};
                                 int i = 1;
@@ -795,8 +796,11 @@ public class XranControllerImpl implements XranController {
                                     values[2] += value.intValue();
                                 });
 
-                                quality.setCqiMode(values[0]);
-                                quality.setCqiMean(values[1] / values[2]);
+                                quality.setCQI(new RnibLink.LinkQuality.CQI(
+                                        cqiHist,
+                                        values[0],
+                                        values[1] / values[0]
+                                ));
 
                             } else {
                                 log.warn("Could not find link between: {}-{}", cell.getEcgi(), radioMeasReportPerUE.getCrnti());
@@ -821,11 +825,15 @@ public class XranControllerImpl implements XranController {
                         if (cell != null) {
                             RnibLink link = linkMap.get(cell.getEcgi(), schedMeasReportPerUE.getCrnti());
                             if (link != null) {
-                                link.getQuality().setMcsDl(servCell.getMcsDl());
-                                link.getQuality().setMcsUl(servCell.getMcsUl());
+                                link.getQuality().setMCS(new RnibLink.LinkQuality.MCS(
+                                        servCell.getMcsDl(),
+                                        servCell.getMcsUl()
+                                ));
 
-                                link.getResourceUsage().setDl(servCell.getPrbUsage().getPrbUsageDl());
-                                link.getResourceUsage().setUl(servCell.getPrbUsage().getPrbUsageUl());
+                                link.setResourceUsage(new RnibLink.ResourceUsage(
+                                        servCell.getPrbUsage().getPrbUsageDl(),
+                                        servCell.getPrbUsage().getPrbUsageUl()
+                                ));
                             } else {
                                 log.warn("Could not find link between: {}-{}", cell.getEcgi(),
                                         schedMeasReportPerUE.getCrnti());
@@ -840,8 +848,11 @@ public class XranControllerImpl implements XranController {
                     SchedMeasReportPerCell schedMeasReportPerCell = recv_pdu.getBody().getSchedMeasReportPerCell();
                     RnibCell cell = cellMap.get(schedMeasReportPerCell.getEcgi());
                     if (cell != null) {
-                        cell.setPrimaryPrbUsage(schedMeasReportPerCell.getPrbUsagePcell());
-                        cell.setSecondaryPrbUsage(schedMeasReportPerCell.getPrbUsageScell());
+                        cell.setPrbUsage(new RnibCell.PrbUsageContainer(
+                                schedMeasReportPerCell.getPrbUsagePcell(),
+                                schedMeasReportPerCell.getPrbUsageScell()
+                        ));
+
                         cell.setQci(schedMeasReportPerCell.getQciVals());
                     } else {
                         log.warn("Could not find cell with ECGI: {}", schedMeasReportPerCell.getEcgi());
@@ -853,10 +864,15 @@ public class XranControllerImpl implements XranController {
 
                     RnibLink link = linkMap.get(pdcpMeasReportPerUe.getEcgi(), pdcpMeasReportPerUe.getCrnti());
                     if (link != null) {
-                        link.getPdcpThroughput().setDl(pdcpMeasReportPerUe.getThroughputDl());
-                        link.getPdcpThroughput().setUl(pdcpMeasReportPerUe.getThroughputUl());
-                        link.getPdcpPackDelay().setDl(pdcpMeasReportPerUe.getPktDelayDl());
-                        link.getPdcpPackDelay().setUl(pdcpMeasReportPerUe.getPktDelayUl());
+                        link.setPdcpThroughput(new RnibLink.PDCPThroughput(
+                                pdcpMeasReportPerUe.getThroughputDl(),
+                                pdcpMeasReportPerUe.getThroughputUl()
+                        ));
+
+                        link.setPdcpPackDelay(new RnibLink.PDCPPacketDelay(
+                                pdcpMeasReportPerUe.getPktDelayDl(),
+                                pdcpMeasReportPerUe.getPktDelayUl()
+                        ));
                     } else {
                         log.warn("Could not find link between: {}-{}", pdcpMeasReportPerUe.getEcgi(),
                                 pdcpMeasReportPerUe.getCrnti());

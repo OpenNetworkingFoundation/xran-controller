@@ -16,21 +16,19 @@
 
 package org.onosproject.xran.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.onosproject.net.DeviceId;
+import org.onosproject.store.Timestamp;
+import org.onosproject.store.service.WallClockTimestamp;
 import org.onosproject.xran.codecs.api.ECGI;
 import org.onosproject.xran.codecs.api.PRBUsage;
+import org.onosproject.xran.codecs.ber.BerByteArrayOutputStream;
+import org.onosproject.xran.codecs.ber.types.BerInteger;
 import org.onosproject.xran.codecs.pdu.CellConfigReport;
 import org.onosproject.xran.codecs.pdu.L2MeasConfig;
 import org.onosproject.xran.codecs.pdu.RRMConfig;
 import org.onosproject.xran.codecs.pdu.SchedMeasReportPerCell;
-import org.onosproject.xran.codecs.ber.BerByteArrayOutputStream;
-import org.onosproject.xran.codecs.ber.types.BerBitString;
-import org.onosproject.xran.codecs.ber.types.BerInteger;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.ByteArrayInputStream;
@@ -76,7 +74,6 @@ public class RnibCell {
     private String version;
 
     public RnibCell() {
-        prbUsage = new PrbUsageContainer();
         version = "3";
 
         rrmConfig = new RRMConfig();
@@ -151,10 +148,6 @@ public class RnibCell {
     public CellConfigReport getConf() {
         return conf;
     }
-
-    /*public RRMConfig getRrmConfig() {
-        return rrmConfig;
-    }*/
 
     @JsonProperty("Configuration")
     public void setConf(CellConfigReport conf) {
@@ -242,14 +235,6 @@ public class RnibCell {
         this.qci = qci;
     }
 
-    public void setPrimaryPrbUsage(PRBUsage primary) {
-        this.prbUsage.primary = primary;
-    }
-
-    public void setSecondaryPrbUsage(PRBUsage secondary) {
-        this.prbUsage.secondary = secondary;
-    }
-
     @JsonProperty("MeasurementConfiguration")
     public L2MeasConfig getMeasConfig() {
         return measConfig;
@@ -290,12 +275,21 @@ public class RnibCell {
 
     @JsonPropertyOrder({
             "primary",
-            "secondary"
+            "secondary",
+            "timesincelastupdate"
     })
     @JsonIgnoreProperties(ignoreUnknown = true)
-    class PrbUsageContainer {
+    public static class PrbUsageContainer {
         PRBUsage primary;
         PRBUsage secondary;
+        WallClockTimestamp timesincelastupdate;
+
+        @JsonCreator
+        public PrbUsageContainer(@JsonProperty("primary") PRBUsage primary, @JsonProperty("secondary") PRBUsage secondary) {
+            this.primary = primary;
+            this.secondary = secondary;
+            this.timesincelastupdate = new WallClockTimestamp();
+        }
 
         public PRBUsage getPrimary() {
             return primary;
@@ -313,11 +307,19 @@ public class RnibCell {
             this.secondary = secondary;
         }
 
+        public long getTimesincelastupdate() {
+            return timesincelastupdate.unixTimestamp();
+        }
+        public void setTimesincelastupdate(WallClockTimestamp timesincelastupdate) {
+            this.timesincelastupdate = timesincelastupdate;
+        }
+
         @Override
         public String toString() {
             return "PrbUsageContainer{" +
                     "primary=" + primary +
                     ", secondary=" + secondary +
+                    ", timesincelastupdate=" + timesincelastupdate +
                     '}';
         }
     }
