@@ -308,8 +308,9 @@ public class RnibCell {
         }
 
         public long getTimesincelastupdate() {
-            return timesincelastupdate.unixTimestamp();
+            return new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp();
         }
+
         public void setTimesincelastupdate(WallClockTimestamp timesincelastupdate) {
             this.timesincelastupdate = timesincelastupdate;
         }
@@ -319,7 +320,7 @@ public class RnibCell {
             return "PrbUsageContainer{" +
                     "primary=" + primary +
                     ", secondary=" + secondary +
-                    ", timesincelastupdate=" + timesincelastupdate +
+                    ", timesincelastupdate=" + (new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp()) +
                     '}';
         }
     }

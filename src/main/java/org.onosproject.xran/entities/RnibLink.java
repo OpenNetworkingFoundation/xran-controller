@@ -391,7 +391,7 @@ public class RnibLink {
             }
 
             public long getTimesincelastupdate() {
-                return timesincelastupdate.unixTimestamp();
+                return new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp();
             }
 
             public void setTimesincelastupdate(WallClockTimestamp timesincelastupdate) {
@@ -403,7 +403,7 @@ public class RnibLink {
                 return "RX{" +
                         "RSRP=" + RSRP +
                         ", RSRQ=" + RSRQ +
-                        ", timesincelastupdate=" + timesincelastupdate +
+                        ", timesincelastupdate=" + (new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp()) +
                         '}';
             }
         }
@@ -454,7 +454,7 @@ public class RnibLink {
             }
 
             public long getTimesincelastupdate() {
-                return timesincelastupdate.unixTimestamp();
+                return new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp();
             }
 
             public void setTimesincelastupdate(WallClockTimestamp timesincelastupdate) {
@@ -467,7 +467,7 @@ public class RnibLink {
                         "Hist=" + Hist +
                         ", Mode=" + Mode +
                         ", Mean=" + Mean +
-                        ", timesincelastupdate=" + timesincelastupdate +
+                        ", timesincelastupdate=" + (new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp()) +
                         '}';
             }
         }
@@ -507,7 +507,7 @@ public class RnibLink {
             }
 
             public long getTimesincelastupdate() {
-                return timesincelastupdate.unixTimestamp();
+                return new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp();
             }
 
             public void setTimesincelastupdate(WallClockTimestamp timesincelastupdate) {
@@ -519,7 +519,7 @@ public class RnibLink {
                 return "MCS{" +
                         "dl=" + dl +
                         ", ul=" + ul +
-                        ", timesincelastupdate=" + timesincelastupdate +
+                        ", timesincelastupdate=" + (new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp()) +
                         '}';
             }
         }
@@ -560,7 +560,7 @@ public class RnibLink {
         }
 
         public long getTimesincelastupdate() {
-            return timesincelastupdate.unixTimestamp();
+            return new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp();
         }
 
         public void setTimesincelastupdate(WallClockTimestamp timesincelastupdate) {
@@ -573,7 +573,7 @@ public class RnibLink {
             return "PDCPThroughput{" +
                     "dl=" + dl +
                     ", ul=" + ul +
-                    ", timesincelastupdate=" + timesincelastupdate +
+                    ", timesincelastupdate=" + (new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp()) +
                     '}';
         }
     }
@@ -612,7 +612,7 @@ public class RnibLink {
         }
 
         public long getTimesincelastupdate() {
-            return timesincelastupdate.unixTimestamp();
+            return new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp();
         }
 
         public void setTimesincelastupdate(WallClockTimestamp timesincelastupdate) {
@@ -624,7 +624,7 @@ public class RnibLink {
             return "PDCPPacketDelay{" +
                     "dl=" + dl +
                     ", ul=" + ul +
-                    ", timesincelastupdate=" + timesincelastupdate +
+                    ", timesincelastupdate=" + (new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp()) +
                     '}';
         }
     }
@@ -663,7 +663,7 @@ public class RnibLink {
         }
 
         public long getTimesincelastupdate() {
-            return timesincelastupdate.unixTimestamp();
+            return new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp();
         }
 
         public void setTimesincelastupdate(WallClockTimestamp timesincelastupdate) {
@@ -675,7 +675,7 @@ public class RnibLink {
             return "ResourceUsage{" +
                     "dl=" + dl +
                     ", ul=" + ul +
-                    ", timesincelastupdate=" + timesincelastupdate +
+                    ", timesincelastupdate=" + (new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp()) +
                     '}';
         }
     }
