@@ -789,11 +789,12 @@ public class XranControllerImpl implements XranController {
                                 RnibLink.LinkQuality quality = link.getQuality();
 
                                 final double[] values = {0, 0, 0};
-                                int i = 1;
+                                final int[] i = {1};
                                 cqiHist.getBerInteger().forEach(value -> {
                                     values[0] = Math.max(values[0], value.intValue());
-                                    values[1] += i * value.intValue();
+                                    values[1] += i[0] * value.intValue();
                                     values[2] += value.intValue();
+                                    i[0]++;
                                 });
 
                                 quality.setCQI(new RnibLink.LinkQuality.CQI(
