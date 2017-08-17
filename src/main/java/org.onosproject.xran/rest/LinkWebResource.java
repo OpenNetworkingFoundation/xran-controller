@@ -150,6 +150,14 @@ public class LinkWebResource extends AbstractWebResource {
                     return handleRRMChange(link, rrmConf);
                 }
 
+                return ResponseHelper.getResponse(
+                        mapper(),
+                        ResponseHelper.statusCode.NOT_IMPLEMENTED,
+                        "Not Implemented",
+                        "The command you specified is not implemented or doesn't exist. We support " +
+                                "type/RRMConf/traficpercent commands."
+                );
+
             } catch (Exception e) {
                 String fullStackTrace = ExceptionUtils.getFullStackTrace(e);
                 log.error(fullStackTrace);
@@ -254,7 +262,8 @@ public class LinkWebResource extends AbstractWebResource {
                 mapper(),
                 ResponseHelper.statusCode.NOT_IMPLEMENTED,
                 "Not Implemented",
-                "This request is not implemented"
+                "The command you specified is not implemented or doesn't exist. We support " +
+                        "type/RRMConf/traficpercent commands."
         );
     }
 

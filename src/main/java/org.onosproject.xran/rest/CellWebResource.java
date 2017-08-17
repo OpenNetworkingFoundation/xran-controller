@@ -138,6 +138,14 @@ public class CellWebResource extends AbstractWebResource {
                         );
                     }
                 }
+
+                return ResponseHelper.getResponse(
+                        mapper(),
+                        ResponseHelper.statusCode.NOT_IMPLEMENTED,
+                        "Not Implemented",
+                        "The command you specified is not implemented or doesn't exist. We support " +
+                                "RRMConf commands."
+                );
             } catch (Exception e) {
                 String fullStackTrace = ExceptionUtils.getFullStackTrace(e);
                 log.error(fullStackTrace);
