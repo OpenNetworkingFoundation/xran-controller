@@ -421,7 +421,7 @@ public class LinkWebResource extends AbstractWebResource {
         final SynchronousQueue<String>[] queue = new SynchronousQueue[1];
         get(XranStore.class).modifyLinkRrmConf(link, rrmConf);
         queue[0] = get(XranController.class).sendModifiedRRMConf(link.getRrmParameters(),
-                link.getLinkId().getCell().getVersion().equals("3"));
+                link.getLinkId().getCell().getVersion() <= 3);
         String poll = queue[0].poll(5, TimeUnit.SECONDS);
 
         if (poll != null) {

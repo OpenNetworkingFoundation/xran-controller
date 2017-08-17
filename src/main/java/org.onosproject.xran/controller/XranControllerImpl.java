@@ -395,7 +395,7 @@ public class XranControllerImpl implements XranController {
                                     new TimerTask() {
                                         @Override
                                         public void run() {
-                                            if (ue.getCapability() == null) {
+                                            if (ue.getCapability() == null && primary.getVersion() >= 3) {
                                                 try {
                                                     ChannelHandlerContext ctx = cellMap.getCtx(primary.getEcgi());
                                                     XrancPdu xrancPdu = UECapabilityEnquiry.constructPacket(
@@ -407,32 +407,6 @@ public class XranControllerImpl implements XranController {
                                                     e.printStackTrace();
                                                 }
                                             } else {
-                                                if (ue.getMeasConfig() == null) {
-                                                    try {
-                                                        ChannelHandlerContext ctx = cellMap.getCtx(primary.getEcgi());
-                                                        RXSigMeasConfig.MeasCells measCells = new RXSigMeasConfig.MeasCells();
-                                                        xranStore.getCellNodes().forEach(cell -> {
-                                                            CellConfigReport cellReport = ((RnibCell) cell).getConf();
-                                                            if (cellReport != null) {
-                                                                PCIARFCN pciarfcn = new PCIARFCN();
-                                                                pciarfcn.setPci(cellReport.getPci());
-                                                                pciarfcn.setEarfcnDl(cellReport.getEarfcnDl());
-                                                                measCells.setPCIARFCN(pciarfcn);
-                                                            }
-                                                        });
-                                                        XrancPdu xrancPdu = RXSigMeasConfig.constructPacket(
-                                                                primary.getEcgi(),
-                                                                ue.getRanId(),
-                                                                measCells,
-                                                                xranConfig.getRxSignalInterval()
-                                                        );
-                                                        ue.setMeasConfig(xrancPdu.getBody().getRXSigMeasConfig());
-                                                        ctx.writeAndFlush(getSctpMessage(xrancPdu));
-                                                    } catch (IOException e) {
-                                                        log.warn(ExceptionUtils.getFullStackTrace(e));
-                                                        e.printStackTrace();
-                                                    }
-                                                }
                                                 timer.cancel();
                                                 timer.purge();
                                             }
@@ -441,6 +415,32 @@ public class XranControllerImpl implements XranController {
                                     0,
                                     xranConfig.getConfigRequestInterval() * 1000
                             );
+                            if (ue.getMeasConfig() == null) {
+                                try {
+                                    ChannelHandlerContext ctx = cellMap.getCtx(primary.getEcgi());
+                                    RXSigMeasConfig.MeasCells measCells = new RXSigMeasConfig.MeasCells();
+                                    xranStore.getCellNodes().forEach(cell -> {
+                                        CellConfigReport cellReport = ((RnibCell) cell).getConf();
+                                        if (cellReport != null) {
+                                            PCIARFCN pciarfcn = new PCIARFCN();
+                                            pciarfcn.setPci(cellReport.getPci());
+                                            pciarfcn.setEarfcnDl(cellReport.getEarfcnDl());
+                                            measCells.setPCIARFCN(pciarfcn);
+                                        }
+                                    });
+                                    XrancPdu xrancPdu = RXSigMeasConfig.constructPacket(
+                                            primary.getEcgi(),
+                                            ue.getRanId(),
+                                            measCells,
+                                            xranConfig.getRxSignalInterval()
+                                    );
+                                    ue.setMeasConfig(xrancPdu.getBody().getRXSigMeasConfig());
+                                    ctx.writeAndFlush(getSctpMessage(xrancPdu));
+                                } catch (IOException e) {
+                                    log.warn(ExceptionUtils.getFullStackTrace(e));
+                                    e.printStackTrace();
+                                }
+                            }
                         }
                     }
                     break;

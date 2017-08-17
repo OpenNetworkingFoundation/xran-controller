@@ -106,8 +106,8 @@ public class RnibCell {
         return ecgi;
     }
 
-    public String getVersion() {
-        return version;
+    public int getVersion() {
+        return Integer.parseInt(version);
     }
 
     public void setVersion(String version) {

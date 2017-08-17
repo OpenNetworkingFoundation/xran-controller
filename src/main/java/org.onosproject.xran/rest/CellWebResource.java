@@ -119,7 +119,7 @@ public class CellWebResource extends AbstractWebResource {
                     get(XranStore.class).modifyCellRrmConf(cell, rrmConf);
 
                     queue[0] = get(XranController.class).sendModifiedRRMConf(cell.getRrmConfig(),
-                            cell.getVersion().equals("3"));
+                            cell.getVersion() <= 3);
                     String poll = queue[0].poll(5, TimeUnit.SECONDS);
 
                     if (poll != null) {
