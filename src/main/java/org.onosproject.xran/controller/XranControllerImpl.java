@@ -347,8 +347,6 @@ public class XranControllerImpl implements XranController {
                                                     e.printStackTrace();
                                                 }
                                             } else {
-                                                // FIXME: maybe remove this map.
-                                                cellMap.putPciArfcn(cell);
                                                 try {
                                                     ChannelHandlerContext ctx = cellMap.
                                                             getCtx(ecgi);
@@ -567,7 +565,7 @@ public class XranControllerImpl implements XranController {
                     RnibCell cell = xranStore.getCell(ecgi);
                     cell.setVersion(recv_pdu.getHdr().getVer().toString());
                     cell.setConf(report);
-
+                    cellMap.putPciArfcn(cell);
                     break;
                 }
                 case 2: {
@@ -750,7 +748,7 @@ public class XranControllerImpl implements XranController {
                                     ));
                                 }
                             } else {
-                                log.warn("Could not find cell with PCI-ARFCN: {}", rxSigReport.getPciArfcn());
+                                log.warn("case 16: Could not find cell with PCI-ARFCN: {}", rxSigReport.getPciArfcn());
                             }
                         });
                     }
@@ -788,7 +786,7 @@ public class XranControllerImpl implements XranController {
                                 log.warn("Could not find link between: {}-{}", cell.getEcgi(), radioMeasReportPerUE.getCrnti());
                             }
                         } else {
-                            log.warn("Could not find cell with PCI-ARFCN: {}", servCell.getPciArfcn());
+                            log.warn("case 18: Could not find cell with PCI-ARFCN: {}", servCell.getPciArfcn());
                         }
                     });
                     break;
@@ -821,7 +819,7 @@ public class XranControllerImpl implements XranController {
                                         schedMeasReportPerUE.getCrnti());
                             }
                         } else {
-                            log.warn("Could not find cell with PCI-ARFCN: {}", servCell.getPciArfcn());
+                            log.warn("case 20: Could not find cell with PCI-ARFCN: {}", servCell.getPciArfcn());
                         }
                     });
                     break;
