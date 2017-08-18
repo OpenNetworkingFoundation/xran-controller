@@ -53,7 +53,7 @@ public class UeProvider extends AbstractProvider implements HostProvider {
     private HostProviderService providerService;
 
     public UeProvider() {
-        super(new ProviderId("xran", "org.onosproject.providers.cell"));
+        super(new ProviderId("xran", "org.onosproject.providers.ue"));
     }
 
     @Activate
@@ -87,7 +87,7 @@ public class UeProvider extends AbstractProvider implements HostProvider {
             }
 
             if (ue == null) {
-                log.error("UE {} is not found", ue);
+                log.error("UE is not found");
                 return;
             }
 
@@ -97,7 +97,7 @@ public class UeProvider extends AbstractProvider implements HostProvider {
                 ecgiSet.forEach(ecgi -> hostLocations.add(new HostLocation(deviceId(uri(ecgi)), PortNumber.portNumber(0), 0)));
 
                 SparseAnnotations annotations = DefaultAnnotations.builder()
-                        .set(AnnotationKeys.NAME, "UE #" + ue.getMmeS1apId())
+                        .set(AnnotationKeys.NAME, "UE " + ue.getMmeS1apId())
                         .build();
 
                 DefaultHostDescription desc = new DefaultHostDescription(

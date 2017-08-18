@@ -80,6 +80,7 @@ public class XranControllerImpl implements XranController {
     private final Controller controller = new Controller();
     private XranConfig xranConfig;
     private ApplicationId appId;
+    public int northbound_timeout;
     /* Services */
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     private DeviceService deviceService;
@@ -131,7 +132,7 @@ public class XranControllerImpl implements XranController {
 
         cellMap = new CellMap(xranStore);
         ueMap = new UeMap(xranStore);
-        linkMap = new LinkMap(xranStore);
+        linkMap = new LinkMap(xranStore, ueMap);
 
         xranStore.setController(this);
 
@@ -290,7 +291,6 @@ public class XranControllerImpl implements XranController {
     private void restartTimer(RnibUe ue) {
         Timer timer = new Timer();
         ue.setTimer(timer);
-        log.info("Starting UE timer...");
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -301,13 +301,12 @@ public class XranControllerImpl implements XranController {
                     log.info("UE not removed cause its ACTIVE");
                 }
             }
-        }, 10000);
+        }, xranConfig.getIdleUeRemoval());
     }
 
     private void restartTimer(RnibLink link) {
         Timer timer = new Timer();
         link.setTimer(timer);
-        log.info("Starting Link timer...");
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -315,7 +314,7 @@ public class XranControllerImpl implements XranController {
                 xranStore.removeLink(linkId);
                 log.info("Link is removed after not receiving Meas Reports for 10 seconds");
             }
-        }, 10000);
+        }, xranConfig.getNoMeasLinkRemoval());
 
     }
 
@@ -346,9 +345,38 @@ public class XranControllerImpl implements XranController {
                                                     e.printStackTrace();
                                                 }
                                             } else {
+                                                List<Object> ueNodes = xranStore.getUeNodes();
+                                                ueNodes.forEach(object -> {
+                                                    RnibUe ue = (RnibUe) object;
+                                                    try {
+                                                        ECGI primary_ecgi = linkMap.getPrimaryCell(ue).getEcgi();
+                                                        ChannelHandlerContext ctx = cellMap.getCtx(primary_ecgi);
+                                                        RXSigMeasConfig.MeasCells measCells = new RXSigMeasConfig.MeasCells();
+                                                        xranStore.getCellNodes().forEach(cell -> {
+                                                            CellConfigReport cellReport = ((RnibCell) cell).getConf();
+                                                            if (cellReport != null) {
+                                                                PCIARFCN pciarfcn = new PCIARFCN();
+                                                                pciarfcn.setPci(cellReport.getPci());
+                                                                pciarfcn.setEarfcnDl(cellReport.getEarfcnDl());
+                                                                measCells.setPCIARFCN(pciarfcn);
+                                                            }
+                                                        });
+                                                        XrancPdu xrancPdu = RXSigMeasConfig.constructPacket(
+                                                                primary_ecgi,
+                                                                ue.getRanId(),
+                                                                measCells,
+                                                                xranConfig.getRxSignalInterval()
+                                                        );
+                                                        ue.setMeasConfig(xrancPdu.getBody().getRXSigMeasConfig());
+                                                        ctx.writeAndFlush(getSctpMessage(xrancPdu));
+                                                    } catch (IOException e) {
+                                                        log.warn(ExceptionUtils.getFullStackTrace(e));
+                                                        e.printStackTrace();
+                                                    }
+                                                });
+
                                                 try {
-                                                    ChannelHandlerContext ctx = cellMap.
-                                                            getCtx(ecgi);
+                                                    ChannelHandlerContext ctx = cellMap.getCtx(ecgi);
                                                     XrancPdu xrancPdu = L2MeasConfig.constructPacket(ecgi, xranConfig.getL2MeasInterval());
                                                     cell.setMeasConfig(xrancPdu.getBody().getL2MeasConfig());
                                                     SctpMessage sctpMessage = getSctpMessage(xrancPdu);
@@ -435,7 +463,7 @@ public class XranControllerImpl implements XranController {
                                             primary.getEcgi(),
                                             ue.getRanId(),
                                             measCells,
-                                            xranConfig.getRxSignalInterval() * 1000
+                                            xranConfig.getRxSignalInterval()
                                     );
                                     ue.setMeasConfig(xrancPdu.getBody().getRXSigMeasConfig());
                                     ctx.writeAndFlush(getSctpMessage(xrancPdu));
@@ -520,7 +548,7 @@ public class XranControllerImpl implements XranController {
                 }
                 return true;
             } else {
-                ueMap.put(ue);
+                ueMap.put(cell, ue);
                 linkMap.putPrimaryLink(cell, ue);
 
                 Set<ECGI> ecgiSet = Sets.newConcurrentHashSet();
@@ -585,7 +613,7 @@ public class XranControllerImpl implements XranController {
                     // Decode UE Admission Status.
                     UEAdmissionStatus ueAdmissionStatus = recv_pdu.getBody().getUEAdmissionStatus();
 
-                    RnibUe ue = ueMap.get(ueAdmissionStatus.getCrnti());
+                    RnibUe ue = ueMap.get(ueAdmissionStatus.getEcgi(), ueAdmissionStatus.getCrnti());
                     if (ue != null) {
                         if (ueAdmissionStatus.getAdmEstStatus().value.intValue() == 0) {
                             ue.setState(RnibUe.State.ACTIVE);
@@ -616,7 +644,7 @@ public class XranControllerImpl implements XranController {
                 case 6: {
                     // Decode UE Reconfig_Ind.
                     UEReconfigInd ueReconfigInd = recv_pdu.getBody().getUEReconfigInd();
-                    RnibUe ue = ueMap.get(ueReconfigInd.getCrntiOld());
+                    RnibUe ue = ueMap.get(ueReconfigInd.getEcgi(), ueReconfigInd.getCrntiOld());
 
                     if (ue != null) {
                         ue.setRanId(ueReconfigInd.getCrntiNew());
@@ -629,7 +657,7 @@ public class XranControllerImpl implements XranController {
                     // If xRANc wants to deactivate UE, we pass UEReleaseInd from xRANc to eNB.
                     // Decode UE Release_Ind.
                     UEReleaseInd ueReleaseInd = recv_pdu.getBody().getUEReleaseInd();
-                    RnibUe ue = ueMap.get(ueReleaseInd.getCrnti());
+                    RnibUe ue = ueMap.get(ueReleaseInd.getEcgi(), ueReleaseInd.getCrnti());
                     if (ue != null) {
                         ue.setState(RnibUe.State.IDLE);
                         restartTimer(ue);
@@ -862,7 +890,7 @@ public class XranControllerImpl implements XranController {
                     // Decode UE Capability Info
                     UECapabilityInfo capabilityInfo = recv_pdu.getBody().getUECapabilityInfo();
 
-                    RnibUe ue = ueMap.get(capabilityInfo.getCrnti());
+                    RnibUe ue = ueMap.get(capabilityInfo.getEcgi(), capabilityInfo.getCrnti());
                     if (ue != null) {
                         ue.setCapability(capabilityInfo);
                     } else {
@@ -977,6 +1005,8 @@ public class XranControllerImpl implements XranController {
             }
 
             xranConfig = (XranConfig) config.get();
+
+            northbound_timeout = xranConfig.getNorthBoundTimeout();
 
             legitCells.putAll(xranConfig.activeCellSet());
 

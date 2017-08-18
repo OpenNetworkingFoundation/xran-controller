@@ -47,7 +47,7 @@ public class CellDeviceProvider extends AbstractProvider implements DeviceProvid
     private DeviceProviderService providerService;
 
     public CellDeviceProvider() {
-        super(new ProviderId("xran", "org.onosproject.provider.xran"));
+        super(new ProviderId("xran", "org.onosproject.providers.cell"));
     }
 
     @Activate
@@ -101,7 +101,7 @@ public class CellDeviceProvider extends AbstractProvider implements DeviceProvid
 
             Device.Type type = Device.Type.OTHER;
             SparseAnnotations annotations = DefaultAnnotations.builder()
-                    .set(AnnotationKeys.NAME, "eNodeB #" + cell.getEcgi().getEUTRANcellIdentifier())
+                    .set(AnnotationKeys.NAME, "eNodeB " + cell.getEcgi().getEUTRANcellIdentifier())
                     .set(AnnotationKeys.PROTOCOL, "SCTP")
                     .set(AnnotationKeys.CHANNEL_ID, "xxx")
                     .set(AnnotationKeys.MANAGEMENT_ADDRESS, "127.0.0.1")

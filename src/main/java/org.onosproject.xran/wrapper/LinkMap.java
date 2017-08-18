@@ -16,8 +16,6 @@
 
 package org.onosproject.xran.wrapper;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import org.onosproject.xran.XranStore;
 import org.onosproject.xran.codecs.api.CRNTI;
 import org.onosproject.xran.codecs.api.ECGI;
@@ -25,7 +23,6 @@ import org.onosproject.xran.codecs.api.MMEUES1APID;
 import org.onosproject.xran.entities.RnibCell;
 import org.onosproject.xran.entities.RnibLink;
 import org.onosproject.xran.entities.RnibUe;
-import org.onosproject.xran.identifiers.LinkId;
 import org.slf4j.Logger;
 
 import java.util.List;
@@ -35,26 +32,29 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public class LinkMap {
     private static final Logger log = getLogger(LinkMap.class);
-    private final XranStore xranStore;
-    private BiMap<CRNTI, MMEUES1APID> crntiMme = HashBiMap.create();
 
-    public LinkMap(XranStore xranStore) {
+    private final XranStore xranStore;
+
+    private UeMap ueMap;
+
+    public LinkMap(XranStore xranStore, UeMap ueMap) {
         this.xranStore = xranStore;
+        this.ueMap = ueMap;
     }
 
     public void putPrimaryLink(RnibCell cell, RnibUe ue) {
         RnibLink link = new RnibLink(cell, ue);
         link.setType(RnibLink.Type.SERVING_PRIMARY);
         xranStore.storeLink(link);
-        crntiMme.put(ue.getRanId(), ue.getMmeS1apId());
+
+        ueMap.putCrnti(cell, ue);
     }
 
     public RnibLink putNonServingLink(RnibCell cell, CRNTI crnti) {
         RnibLink link = null;
-        MMEUES1APID mmeues1APID = crntiMme.get(crnti);
+        RnibUe ue = ueMap.get(cell.getEcgi(), crnti);
 
-        if (mmeues1APID != null) {
-            RnibUe ue = xranStore.getUe(mmeues1APID);
+        if (ue != null) {
             link = new RnibLink(cell, ue);
             xranStore.storeLink(link);
         } else {
@@ -71,41 +71,16 @@ public class LinkMap {
     }
 
     public RnibLink get(ECGI src, CRNTI dst) {
-        MMEUES1APID mmeues1APID = crntiMme.get(dst);
+        RnibUe ue = ueMap.get(src, dst);
 
-        if (mmeues1APID != null) {
-            return xranStore.getLink(src, mmeues1APID);
+        if (ue != null) {
+            return xranStore.getLink(src, ue.getMmeS1apId());
         }
         return null;
     }
 
     public CRNTI getCrnti(MMEUES1APID mme) {
-        return crntiMme.inverse().get(mme);
-    }
-
-    public boolean remove(ECGI src, MMEUES1APID dst) {
-        RnibLink link = xranStore.getLink(src, dst);
-
-        if (link != null) {
-            LinkId linkId = link.getLinkId();
-            if (linkId != null) {
-                return xranStore.removeLink(linkId);
-            }
-        }
-        return false;
-    }
-
-    public boolean remove(ECGI src, CRNTI dst) {
-        MMEUES1APID mmeues1APID = crntiMme.get(dst);
-
-        RnibLink link = xranStore.getLink(src, mmeues1APID);
-        if (link != null) {
-            LinkId linkId = link.getLinkId();
-            if (linkId != null) {
-                return xranStore.removeLink(linkId);
-            }
-        }
-        return false;
+        return ueMap.getCrntUe().inverse().get(mme).getValue();
     }
 
     public RnibCell getPrimaryCell(RnibUe ue) {

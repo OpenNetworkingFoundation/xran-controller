@@ -17,9 +17,7 @@
 package org.onosproject.xran.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.onosproject.core.ApplicationId;
-import org.onosproject.net.DeviceId;
 import org.onosproject.net.config.Config;
 import org.onosproject.xran.codecs.api.ECGI;
 import org.onosproject.xran.codecs.api.EUTRANCellIdentifier;
@@ -32,18 +30,15 @@ import javax.xml.bind.DatatypeConverter;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static org.onosproject.net.DeviceId.deviceId;
 
 public class XranConfig extends Config<ApplicationId> {
 
     private static final String CELLS = "active_cells";
 
     private static final String PLMN_ID = "plmn_id";
+
     private static final String ECI_ID = "eci";
 
     private static final String IP_ADDR = "ip_addr";
@@ -52,13 +47,19 @@ public class XranConfig extends Config<ApplicationId> {
 
     private static final String XRANC_CELLCONFIG_INTERVAL = "xranc_cellconfigrequest_interval_seconds";
 
-    private static final String RX_SIGNAL_MEAS_REPORT_INTERVAL = "rx_signal_meas_report_interval_seconds";
+    private static final String RX_SIGNAL_MEAS_REPORT_INTERVAL = "rx_signal_meas_report_interval_ms";
 
     private static final String L2_MEAS_REPORT_INTERVAL = "l2_meas_report_interval_ms";
 
     private static final String ADMISSION_SUCCESS = "admission_success";
 
     private static final String BEARER_SUCCESS = "bearer_success";
+
+    private static final String NO_MEAS_LINK_REMOVAL = "no_meas_link_removal_ms";
+
+    private static final String IDLE_UE_REMOVAL = "idle_ue_removal_ms";
+
+    private static final String NORTHBOUND_TIMEOUT = "nb_response_timeout_ms";
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -110,6 +111,17 @@ public class XranConfig extends Config<ApplicationId> {
         return object.get(L2_MEAS_REPORT_INTERVAL).asInt();
     }
 
+    public int getNoMeasLinkRemoval() {
+        return object.get(NO_MEAS_LINK_REMOVAL).asInt();
+    }
+
+    public int getIdleUeRemoval() {
+        return object.get(IDLE_UE_REMOVAL).asInt();
+    }
+
+    public int getNorthBoundTimeout() {
+        return object.get(NORTHBOUND_TIMEOUT).asInt();
+    }
 
     private ECGI hexToECGI(String plmn_id, String eci) {
         byte[] bytes = HexConverter.fromShortHexString(plmn_id);

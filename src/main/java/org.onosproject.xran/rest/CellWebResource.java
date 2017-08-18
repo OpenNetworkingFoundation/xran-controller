@@ -22,6 +22,7 @@ import org.onosproject.rest.AbstractWebResource;
 import org.onosproject.xran.XranStore;
 import org.onosproject.xran.annotations.Patch;
 import org.onosproject.xran.controller.XranController;
+import org.onosproject.xran.controller.XranControllerImpl;
 import org.onosproject.xran.entities.RnibCell;
 import org.onosproject.xran.rest.ResponseHelper.statusCode;
 import org.slf4j.Logger;
@@ -119,7 +120,7 @@ public class CellWebResource extends AbstractWebResource {
 
                     queue[0] = get(XranController.class).sendModifiedRRMConf(cell.getRrmConfig(),
                             cell.getVersion() <= 3);
-                    String poll = queue[0].poll(5, TimeUnit.SECONDS);
+                    String poll = queue[0].poll(get(XranControllerImpl.class).northbound_timeout, TimeUnit.MILLISECONDS);
 
                     if (poll != null) {
                         return ResponseHelper.getResponse(

@@ -24,6 +24,7 @@ import org.onosproject.rest.AbstractWebResource;
 import org.onosproject.xran.XranStore;
 import org.onosproject.xran.annotations.Patch;
 import org.onosproject.xran.controller.XranController;
+import org.onosproject.xran.controller.XranControllerImpl;
 import org.onosproject.xran.entities.RnibCell;
 import org.onosproject.xran.entities.RnibLink;
 import org.onosproject.xran.entities.RnibUe;
@@ -290,7 +291,7 @@ public class LinkWebResource extends AbstractWebResource {
                             .findFirst();
                     if (primary.isPresent()) {
                         queue[0] = get(XranController.class).sendHORequest(link, primary.get());
-                        String poll = queue[0].poll(5, TimeUnit.SECONDS);
+                        String poll = queue[0].poll(get(XranControllerImpl.class).northbound_timeout, TimeUnit.MILLISECONDS);
 
                         if (poll != null) {
                             return ResponseHelper.getResponse(
@@ -364,7 +365,7 @@ public class LinkWebResource extends AbstractWebResource {
                 case SERVING_SECONDARY_DC:
                 case NON_SERVING:
                     queue[0] = get(XranController.class).sendScellAdd(link);
-                    String poll = queue[0].poll(5, TimeUnit.SECONDS);
+                    String poll = queue[0].poll(get(XranControllerImpl.class).northbound_timeout, TimeUnit.MILLISECONDS);
                     if (poll != null) {
                         return ResponseHelper.getResponse(
                                 mapper(),
@@ -433,7 +434,7 @@ public class LinkWebResource extends AbstractWebResource {
                     "xICIC was sent successfully"
             );
         } else {
-            String poll = queue[0].poll(5, TimeUnit.SECONDS);
+            String poll = queue[0].poll(get(XranControllerImpl.class).northbound_timeout, TimeUnit.MILLISECONDS);
 
             if (poll != null) {
                 return ResponseHelper.getResponse(
