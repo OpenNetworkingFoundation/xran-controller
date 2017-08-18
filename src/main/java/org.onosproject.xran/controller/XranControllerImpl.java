@@ -436,7 +436,7 @@ public class XranControllerImpl implements XranController {
                                             primary.getEcgi(),
                                             ue.getRanId(),
                                             measCells,
-                                            xranConfig.getRxSignalInterval()
+                                            xranConfig.getRxSignalInterval() * 1000
                                     );
                                     ue.setMeasConfig(xrancPdu.getBody().getRXSigMeasConfig());
                                     ctx.writeAndFlush(getSctpMessage(xrancPdu));
