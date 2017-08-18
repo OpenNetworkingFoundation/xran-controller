@@ -110,7 +110,6 @@ public class XranControllerImpl implements XranController {
     private ConcurrentMap<ECGI, SynchronousQueue<String>> hoQueue = new ConcurrentHashMap<>();
     private ConcurrentMap<ECGI, SynchronousQueue<String>> RRMCellQueue = new ConcurrentHashMap<>();
     private ConcurrentMap<CRNTI, SynchronousQueue<String>> scellAddQueue = new ConcurrentHashMap<>();
-    private ConcurrentMap<CRNTI, SynchronousQueue<String>> scellDeleteQueue = new ConcurrentHashMap<>();
     /* AGENTS */
     private InternalXranDeviceAgent deviceAgent = new InternalXranDeviceAgent();
     private InternalXranHostAgent hostAgent = new InternalXranHostAgent();
@@ -731,13 +730,13 @@ public class XranControllerImpl implements XranController {
                                 if (link == null) {
                                     log.warn("Could not find link between: {}-{} | Creating non-serving link..", ecgi, rxSigMeasReport.getCrnti());
                                     link = linkMap.putNonServingLink(cell, rxSigMeasReport.getCrnti());
-
-                                    if (link != null) {
-                                        restartTimer(link);
-                                    }
                                 }
 
                                 if (link != null) {
+                                    if (link.getType().equals(RnibLink.Type.NON_SERVING)) {
+                                        restartTimer(link);
+                                    }
+
                                     RSRQRange rsrq = rxSigReport.getRsrq();
                                     RSRPRange rsrp = rxSigReport.getRsrp();
 
