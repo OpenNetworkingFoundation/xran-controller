@@ -19,7 +19,6 @@ package org.onosproject.xran.wrapper;
 import org.onosproject.xran.XranStore;
 import org.onosproject.xran.codecs.api.CRNTI;
 import org.onosproject.xran.codecs.api.ECGI;
-import org.onosproject.xran.codecs.api.MMEUES1APID;
 import org.onosproject.xran.entities.RnibCell;
 import org.onosproject.xran.entities.RnibLink;
 import org.onosproject.xran.entities.RnibUe;
@@ -63,7 +62,20 @@ public class LinkMap {
         return link;
     }
 
-    public RnibLink get(ECGI src, MMEUES1APID dst) {
+    public RnibLink putNonServingLink(RnibCell cell, Long ueId) {
+        RnibLink link = null;
+        RnibUe ue = ueMap.get(ueId);
+
+        if (ue != null) {
+            link = new RnibLink(cell, ue);
+            xranStore.storeLink(link);
+        } else {
+            log.error("Could not find mapping for CRNTI to UE. Aborting creation of non-serving link");
+        }
+        return link;
+    }
+
+    public RnibLink get(ECGI src, Long dst) {
         if (src != null && dst != null) {
             return xranStore.getLink(src, dst);
         }
@@ -74,17 +86,17 @@ public class LinkMap {
         RnibUe ue = ueMap.get(src, dst);
 
         if (ue != null) {
-            return xranStore.getLink(src, ue.getMmeS1apId());
+            return xranStore.getLink(src, ue.getId());
         }
         return null;
     }
 
-    public CRNTI getCrnti(MMEUES1APID mme) {
-        return ueMap.getCrntUe().inverse().get(mme).getValue();
+    public CRNTI getCrnti(Long ueId) {
+        return ueMap.getCrntUe().inverse().get(ueId).getValue();
     }
 
     public RnibCell getPrimaryCell(RnibUe ue) {
-        List<RnibLink> linksByUeId = xranStore.getLinksByUeId(ue.getMmeS1apId().longValue());
+        List<RnibLink> linksByUeId = xranStore.getLinksByUeId(ue.getId());
         Optional<RnibLink> primary = linksByUeId.stream()
                 .filter(l -> l.getType().equals(RnibLink.Type.SERVING_PRIMARY))
                 .findFirst();

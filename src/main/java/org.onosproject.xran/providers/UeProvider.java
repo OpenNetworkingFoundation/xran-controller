@@ -97,7 +97,7 @@ public class UeProvider extends AbstractProvider implements HostProvider {
                 ecgiSet.forEach(ecgi -> hostLocations.add(new HostLocation(deviceId(uri(ecgi)), PortNumber.portNumber(0), 0)));
 
                 SparseAnnotations annotations = DefaultAnnotations.builder()
-                        .set(AnnotationKeys.NAME, "UE " + ue.getMmeS1apId())
+                        .set(AnnotationKeys.NAME, "UE " + ue.getId())
                         .build();
 
                 DefaultHostDescription desc = new DefaultHostDescription(

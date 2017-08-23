@@ -22,11 +22,11 @@ import com.google.common.collect.Lists;
 import org.apache.felix.scr.annotations.*;
 import org.onosproject.core.ApplicationId;
 import org.onosproject.core.CoreService;
+import org.onosproject.core.IdGenerator;
 import org.onosproject.store.AbstractStore;
 import org.onosproject.xran.XranStore;
 import org.onosproject.xran.codecs.api.ECGI;
 import org.onosproject.xran.codecs.api.EUTRANCellIdentifier;
-import org.onosproject.xran.codecs.api.MMEUES1APID;
 import org.onosproject.xran.controller.XranController;
 import org.onosproject.xran.entities.RnibCell;
 import org.onosproject.xran.entities.RnibLink;
@@ -57,18 +57,23 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
     protected CoreService coreService;
     private ConcurrentMap<LinkId, RnibLink> linkMap = new ConcurrentHashMap<>();
     private ConcurrentMap<ECGI, RnibCell> cellMap = new ConcurrentHashMap<>();
-    private ConcurrentMap<MMEUES1APID, RnibUe> ueMap = new ConcurrentHashMap<>();
+    private ConcurrentMap<Long, RnibUe> ueMap = new ConcurrentHashMap<>();
     private ConcurrentMap<Object, RnibSlice> sliceMap = new ConcurrentHashMap<>();
     private XranController controller;
+
+    private IdGenerator ueIdGenerator;
 
     @Activate
     public void activate() {
         ApplicationId appId = coreService.getAppId(XRAN_APP_ID);
+
+        ueIdGenerator = coreService.getIdGenerator("xran-ue-id");
+
         log.info("XRAN Default Store Started");
     }
 
     @Deactivate
-    public void deactive() {
+    public void deactivate() {
         log.info("XRAN Default Store Stopped");
     }
 
@@ -110,12 +115,11 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
     @Override
     public List<RnibLink> getLinksByUeId(long euId) {
         List<RnibLink> list = Lists.newArrayList();
-        MMEUES1APID mme = new MMEUES1APID(euId);
 
         list.addAll(
                 linkMap.keySet()
                         .stream()
-                        .filter(k -> k.getMmeues1apid().equals(mme))
+                        .filter(k -> k.getUeId().equals(euId))
                         .map(v -> linkMap.get(v))
                         .collect(Collectors.toList()));
 
@@ -126,12 +130,11 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
     @Override
     public RnibLink getLinkBetweenCellIdUeId(String eciHex, long euId) {
         EUTRANCellIdentifier eci = hexToECI(eciHex);
-        MMEUES1APID mme = new MMEUES1APID(euId);
 
         Optional<LinkId> first = linkMap.keySet()
                 .stream()
                 .filter(linkId -> linkId.getEcgi().getEUTRANcellIdentifier().equals(eci))
-                .filter(linkId -> linkId.getMmeues1apid().equals(mme))
+                .filter(linkId -> linkId.getUeId().equals(euId))
                 .findFirst();
 
         return first.map(linkId -> linkMap.get(linkId)).orElse(null);
@@ -144,7 +147,7 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
                 // if we add a primary link then change the primary to non serving
                 if (link.getType().equals(RnibLink.Type.SERVING_PRIMARY)) {
                     RnibUe ue = link.getLinkId().getUe();
-                    getLinksByUeId(ue.getMmeS1apId().longValue())
+                    getLinksByUeId(ue.getId())
                             .forEach(l -> {
                                 if (l.getType().equals(RnibLink.Type.SERVING_PRIMARY)) {
                                     l.setType(RnibLink.Type.NON_SERVING);
@@ -162,9 +165,9 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
     }
 
     @Override
-    public RnibLink getLink(ECGI ecgi, MMEUES1APID mme) {
+    public RnibLink getLink(ECGI ecgi, Long ueId) {
 
-        LinkId linkId = LinkId.valueOf(ecgi, mme);
+        LinkId linkId = LinkId.valueOf(ecgi, ueId);
         return linkMap.get(linkId);
     }
 
@@ -267,25 +270,19 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
 
     @Override
     public void storeUe(RnibUe ue) {
-        if (ue.getMmeS1apId() != null) {
-            ueMap.putIfAbsent(ue.getMmeS1apId(), ue);
-        }
+        long newId = ueIdGenerator.getNewId();
+        ue.setId(newId);
+        ueMap.put(newId, ue);
     }
 
     @Override
-    public boolean removeUe(MMEUES1APID mme) {
-        return ueMap.remove(mme) != null;
+    public boolean removeUe(long ueId) {
+        return ueMap.remove(ueId) != null;
     }
 
     @Override
-    public RnibUe getUe(long euId) {
-        MMEUES1APID mme = new MMEUES1APID(euId);
-        return ueMap.get(mme);
-    }
-
-    @Override
-    public RnibUe getUe(MMEUES1APID mme) {
-        return ueMap.get(mme);
+    public RnibUe getUe(long ueId) {
+        return ueMap.get(ueId);
     }
 
     private EUTRANCellIdentifier hexToECI(String eciHex) {

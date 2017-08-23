@@ -215,7 +215,7 @@ public class LinkWebResource extends AbstractWebResource {
             );
         }
 
-        if (get(XranStore.class).getLink(cell.getEcgi(), ue.getMmeS1apId()) != null) {
+        if (get(XranStore.class).getLink(cell.getEcgi(), ue.getId()) != null) {
             return ResponseHelper.getResponse(
                     mapper(),
                     ResponseHelper.statusCode.BAD_REQUEST,
@@ -284,14 +284,14 @@ public class LinkWebResource extends AbstractWebResource {
                 case SERVING_SECONDARY_CA:
                 case SERVING_SECONDARY_DC:
                 case NON_SERVING: {
-                    List<RnibLink> linksByUeId = get(XranStore.class).getLinksByUeId(link.getLinkId().getMmeues1apid().longValue());
+                    List<RnibLink> linksByUeId = get(XranStore.class).getLinksByUeId(link.getLinkId().getUeId());
 
                     Optional<RnibLink> primary = linksByUeId.stream()
                             .filter(l -> l.getType().equals(RnibLink.Type.SERVING_PRIMARY))
                             .findFirst();
                     if (primary.isPresent()) {
                         queue[0] = get(XranController.class).sendHORequest(link, primary.get());
-                        String poll = queue[0].poll(get(XranControllerImpl.class).northbound_timeout, TimeUnit.MILLISECONDS);
+                        String poll = queue[0].poll(get(XranController.class).getNorthbound_timeout(), TimeUnit.MILLISECONDS);
 
                         if (poll != null) {
                             return ResponseHelper.getResponse(
@@ -365,7 +365,7 @@ public class LinkWebResource extends AbstractWebResource {
                 case SERVING_SECONDARY_DC:
                 case NON_SERVING:
                     queue[0] = get(XranController.class).sendScellAdd(link);
-                    String poll = queue[0].poll(get(XranControllerImpl.class).northbound_timeout, TimeUnit.MILLISECONDS);
+                    String poll = queue[0].poll(get(XranController.class).getNorthbound_timeout(), TimeUnit.MILLISECONDS);
                     if (poll != null) {
                         return ResponseHelper.getResponse(
                                 mapper(),
@@ -434,7 +434,7 @@ public class LinkWebResource extends AbstractWebResource {
                     "xICIC was sent successfully"
             );
         } else {
-            String poll = queue[0].poll(get(XranControllerImpl.class).northbound_timeout, TimeUnit.MILLISECONDS);
+            String poll = queue[0].poll(get(XranController.class).getNorthbound_timeout(), TimeUnit.MILLISECONDS);
 
             if (poll != null) {
                 return ResponseHelper.getResponse(

@@ -43,11 +43,11 @@ public interface XranStore extends Store {
 
     List<RnibLink> getLinksByCellId(String eciHex);
 
-    List<RnibLink> getLinksByUeId(long euId);
+    List<RnibLink> getLinksByUeId(long ueId);
 
-    RnibLink getLinkBetweenCellIdUeId(String cellId, long euId);
+    RnibLink getLinkBetweenCellIdUeId(String cellId, long ueId);
 
-    RnibLink getLink(ECGI ecgi, MMEUES1APID mme);
+    RnibLink getLink(ECGI ecgi, Long ueId);
 
     void modifyLinkRrmConf(RnibLink link, JsonNode rrmConf);
 
@@ -95,9 +95,7 @@ public interface XranStore extends Store {
 
     RnibUe getUe(long euId);
 
-    RnibUe getUe(MMEUES1APID mme);
-
     void storeUe(RnibUe ue);
 
-    boolean removeUe(MMEUES1APID mme);
+    boolean removeUe(long ueId);
 }

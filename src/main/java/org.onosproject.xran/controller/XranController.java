@@ -28,7 +28,7 @@ import java.util.concurrent.SynchronousQueue;
  */
 public interface XranController {
 
-    SynchronousQueue<String> sendHORequest(RnibLink newLink, RnibLink oldLink);
+    SynchronousQueue<String> sendHORequest(RnibLink newLink, RnibLink oldLink) throws InterruptedException;
 
     void addListener(XranDeviceListener listener);
 
@@ -43,4 +43,8 @@ public interface XranController {
     SynchronousQueue<String> sendScellAdd(RnibLink link);
 
     boolean sendScellDelete(RnibLink link);
+
+    int getNorthbound_timeout();
+
+    void setNorthbound_timeout(int northbound_timeout);
 }

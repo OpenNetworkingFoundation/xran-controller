@@ -23,23 +23,17 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.sctp.SctpMessage;
 import org.apache.commons.lang.exception.ExceptionUtils;
-import org.onosproject.net.DeviceId;
-import org.onosproject.xran.codecs.pdu.XrancPdu;
 import org.onosproject.xran.codecs.ber.BerByteArrayOutputStream;
+import org.onosproject.xran.codecs.pdu.XrancPdu;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.Charset;
-
-import static org.onosproject.net.DeviceId.deviceId;
 
 /**
  * Created by dimitris on 7/20/17.
@@ -89,7 +83,7 @@ public class XranChannelHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws IOException {
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws IOException, InterruptedException {
         SctpMessage sctpMessage = (SctpMessage) msg;
         ByteBuf byteBuf = sctpMessage.content();
 

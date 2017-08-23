@@ -18,9 +18,7 @@ package org.onosproject.xran.entities;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.collect.Lists;
 import org.onosproject.net.DeviceId;
-import org.onosproject.store.Timestamp;
 import org.onosproject.store.service.WallClockTimestamp;
 import org.onosproject.xran.codecs.api.ECGI;
 import org.onosproject.xran.codecs.api.PRBUsage;
@@ -159,7 +157,7 @@ public class RnibCell {
 
     public void modifyRrmConfig(JsonNode rrmConfigNode, List<RnibUe> ueList) throws Exception {
         RRMConfig.Crnti crnti = new RRMConfig.Crnti();
-        ueList.forEach(ue -> crnti.addCRNTI(ue.getRanId()));
+        ueList.forEach(ue -> crnti.addCRNTI(ue.getCrnti()));
 
         {
             JsonNode p_a = rrmConfigNode.path("p_a");

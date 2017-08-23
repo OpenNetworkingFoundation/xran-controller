@@ -21,13 +21,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.onosproject.xran.codecs.api.ECGI;
-import org.onosproject.xran.codecs.api.MMEUES1APID;
 import org.onosproject.xran.entities.RnibCell;
 import org.onosproject.xran.entities.RnibUe;
 
 @JsonPropertyOrder({
         "ECGI",
-        "MMEUES1APID"
+        "UEID"
 })
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LinkId {
@@ -45,12 +44,12 @@ public class LinkId {
         return new LinkId(cell, ue);
     }
 
-    public static LinkId valueOf(ECGI ecgi, MMEUES1APID mmeues1APID) {
+    public static LinkId valueOf(ECGI ecgi, Long UeId) {
         RnibCell cell = new RnibCell();
         RnibUe ue = new RnibUe();
 
         cell.setEcgi(ecgi);
-        ue.setMmeS1apId(mmeues1APID);
+        ue.setId(UeId);
         return new LinkId(cell, ue);
     }
 
@@ -64,14 +63,14 @@ public class LinkId {
         cell.setEcgi(sourceId);
     }
 
-    @JsonProperty("MMEUES1APID")
-    public MMEUES1APID getMmeues1apid() {
-        return ue.getMmeS1apId();
+    @JsonProperty("UEID")
+    public Long getUeId() {
+        return ue.getId();
     }
 
-    @JsonProperty("MMEUES1APID")
-    public void setMmeues1apid(MMEUES1APID destinationId) {
-        ue.setMmeS1apId(destinationId);
+    @JsonProperty("UEID")
+    public void setUeId(Long destinationId) {
+        ue.setId(destinationId);
     }
 
     @JsonIgnore
@@ -100,14 +99,14 @@ public class LinkId {
                 o != null &&
                         o instanceof LinkId &&
                         cell.getEcgi().equals(((LinkId) o).cell.getEcgi()) &&
-                        ue.getMmeS1apId().equals(((LinkId) o).ue.getMmeS1apId());
+                        ue.getId().equals(((LinkId) o).ue.getId());
 
     }
 
     @Override
     public int hashCode() {
         int result = cell.getEcgi().hashCode();
-        result = 31 * result + ue.getMmeS1apId().hashCode();
+        result = 31 * result + ue.getId().hashCode();
         return result;
     }
 

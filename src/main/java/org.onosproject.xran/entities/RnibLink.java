@@ -92,7 +92,7 @@ public class RnibLink {
 
         rrmParameters = new RRMConfig();
         RRMConfig.Crnti crnti = new RRMConfig.Crnti();
-        crnti.addCRNTI(linkId.getUe().getRanId());
+        crnti.addCRNTI(linkId.getUe().getCrnti());
         rrmParameters.setCrnti(crnti);
         rrmParameters.setEcgi(linkId.getEcgi());
     }

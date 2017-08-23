@@ -29,7 +29,16 @@ public class ResponseHelper {
         ObjectNode rootNode = mapper.createObjectNode();
 
         switch (status) {
-            case OK:
+            case OK: {
+                ArrayNode data = rootNode.putArray("data");
+                ObjectNode addObject = data.addObject();
+                addObject.put("status", status.status);
+                addObject.put("title", title);
+                addObject.put("detail", detail);
+                return Response.status(status.status)
+                        .entity(rootNode.toString())
+                        .build();
+            }
             case BAD_REQUEST:
             case NOT_IMPLEMENTED:
             case REQUEST_TIMEOUT:

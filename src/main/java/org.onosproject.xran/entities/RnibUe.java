@@ -30,8 +30,7 @@ import org.onosproject.xran.codecs.pdu.UECapabilityInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -42,6 +41,7 @@ import static org.onosproject.net.HostId.hostId;
  * Created by dimitris on 7/22/17.
  */
 @JsonPropertyOrder({
+        "ID",
         "IMSI",
         "ENBUES1APID",
         "MMEUES1APID",
@@ -58,6 +58,8 @@ public class RnibUe {
     private static final Logger log =
             LoggerFactory.getLogger(RnibUe.class);
 
+    @JsonProperty("ID")
+    private Long id;
     @JsonProperty("IMSI")
     private String imsi;
     @JsonProperty("ENBUES1APID")
@@ -65,7 +67,7 @@ public class RnibUe {
     @JsonProperty("MMEUES1APID")
     private MMEUES1APID mmeS1apId;
     @JsonProperty("CRNTI")
-    private CRNTI ranId;
+    private CRNTI crnti;
     @JsonProperty("State")
     private State state;
     @JsonProperty("Capability")
@@ -80,23 +82,11 @@ public class RnibUe {
         timer = new Timer();
     }
 
-    public static URI uri(RnibUe ue) {
-        MMEUES1APID mmeS1apId = ue.getMmeS1apId();
-        if (mmeS1apId != null) {
-            try {
-                return new URI(SCHEME, mmeS1apId.toString(), null);
-            } catch (URISyntaxException e) {
-                return null;
-            }
-        }
-        return null;
-    }
-
-    public static MMEUES1APID hostIdtoMME(HostId hostId) {
+    public static Long hostIdtoUEId(HostId hostId) {
         String mac = hostId.mac().toString();
         mac = mac.replace(":", "");
         long l = Long.parseLong(mac, 16);
-        return new MMEUES1APID(l);
+        return l;
     }
 
     @JsonIgnore
@@ -132,13 +122,13 @@ public class RnibUe {
     }
 
     @JsonProperty("CRNTI")
-    public CRNTI getRanId() {
-        return ranId;
+    public CRNTI getCrnti() {
+        return crnti;
     }
 
     @JsonProperty("CRNTI")
-    public void setRanId(CRNTI ranId) {
-        this.ranId = ranId;
+    public void setCrnti(CRNTI crnti) {
+        this.crnti = crnti;
     }
 
     @JsonProperty("IMSI")
@@ -154,7 +144,7 @@ public class RnibUe {
     @JsonIgnore
     public HostId getHostId() {
         try {
-            String text = this.mmeS1apId.value.toString(16),
+            String text = Long.toHexString(this.id),
                     res = "";
             int charsLeft = 12 - text.length();
             if (charsLeft > 0) {
@@ -220,17 +210,25 @@ public class RnibUe {
         this.state = state;
     }
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     @Override
     public String toString() {
         return "RnibUe{" +
-                "imsi='" + imsi + '\'' +
+                "id=" + id +
+                ", imsi='" + imsi + '\'' +
                 ", enbS1apId=" + enbS1apId +
                 ", mmeS1apId=" + mmeS1apId +
-                ", ranId=" + ranId +
+                ", crnti=" + crnti +
                 ", state=" + state +
                 ", capability=" + capability +
                 ", measConfig=" + measConfig +
-                ", timer=" + timer +
                 '}';
     }
 
@@ -238,17 +236,13 @@ public class RnibUe {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         RnibUe rnibUe = (RnibUe) o;
-
-        return mmeS1apId.equals(rnibUe.mmeS1apId) && ranId.equals(rnibUe.ranId);
+        return Objects.equals(id, rnibUe.id);
     }
 
     @Override
     public int hashCode() {
-        int result = mmeS1apId.hashCode();
-        result = 31 * result + ranId.hashCode();
-        return result;
+        return Objects.hash(id);
     }
 
     public enum State {

@@ -23,5 +23,5 @@ import org.onosproject.xran.codecs.pdu.XrancPdu;
 import java.io.IOException;
 
 public interface XranPacketProcessor {
-    void handlePacket(XrancPdu pdu, ChannelHandlerContext ctx) throws IOException;
+    void handlePacket(XrancPdu pdu, ChannelHandlerContext ctx) throws IOException, InterruptedException;
 }
