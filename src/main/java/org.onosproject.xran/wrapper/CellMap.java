@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-present Open Networking Laboratory
+ * Copyright 2015-present Open Networking Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,20 +19,22 @@ package org.onosproject.xran.wrapper;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import io.netty.channel.ChannelHandlerContext;
-import org.onosproject.net.DeviceId;
 import org.onosproject.xran.XranStore;
 import org.onosproject.xran.codecs.api.ECGI;
 import org.onosproject.xran.codecs.api.PCIARFCN;
 import org.onosproject.xran.entities.RnibCell;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * CELL wrapper to help put/get/remove.
+ */
 public class CellMap {
+    // map to get the context channel based on ecgi
     private ConcurrentMap<ECGI, ChannelHandlerContext> ecgiCtx = new ConcurrentHashMap<>();
 
+    // pci-arfcn to ecgi bimap
     private BiMap<PCIARFCN, ECGI> pciarfcnMap = HashBiMap.create();
     private XranStore xranStore;
 
@@ -40,13 +42,22 @@ public class CellMap {
         this.xranStore = xranStore;
     }
 
+    /**
+     * Put the PCI-ARFCN to ECGI map from new cell.
+     *
+     * @param value CELL entity
+     */
     public void putPciArfcn(RnibCell value) {
-        PCIARFCN pciarfcn = new PCIARFCN();
-        pciarfcn.setPci(value.getConf().getPci());
-        pciarfcn.setEarfcnDl(value.getConf().getEarfcnDl());
+        PCIARFCN pciarfcn = PCIARFCN.valueOf(value.getConf().getPci(), value.getConf().getEarfcnDl());
         pciarfcnMap.put(pciarfcn, value.getEcgi());
     }
 
+    /**
+     * Put inside ECGI to CTX map.
+     *
+     * @param value CELL entity to get ECGI from
+     * @param ctx   context channel
+     */
     public void put(RnibCell value, ChannelHandlerContext ctx) {
         if (value.getEcgi() != null) {
             ecgiCtx.put(value.getEcgi(), ctx);
@@ -54,8 +65,14 @@ public class CellMap {
         }
     }
 
+    /**
+     * Get cell based on PCI-ARFCN.
+     *
+     * @param id PCI-ARFCN
+     * @return CELL entity if found
+     */
     public RnibCell get(PCIARFCN id) {
-        ECGI ecgi = null;
+        ECGI ecgi;
         ecgi = pciarfcnMap.get(id);
 
         if (ecgi != null) {
@@ -64,6 +81,12 @@ public class CellMap {
         return null;
     }
 
+    /**
+     * Get cell based on ECGI.
+     *
+     * @param ecgi CELL ECGI
+     * @return CELL entity if found
+     */
     public RnibCell get(ECGI ecgi) {
         if (ecgi != null) {
             return xranStore.getCell(ecgi);
@@ -71,6 +94,12 @@ public class CellMap {
         return null;
     }
 
+    /**
+     * Remove cell from three maps based on ECGI or PCI-ARFCN.
+     *
+     * @param key ecgECGIi or pci-arfcn of cell to remove
+     * @return true if remove succeeded
+     */
     public boolean remove(Object key) {
         ECGI ecgi = null;
         if (key instanceof ECGI) {
@@ -87,6 +116,12 @@ public class CellMap {
         return ecgi != null && xranStore.removeCell(ecgi);
     }
 
+    /**
+     * Get context handler for specified ECGI.
+     *
+     * @param id CELL ECGI
+     * @return context handler if found
+     */
     public ChannelHandlerContext getCtx(ECGI id) {
         return ecgiCtx.get(id);
     }

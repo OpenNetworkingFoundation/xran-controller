@@ -21,10 +21,13 @@ import javafx.util.Pair;
 import org.onosproject.xran.codecs.api.CRNTI;
 import org.onosproject.xran.codecs.api.ECGI;
 
+/**
+ * Class to maintain pair of ECGI and CRNTI.
+ */
 public class EcgiCrntiPair extends Pair<ECGI, CRNTI> {
 
     /**
-     * Creates a new pair
+     * Creates a new pair.
      *
      * @param key   The key for this pair
      * @param value The value to use for this pair
@@ -33,6 +36,13 @@ public class EcgiCrntiPair extends Pair<ECGI, CRNTI> {
         super(key, value);
     }
 
+    /**
+     * Return a new EcgiCrntiPair.
+     *
+     * @param key ECGI
+     * @param value CRNTI
+     * @return EcgiCrntiPair
+     */
     public static EcgiCrntiPair valueOf(ECGI key, CRNTI value) {
         return new EcgiCrntiPair(key, value);
     }

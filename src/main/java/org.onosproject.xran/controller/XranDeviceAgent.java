@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-present Open Networking Laboratory
+ * Copyright 2015-present Open Networking Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,24 @@ package org.onosproject.xran.controller;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * Created by dimitris on 7/27/17.
+ * Xran device agent interface.
  */
 public interface XranDeviceAgent {
 
+    /**
+     * Add connected CELL.
+     *
+     * @param host IP of host trying to connect
+     * @param ctx  channel of CELL speaking to
+     * @return true if succeeded
+     */
     boolean addConnectedCell(String host, ChannelHandlerContext ctx);
 
+    /**
+     * Remove disconnected CELL.
+     *
+     * @param host IP of host disconnected
+     * @return true if remove succeeded
+     */
     boolean removeConnectedCell(String host);
 }

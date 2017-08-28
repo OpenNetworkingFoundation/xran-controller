@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-present Open Networking Laboratory
+ * Copyright 2015-present Open Networking Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,25 @@ import org.onosproject.xran.entities.RnibCell;
 import org.onosproject.xran.entities.RnibUe;
 
 /**
- * Created by dimitris on 7/28/17.
+ * Xran host agent interface.
  */
 public interface XranHostAgent {
+
+    /**
+     * Add connected host.
+     *
+     * @param ue   UE entity
+     * @param cell CELL entity
+     * @param ctx  channel of CELL
+     * @return true if succeeded
+     */
     boolean addConnectedHost(RnibUe ue, RnibCell cell, ChannelHandlerContext ctx);
 
+    /**
+     * Remove disconnected host.
+     *
+     * @param ue UE entity
+     * @return true if remove succeeded
+     */
     boolean removeConnectedHost(RnibUe ue);
 }

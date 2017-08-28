@@ -11,7 +11,6 @@ COMPILE_DEPS = [
     '//lib:netty-transport',
     '//core/common:onos-core-common',
     ':netty-transport-sctp',
-    ':jasn1',
 ]
 
 BUNDLES = [
@@ -20,7 +19,6 @@ BUNDLES = [
 
 EXCLUDED_BUNDLES = [
     ':netty-transport-sctp',
-    ':jasn1',
 ]
 
 osgi_jar (
@@ -48,14 +46,5 @@ remote_jar (
     url = 'mvn:io.netty:netty-transport-sctp:jar:4.1.13.Final',
     sha1 = '41e4ab1dc14cae445f93cef6421ce08f82804c1d',
     maven_coords = 'io.netty:netty-transport-sctp:4.1.13.Final',
-    visibility = [ 'PUBLIC' ],
-)
-
-remote_jar (
-    name = 'jasn1',
-    out = 'jasn1-1.8.1.jar',
-    url = 'mvn:org.openmuc:jasn1:jar:1.8.1',
-    sha1 = '4919f475a36f2389f58e7cad8d815d011acd2946',
-    maven_coords = 'org.openmuc:jasn1:1.8.1',
     visibility = [ 'PUBLIC' ],
 )

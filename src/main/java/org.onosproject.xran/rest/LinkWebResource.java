@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-present Open Networking Laboratory
+ * Copyright 2016-present Open Networking Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.onosproject.xran.rest;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
@@ -23,23 +22,22 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.onosproject.rest.AbstractWebResource;
 import org.onosproject.xran.XranStore;
 import org.onosproject.xran.annotations.Patch;
+import org.onosproject.xran.codecs.ber.types.BerInteger;
 import org.onosproject.xran.controller.XranController;
-import org.onosproject.xran.controller.XranControllerImpl;
 import org.onosproject.xran.entities.RnibCell;
 import org.onosproject.xran.entities.RnibLink;
 import org.onosproject.xran.entities.RnibUe;
-import org.onosproject.xran.codecs.ber.types.BerInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.Produces;
+import javax.ws.rs.POST;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
@@ -62,11 +60,11 @@ public class LinkWebResource extends AbstractWebResource {
     }
 
     /**
-     * test.
+     * List all the links originating or terminating at cell/UE OR list the link connecting between cell and UE.
      *
-     * @param eciHex test
-     * @param ue     test
-     * @return test
+     * @param eciHex EutranCellIdentifier in binary
+     * @param ue     UE ID
+     * @return Response
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -74,14 +72,14 @@ public class LinkWebResource extends AbstractWebResource {
                                     @DefaultValue("-1") @QueryParam("ue") long ue) {
         List<RnibLink> list = Lists.newArrayList();
         if (!eciHex.isEmpty() && ue != -1) {
-            RnibLink link = get(XranStore.class).getLinkBetweenCellIdUeId(eciHex, ue);
+            RnibLink link = get(XranStore.class).getlinkbetweencellidueid(eciHex, ue);
             if (link != null) {
                 list.add(link);
             }
         } else if (!eciHex.isEmpty()) {
-            list.addAll(get(XranStore.class).getLinksByCellId(eciHex));
+            list.addAll(get(XranStore.class).getlinksbycellid(eciHex));
         } else if (ue != -1) {
-            list.addAll(get(XranStore.class).getLinksByUeId(ue));
+            list.addAll(get(XranStore.class).getlinksbyueid(ue));
         } else {
             list.addAll(get(XranStore.class).getLinks());
         }
@@ -92,7 +90,7 @@ public class LinkWebResource extends AbstractWebResource {
 
                 return ResponseHelper.getResponse(
                         mapper(),
-                        ResponseHelper.statusCode.OK,
+                        ResponseHelper.StatusCode.OK,
                         jsonNode
                 );
             } catch (Exception e) {
@@ -102,7 +100,7 @@ public class LinkWebResource extends AbstractWebResource {
 
                 return ResponseHelper.getResponse(
                         mapper(),
-                        ResponseHelper.statusCode.INTERNAL_SERVER_ERROR,
+                        ResponseHelper.StatusCode.INTERNAL_SERVER_ERROR,
                         "Exception",
                         fullStackTrace
                 );
@@ -111,49 +109,52 @@ public class LinkWebResource extends AbstractWebResource {
 
         return ResponseHelper.getResponse(
                 mapper(),
-                ResponseHelper.statusCode.NOT_FOUND,
+                ResponseHelper.StatusCode.NOT_FOUND,
                 "Not Found",
                 "Specified links not found"
         );
     }
 
     /**
-     * test.
+     * Modify the link.
      *
-     * @param src    test
-     * @param dst    test
-     * @param stream test
-     * @return test
+     * @param src    CELL ECI in binary
+     * @param dst    UE ID
+     * @param stream Parameter on basis of which link is to be modified
+     * @return Response
      */
     @Patch
     @Path("{src},{dst}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response patchLinks(@PathParam("src") String src, @PathParam("dst") long dst, InputStream stream) {
-        RnibLink link = get(XranStore.class).getLinkBetweenCellIdUeId(src, dst);
+        RnibLink link = get(XranStore.class).getlinkbetweencellidueid(src, dst);
         if (link != null) {
             try {
                 ObjectNode jsonTree = (ObjectNode) mapper().readTree(stream);
 
+                // Modify link based on Type
                 JsonNode type = jsonTree.path("type");
                 if (!type.isMissingNode()) {
                     RnibLink.Type anEnum = RnibLink.Type.getEnum(type.asText());
                     return handleTypeChange(link, anEnum);
                 }
 
+                // Modify link based on traffic percent
                 JsonNode trafficpercent = jsonTree.path("trafficpercent");
                 if (!trafficpercent.isMissingNode()) {
                     return handleTrafficChange(link, trafficpercent);
                 }
 
+                // Modify link based on RRMConf
                 JsonNode rrmConf = jsonTree.path("RRMConf");
                 if (!rrmConf.isMissingNode()) {
-                    return handleRRMChange(link, rrmConf);
+                    return handleRrmChange(link, rrmConf);
                 }
 
                 return ResponseHelper.getResponse(
                         mapper(),
-                        ResponseHelper.statusCode.NOT_IMPLEMENTED,
+                        ResponseHelper.StatusCode.NOT_IMPLEMENTED,
                         "Not Implemented",
                         "The command you specified is not implemented or doesn't exist. We support " +
                                 "type/RRMConf/traficpercent commands."
@@ -166,7 +167,7 @@ public class LinkWebResource extends AbstractWebResource {
 
                 return ResponseHelper.getResponse(
                         mapper(),
-                        ResponseHelper.statusCode.INTERNAL_SERVER_ERROR,
+                        ResponseHelper.StatusCode.INTERNAL_SERVER_ERROR,
                         "Exception",
                         fullStackTrace
                 );
@@ -175,19 +176,19 @@ public class LinkWebResource extends AbstractWebResource {
 
         return ResponseHelper.getResponse(
                 mapper(),
-                ResponseHelper.statusCode.NOT_FOUND,
+                ResponseHelper.StatusCode.NOT_FOUND,
                 "Not Found",
                 "Link not found use POST request"
         );
     }
 
     /**
-     * test.
+     * Create link based on Type of the link.
      *
-     * @param src    test
-     * @param dst    test
-     * @param stream test
-     * @return test
+     * @param src    CELL ECI in binary
+     * @param dst    UE ID
+     * @param stream LinkType
+     * @return Response
      */
     @POST
     @Path("{src},{dst}")
@@ -200,7 +201,7 @@ public class LinkWebResource extends AbstractWebResource {
         if (cell == null) {
             return ResponseHelper.getResponse(
                     mapper(),
-                    ResponseHelper.statusCode.NOT_FOUND,
+                    ResponseHelper.StatusCode.NOT_FOUND,
                     "Not Found",
                     "Cell " + src + " was not found"
             );
@@ -209,7 +210,7 @@ public class LinkWebResource extends AbstractWebResource {
         if (ue == null) {
             return ResponseHelper.getResponse(
                     mapper(),
-                    ResponseHelper.statusCode.NOT_FOUND,
+                    ResponseHelper.StatusCode.NOT_FOUND,
                     "Not Found",
                     "Ue with " + dst + " was not found"
             );
@@ -218,7 +219,7 @@ public class LinkWebResource extends AbstractWebResource {
         if (get(XranStore.class).getLink(cell.getEcgi(), ue.getId()) != null) {
             return ResponseHelper.getResponse(
                     mapper(),
-                    ResponseHelper.statusCode.BAD_REQUEST,
+                    ResponseHelper.StatusCode.BAD_REQUEST,
                     "Bad Request",
                     "Link already exists use PATCH to modify"
             );
@@ -243,7 +244,7 @@ public class LinkWebResource extends AbstractWebResource {
 
             JsonNode rrmConf = jsonTree.path("RRMConf");
             if (!rrmConf.isMissingNode()) {
-                return handleRRMChange(link, rrmConf);
+                return handleRrmChange(link, rrmConf);
             }
 
         } catch (Exception e) {
@@ -253,7 +254,7 @@ public class LinkWebResource extends AbstractWebResource {
 
             return ResponseHelper.getResponse(
                     mapper(),
-                    ResponseHelper.statusCode.INTERNAL_SERVER_ERROR,
+                    ResponseHelper.StatusCode.INTERNAL_SERVER_ERROR,
                     "Exception",
                     fullStackTrace
             );
@@ -261,22 +262,34 @@ public class LinkWebResource extends AbstractWebResource {
 
         return ResponseHelper.getResponse(
                 mapper(),
-                ResponseHelper.statusCode.BAD_REQUEST,
+                ResponseHelper.StatusCode.BAD_REQUEST,
                 "Bad Request",
-                "The command you specified is not implemented or doesn't exist. We support " +
+                "The command you specified is not implemented " +
+                        "or doesn't exist. We support " +
                         "type/RRMConf/traficpercent commands."
         );
     }
 
-    private Response handleTypeChange(RnibLink link, RnibLink.Type newType) throws InterruptedException {
+
+    /**
+     * Change link based on type of the link.
+     *
+     * @param link    Link
+     * @param newType LinkType
+     * @return Response
+     * @throws InterruptedException Interrupted queue
+     */
+    private Response handleTypeChange(RnibLink link, RnibLink.Type newType)
+            throws InterruptedException {
         final SynchronousQueue<String>[] queue = new SynchronousQueue[1];
+
 
         if (newType.equals(RnibLink.Type.SERVING_PRIMARY)) {
             switch (link.getType()) {
                 case SERVING_PRIMARY: {
                     return ResponseHelper.getResponse(
                             mapper(),
-                            ResponseHelper.statusCode.BAD_REQUEST,
+                            ResponseHelper.StatusCode.BAD_REQUEST,
                             "Bad Request",
                             "Link is already a primary link"
                     );
@@ -284,26 +297,28 @@ public class LinkWebResource extends AbstractWebResource {
                 case SERVING_SECONDARY_CA:
                 case SERVING_SECONDARY_DC:
                 case NON_SERVING: {
-                    List<RnibLink> linksByUeId = get(XranStore.class).getLinksByUeId(link.getLinkId().getUeId());
+                    List<RnibLink> linksByUeId = get(XranStore.class)
+                            .getlinksbyueid(link.getLinkId().getUeId());
 
                     Optional<RnibLink> primary = linksByUeId.stream()
                             .filter(l -> l.getType().equals(RnibLink.Type.SERVING_PRIMARY))
                             .findFirst();
                     if (primary.isPresent()) {
                         queue[0] = get(XranController.class).sendHORequest(link, primary.get());
-                        String poll = queue[0].poll(get(XranController.class).getNorthbound_timeout(), TimeUnit.MILLISECONDS);
+                        String poll = queue[0].poll(get(XranController.class)
+                                .getNorthboundTimeout(), TimeUnit.MILLISECONDS);
 
                         if (poll != null) {
                             return ResponseHelper.getResponse(
                                     mapper(),
-                                    ResponseHelper.statusCode.OK,
+                                    ResponseHelper.StatusCode.OK,
                                     "Handoff Response",
                                     poll
                             );
                         } else {
                             return ResponseHelper.getResponse(
                                     mapper(),
-                                    ResponseHelper.statusCode.REQUEST_TIMEOUT,
+                                    ResponseHelper.StatusCode.REQUEST_TIMEOUT,
                                     "Handoff Timeout",
                                     "eNodeB did not send a HOComplete/HOFailure on time"
                             );
@@ -312,93 +327,110 @@ public class LinkWebResource extends AbstractWebResource {
                         link.setType(RnibLink.Type.SERVING_PRIMARY);
                         return ResponseHelper.getResponse(
                                 mapper(),
-                                ResponseHelper.statusCode.OK,
+                                ResponseHelper.StatusCode.OK,
                                 "OK",
                                 "Link set to primary"
                         );
                     }
                 }
+                default:
             }
         } else if (newType.equals(RnibLink.Type.NON_SERVING)) {
             switch (link.getType()) {
-                case NON_SERVING:
+                case NON_SERVING: {
                     return ResponseHelper.getResponse(
                             mapper(),
-                            ResponseHelper.statusCode.BAD_REQUEST,
+                            ResponseHelper.StatusCode.BAD_REQUEST,
                             "Bad Request",
                             "Link is already a primary link"
                     );
-                case SERVING_PRIMARY:
+                }
+                case SERVING_PRIMARY: {
                     return ResponseHelper.getResponse(
                             mapper(),
-                            ResponseHelper.statusCode.BAD_REQUEST,
+                            ResponseHelper.StatusCode.BAD_REQUEST,
                             "Bad Request",
                             "Cannot modify a primary link"
                     );
+                }
                 case SERVING_SECONDARY_CA:
-                case SERVING_SECONDARY_DC:
+                case SERVING_SECONDARY_DC: {
                     if (get(XranController.class).sendScellDelete(link)) {
                         return ResponseHelper.getResponse(
                                 mapper(),
-                                ResponseHelper.statusCode.OK,
+                                ResponseHelper.StatusCode.OK,
                                 "OK",
                                 "Link set to non-serving"
                         );
                     } else {
                         return ResponseHelper.getResponse(
                                 mapper(),
-                                ResponseHelper.statusCode.NOT_FOUND,
+                                ResponseHelper.StatusCode.NOT_FOUND,
                                 "Not Found",
                                 "Could not find cell config report to construct Scell Delete"
                         );
                     }
+                }
+                default:
             }
         } else if (newType.equals(RnibLink.Type.SERVING_SECONDARY_CA)) {
             switch (link.getType()) {
-                case SERVING_PRIMARY:
+                case SERVING_PRIMARY: {
                     return ResponseHelper.getResponse(
                             mapper(),
-                            ResponseHelper.statusCode.BAD_REQUEST,
+                            ResponseHelper.StatusCode.BAD_REQUEST,
                             "Bad Request",
                             "Cannot modify a primary link"
                     );
+                }
                 case SERVING_SECONDARY_DC:
-                case NON_SERVING:
+                case NON_SERVING: {
                     queue[0] = get(XranController.class).sendScellAdd(link);
-                    String poll = queue[0].poll(get(XranController.class).getNorthbound_timeout(), TimeUnit.MILLISECONDS);
+                    String poll = queue[0].poll(get(XranController.class)
+                            .getNorthboundTimeout(), TimeUnit.MILLISECONDS);
                     if (poll != null) {
                         return ResponseHelper.getResponse(
                                 mapper(),
-                                ResponseHelper.statusCode.OK,
+                                ResponseHelper.StatusCode.OK,
                                 "ScellAdd Response",
                                 poll
                         );
                     } else {
                         return ResponseHelper.getResponse(
                                 mapper(),
-                                ResponseHelper.statusCode.REQUEST_TIMEOUT,
+                                ResponseHelper.StatusCode.REQUEST_TIMEOUT,
                                 "ScellAdd Timeout",
                                 "eNodeB did not send a ScellAddStatus on time"
                         );
                     }
-                case SERVING_SECONDARY_CA:
+                }
+                case SERVING_SECONDARY_CA: {
                     return ResponseHelper.getResponse(
                             mapper(),
-                            ResponseHelper.statusCode.BAD_REQUEST,
+                            ResponseHelper.StatusCode.BAD_REQUEST,
                             "Bad Request",
                             "Link is already a secondary CA link"
                     );
+                }
+                default:
             }
         }
 
         return ResponseHelper.getResponse(
                 mapper(),
-                ResponseHelper.statusCode.BAD_REQUEST,
+                ResponseHelper.StatusCode.BAD_REQUEST,
                 "Bad Request",
                 "The command you specified is not implemented or doesn't exist."
         );
     }
 
+    /**
+     * Modify link based on the traffic percent.
+     *
+     * @param link           Link
+     * @param trafficpercent Traffic Percent of the link to be modified
+     * @return Response
+     */
     private Response handleTrafficChange(RnibLink link, JsonNode trafficpercent) {
         JsonNode jsonNode = trafficpercent.path("traffic-percent-dl");
         if (!jsonNode.isMissingNode()) {
@@ -412,41 +444,49 @@ public class LinkWebResource extends AbstractWebResource {
 
         return ResponseHelper.getResponse(
                 mapper(),
-                ResponseHelper.statusCode.OK,
+                ResponseHelper.StatusCode.OK,
                 "OK",
                 "Traffic Percent changed"
         );
     }
 
-    private Response handleRRMChange(RnibLink link, JsonNode rrmConf) throws InterruptedException {
+    /**
+     * Modify link based on RRMConf parameters.
+     *
+     * @param link    Link
+     * @param rrmConf RRMConfig of the Link to be modified
+     * @return Response
+     * @throws InterruptedException Interrupted queue
+     */
+    private Response handleRrmChange(RnibLink link, JsonNode rrmConf) throws InterruptedException {
         final SynchronousQueue<String>[] queue = new SynchronousQueue[1];
-        get(XranStore.class).modifyLinkRrmConf(link, rrmConf);
-        boolean isxICIC = link.getLinkId().getCell().getVersion() <= 3;
+        get(XranStore.class).modifylinkrrmconf(link, rrmConf);
+        boolean isxicic = link.getLinkId().getCell().getVersion() <= 3;
 
-        queue[0] = get(XranController.class).sendModifiedRRMConf(link.getRrmParameters(),
-                isxICIC);
+        queue[0] = get(XranController.class).sendmodifiedrrmconf(link.getRrmParameters(),
+                isxicic);
 
-        if (isxICIC) {
+        if (isxicic) {
             return ResponseHelper.getResponse(
                     mapper(),
-                    ResponseHelper.statusCode.OK,
+                    ResponseHelper.StatusCode.OK,
                     "OK",
                     "xICIC was sent successfully"
             );
         } else {
-            String poll = queue[0].poll(get(XranController.class).getNorthbound_timeout(), TimeUnit.MILLISECONDS);
+            String poll = queue[0].poll(get(XranController.class).getNorthboundTimeout(), TimeUnit.MILLISECONDS);
 
             if (poll != null) {
                 return ResponseHelper.getResponse(
                         mapper(),
-                        ResponseHelper.statusCode.OK,
+                        ResponseHelper.StatusCode.OK,
                         "RRMConfig Response",
                         poll
                 );
             } else {
                 return ResponseHelper.getResponse(
                         mapper(),
-                        ResponseHelper.statusCode.REQUEST_TIMEOUT,
+                        ResponseHelper.StatusCode.REQUEST_TIMEOUT,
                         "RRMConfig Timeout",
                         "eNodeB did not send a RRMConfingStatus on time"
                 );

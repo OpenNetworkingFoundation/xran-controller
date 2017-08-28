@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-present Open Networking Laboratory
+ * Copyright 2016-present Open Networking Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,20 @@
  */
 package org.onosproject.xran.rest;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.onosproject.rest.AbstractWebResource;
 import org.onosproject.xran.XranStore;
-import org.onosproject.xran.entities.RnibCell;
-import org.onosproject.xran.entities.RnibUe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
@@ -51,10 +47,10 @@ public class NodeWebResource extends AbstractWebResource {
     }
 
     /**
-     * test.
+     * List all the nodes in the R-NIB.
      *
-     * @param type test
-     * @return test
+     * @param type Type of node (cell/ue)
+     * @return Response
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -62,16 +58,17 @@ public class NodeWebResource extends AbstractWebResource {
         JsonNode jsonNode;
         try {
             List<Object> nodes;
+            // List cell type of nodes or UE type of nodes.
             if (StringUtils.isBlank(type)) {
                 nodes = get(XranStore.class).getNodes();
             } else if (type.equals("cell")) {
-                nodes = get(XranStore.class).getCellNodes();
+                nodes = get(XranStore.class).getcellnodes();
             } else if (type.equals("ue")) {
-                nodes = get(XranStore.class).getUeNodes();
+                nodes = get(XranStore.class).getuenodes();
             } else {
                 return ResponseHelper.getResponse(
                         mapper(),
-                        ResponseHelper.statusCode.NOT_FOUND,
+                        ResponseHelper.StatusCode.NOT_FOUND,
                         "Not Found",
                         "Type of node was not found"
                 );
@@ -80,7 +77,7 @@ public class NodeWebResource extends AbstractWebResource {
             if (nodes.size() == 0) {
                 return ResponseHelper.getResponse(
                         mapper(),
-                        ResponseHelper.statusCode.NOT_FOUND,
+                        ResponseHelper.StatusCode.NOT_FOUND,
                         "Not Found",
                         "No nodes found"
                 );
@@ -94,7 +91,7 @@ public class NodeWebResource extends AbstractWebResource {
 
             return ResponseHelper.getResponse(
                     mapper(),
-                    ResponseHelper.statusCode.INTERNAL_SERVER_ERROR,
+                    ResponseHelper.StatusCode.INTERNAL_SERVER_ERROR,
                     "Exception",
                     fullStackTrace
             );
@@ -102,22 +99,22 @@ public class NodeWebResource extends AbstractWebResource {
 
         return ResponseHelper.getResponse(
                 mapper(),
-                ResponseHelper.statusCode.OK,
+                ResponseHelper.StatusCode.OK,
                 jsonNode
         );
     }
 
     /**
-     * test.
+     * List the node with a specific node id.
      *
-     * @param nodeid test
-     * @return test
+     * @param nodeid ID of the node
+     * @return Response
      */
     @GET
     @Path("{nodeid}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getNodeid(@PathParam("nodeid") String nodeid) {
-        Object node = get(XranStore.class).getByNodeId(nodeid);
+        Object node = get(XranStore.class).getbynodeid(nodeid);
 
         if (node != null) {
             try {
@@ -125,7 +122,7 @@ public class NodeWebResource extends AbstractWebResource {
 
                 return ResponseHelper.getResponse(
                         mapper(),
-                        ResponseHelper.statusCode.OK,
+                        ResponseHelper.StatusCode.OK,
                         jsonNode
                 );
             } catch (Exception e) {
@@ -135,7 +132,7 @@ public class NodeWebResource extends AbstractWebResource {
 
                 return ResponseHelper.getResponse(
                         mapper(),
-                        ResponseHelper.statusCode.INTERNAL_SERVER_ERROR,
+                        ResponseHelper.StatusCode.INTERNAL_SERVER_ERROR,
                         "Exception",
                         fullStackTrace
                 );
@@ -144,7 +141,7 @@ public class NodeWebResource extends AbstractWebResource {
 
         return ResponseHelper.getResponse(
                 mapper(),
-                ResponseHelper.statusCode.NOT_FOUND,
+                ResponseHelper.StatusCode.NOT_FOUND,
                 "Not Found",
                 "Node " + nodeid + " was not found"
         );

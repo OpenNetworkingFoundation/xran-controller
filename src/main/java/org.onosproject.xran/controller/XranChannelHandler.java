@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-present Open Networking Laboratory
+ * Copyright 2016-present Open Networking Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,8 @@ import java.net.SocketAddress;
 import java.net.URISyntaxException;
 
 /**
- * Created by dimitris on 7/20/17.
+ * Xran channel handler.
  */
-
 @Sharable
 public class XranChannelHandler extends ChannelInboundHandlerAdapter {
 
@@ -51,6 +50,13 @@ public class XranChannelHandler extends ChannelInboundHandlerAdapter {
         this.controller = controller;
     }
 
+    /**
+     * Given PDU construct an SCTP message.
+     *
+     * @param pdu PDU packet
+     * @return SCTP message
+     * @throws IOException IO exception
+     */
     public static SctpMessage getSctpMessage(XrancPdu pdu) throws IOException {
         BerByteArrayOutputStream os = new BerByteArrayOutputStream(4096);
 
@@ -90,13 +96,13 @@ public class XranChannelHandler extends ChannelInboundHandlerAdapter {
         byte[] bytes = new byte[byteBuf.readableBytes()];
         byteBuf.readBytes(bytes);
 
-        XrancPdu recv_pdu = new XrancPdu();
+        XrancPdu recvPdu = new XrancPdu();
 
         InputStream inputStream = new ByteArrayInputStream(bytes);
 
-        recv_pdu.decode(inputStream);
+        recvPdu.decode(inputStream);
 
-        controller.packetAgent.handlePacket(recv_pdu, ctx);
+        controller.packetAgent.handlePacket(recvPdu, ctx);
     }
 
     @Override

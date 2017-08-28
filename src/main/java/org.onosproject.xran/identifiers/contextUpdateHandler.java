@@ -20,15 +20,27 @@ import org.onosproject.xran.codecs.pdu.HOComplete;
 import org.onosproject.xran.codecs.pdu.UEAdmissionStatus;
 import org.onosproject.xran.codecs.pdu.UEContextUpdate;
 
-public class contextUpdateHandler {
+/**
+ * Class to handle UE Context Update packet.
+ */
+public class ContextUpdateHandler {
     private UEContextUpdate contextUpdate;
     private UEAdmissionStatus admissionStatus;
     private HOComplete hoComplete;
 
+    /**
+     * Get Context Update.
+     * @return UEContextUpdate
+     */
     public UEContextUpdate getContextUpdate() {
         return contextUpdate;
     }
 
+    /**
+     * Set Context Update.
+     * @param contextUpdate UEContextUpdate
+     * @return boolean to check context update was for admissionStatus packet or HOComplete packet
+     */
     public boolean setContextUpdate(UEContextUpdate contextUpdate) {
         this.contextUpdate = contextUpdate;
 
@@ -36,20 +48,38 @@ public class contextUpdateHandler {
 
     }
 
+    /**
+     * Get UEAdmissionStatus.
+     * @return UEAdmissionStatus
+     */
     public UEAdmissionStatus getAdmissionStatus() {
         return admissionStatus;
     }
 
+    /**
+     * Set UEAdmissionStatus.
+     * @param admissionStatus UEAdmissionStatus
+     * @return boolean contextUpdate exists or not
+     */
     public boolean setAdmissionStatus(UEAdmissionStatus admissionStatus) {
         this.admissionStatus = admissionStatus;
 
         return contextUpdate != null;
     }
 
+    /**
+     * Get HOComplete.
+     * @return HOComplete
+     */
     public HOComplete getHoComplete() {
         return hoComplete;
     }
 
+    /**
+     * Set HOComplete.
+     * @param hoComplete HOComplete
+     * @return boolean contextUpdate exists or not
+     */
     public boolean setHoComplete(HOComplete hoComplete) {
         this.hoComplete = hoComplete;
 
@@ -58,7 +88,7 @@ public class contextUpdateHandler {
 
     @Override
     public String toString() {
-        return "contextUpdateHandler{" +
+        return "ContextUpdateHandler{" +
                 "contextUpdate=" + (contextUpdate != null) +
                 ", admissionStatus=" + (admissionStatus != null) +
                 ", hoComplete=" + (hoComplete != null) +

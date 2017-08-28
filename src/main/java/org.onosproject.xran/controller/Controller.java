@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-present Open Networking Laboratory
+ * Copyright 2015-present Open Networking Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,9 @@ public class Controller {
     private int port = 8007;
     private boolean isRunning = false;
 
+    /**
+     * Run SCTP server.
+     */
     public void run() {
         final Controller ctrl = this;
         try {
@@ -62,6 +65,11 @@ public class Controller {
         }
     }
 
+    /**
+     * Create bootstrap for server.
+     *
+     * @return server bootstrap
+     */
     private ServerBootstrap createServerBootStrap() {
         bossGroup = new NioEventLoopGroup(1);
         workerGroup = new NioEventLoopGroup();
@@ -73,6 +81,14 @@ public class Controller {
         return b;
     }
 
+    /**
+     * Initialize controller and start SCTP server.
+     *
+     * @param deviceAgent device agent
+     * @param hostAgent   host agent
+     * @param packetAgent packet agent
+     * @param port        port of server
+     */
     public void start(XranDeviceAgent deviceAgent, XranHostAgent hostAgent, XranPacketProcessor packetAgent, int port) {
         if (isRunning && this.port != port) {
             stop();
@@ -91,7 +107,9 @@ public class Controller {
         }
     }
 
-
+    /**
+     * Stop SCTP server.
+     */
     public void stop() {
         if (isRunning) {
             channel.channel().close();

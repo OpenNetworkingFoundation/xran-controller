@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-present Open Networking Laboratory
+ * Copyright 2015-present Open Networking Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,22 @@ import org.onosproject.xran.entities.RnibUe;
 import java.util.Set;
 
 /**
- * Created by dimitris on 7/28/17.
+ * Xran Host Listener.
  */
 public interface XranHostListener {
 
+    /**
+     * Add UE as a host with location the primary link.
+     *
+     * @param ue      UE entity
+     * @param ecgiSet All connected CELLs to this UE
+     */
     void hostAdded(RnibUe ue, Set<ECGI> ecgiSet);
 
+    /**
+     * Remove UE based on Host Id.
+     *
+     * @param id Host Id generated from UE id
+     */
     void hostRemoved(HostId id);
 }

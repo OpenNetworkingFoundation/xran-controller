@@ -23,9 +23,15 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import javax.ws.rs.core.Response;
 
-public class ResponseHelper {
+/**
+ * Various types of responses.
+ */
+public final class ResponseHelper {
 
-    public static Response getResponse(ObjectMapper mapper, statusCode status, String title, String detail) {
+    private ResponseHelper() {
+    }
+
+    public static Response getResponse(ObjectMapper mapper, StatusCode status, String title, String detail) {
         ObjectNode rootNode = mapper.createObjectNode();
 
         switch (status) {
@@ -58,7 +64,7 @@ public class ResponseHelper {
         }
     }
 
-    public static Response getResponse(ObjectMapper mapper, statusCode status, JsonNode node) {
+    public static Response getResponse(ObjectMapper mapper, StatusCode status, JsonNode node) {
         ObjectNode rootNode = mapper.createObjectNode();
 
         switch (status) {
@@ -79,7 +85,7 @@ public class ResponseHelper {
         }
     }
 
-    public enum statusCode {
+    public enum StatusCode {
         OK(200),
         BAD_REQUEST(400),
         NOT_FOUND(404),
@@ -89,7 +95,7 @@ public class ResponseHelper {
 
         public int status;
 
-        statusCode(int status) {
+        StatusCode(int status) {
             this.status = status;
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-present Open Networking Laboratory
+ * Copyright 2016-present Open Networking Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,17 +22,16 @@ import org.onosproject.rest.AbstractWebResource;
 import org.onosproject.xran.XranStore;
 import org.onosproject.xran.annotations.Patch;
 import org.onosproject.xran.controller.XranController;
-import org.onosproject.xran.controller.XranControllerImpl;
 import org.onosproject.xran.entities.RnibCell;
-import org.onosproject.xran.rest.ResponseHelper.statusCode;
+import org.onosproject.xran.rest.ResponseHelper.StatusCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
@@ -52,10 +51,10 @@ public class CellWebResource extends AbstractWebResource {
     }
 
     /**
-     * test.
+     * Lists the cell with {cellid}.
      *
-     * @param eciHex test
-     * @return test
+     * @param eciHex EutranCellIdentifier in binary
+     * @return Response
      */
     @GET
     @Path("{cellid}")
@@ -69,7 +68,7 @@ public class CellWebResource extends AbstractWebResource {
 
                 return ResponseHelper.getResponse(
                         mapper(),
-                        statusCode.OK,
+                        StatusCode.OK,
                         jsonNode
                 );
 
@@ -80,7 +79,7 @@ public class CellWebResource extends AbstractWebResource {
 
                 return ResponseHelper.getResponse(
                         mapper(),
-                        statusCode.INTERNAL_SERVER_ERROR,
+                        StatusCode.INTERNAL_SERVER_ERROR,
                         "Exception",
                         fullStackTrace
                 );
@@ -89,18 +88,18 @@ public class CellWebResource extends AbstractWebResource {
 
         return ResponseHelper.getResponse(
                 mapper(),
-                statusCode.NOT_FOUND,
+                StatusCode.NOT_FOUND,
                 "Not Found",
                 "Cell with " + eciHex + " was not found"
         );
     }
 
     /**
-     * test.
+     * Modify the RRMConfig parameters of the cell.
      *
-     * @param eciHex test
-     * @param stream test (body of request)
-     * @return test
+     * @param eciHex EutranCellIdentifier in binary
+     * @param stream Parameters that you want to modify
+     * @return Response
      */
     @Patch
     @Path("{cellid}")
@@ -116,23 +115,24 @@ public class CellWebResource extends AbstractWebResource {
                 JsonNode rrmConf = jsonTree.path("RRMConf");
                 if (!rrmConf.isMissingNode()) {
                     final SynchronousQueue<String>[] queue = new SynchronousQueue[1];
-                    get(XranStore.class).modifyCellRrmConf(cell, rrmConf);
+                    get(XranStore.class).modifycellrrmconf(cell, rrmConf);
 
-                    queue[0] = get(XranController.class).sendModifiedRRMConf(cell.getRrmConfig(),
+                    queue[0] = get(XranController.class).sendmodifiedrrmconf(cell.getRrmConfig(),
                             cell.getVersion() <= 3);
-                    String poll = queue[0].poll(get(XranController.class).getNorthbound_timeout(), TimeUnit.MILLISECONDS);
+                    String poll = queue[0].poll(get(XranController.class)
+                            .getNorthboundTimeout(), TimeUnit.MILLISECONDS);
 
                     if (poll != null) {
                         return ResponseHelper.getResponse(
                                 mapper(),
-                                statusCode.OK,
+                                StatusCode.OK,
                                 "Handoff Response",
                                 poll
                         );
                     } else {
                         return ResponseHelper.getResponse(
                                 mapper(),
-                                statusCode.REQUEST_TIMEOUT,
+                                StatusCode.REQUEST_TIMEOUT,
                                 "Handoff Timeout",
                                 "eNodeB did not send a HOComplete/HOFailure on time"
                         );
@@ -141,7 +141,7 @@ public class CellWebResource extends AbstractWebResource {
 
                 return ResponseHelper.getResponse(
                         mapper(),
-                        ResponseHelper.statusCode.BAD_REQUEST,
+                        StatusCode.BAD_REQUEST,
                         "Bad Request",
                         "The command you specified is not implemented or doesn't exist. We support " +
                                 "RRMConf commands."
@@ -153,7 +153,7 @@ public class CellWebResource extends AbstractWebResource {
 
                 return ResponseHelper.getResponse(
                         mapper(),
-                        statusCode.INTERNAL_SERVER_ERROR,
+                        StatusCode.INTERNAL_SERVER_ERROR,
                         "Exception",
                         fullStackTrace
                 );
@@ -162,7 +162,7 @@ public class CellWebResource extends AbstractWebResource {
 
         return ResponseHelper.getResponse(
                 mapper(),
-                statusCode.NOT_FOUND,
+                StatusCode.NOT_FOUND,
                 "Not Found",
                 "Cell " + eciHex + " was not found"
         );

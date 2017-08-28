@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-present Open Networking Laboratory
+ * Copyright 2015-present Open Networking Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,15 @@ import org.onosproject.xran.codecs.api.ECGI;
 import org.onosproject.xran.entities.RnibCell;
 import org.onosproject.xran.entities.RnibUe;
 
+/**
+ * Class for LinkId.
+ */
 @JsonPropertyOrder({
         "ECGI",
         "UEID"
 })
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class LinkId {
+public final class LinkId {
     @JsonIgnore
     private RnibCell cell;
     @JsonIgnore
@@ -40,59 +43,108 @@ public class LinkId {
         this.ue = ue;
     }
 
+    /**
+     * Create new LinkId.
+     * @param cell Cell
+     * @param ue UE
+     * @return new LinkId
+     */
     public static LinkId valueOf(RnibCell cell, RnibUe ue) {
         return new LinkId(cell, ue);
     }
 
-    public static LinkId valueOf(ECGI ecgi, Long UeId) {
+    /**
+     * Create new LinkID with ECGI and UE ID given.
+     * @param ecgi ECGI of new cell
+     * @param ueId UE ID of new UE
+     * @return LinkId
+     */
+    public static LinkId valueOf(ECGI ecgi, Long ueId) {
         RnibCell cell = new RnibCell();
         RnibUe ue = new RnibUe();
 
         cell.setEcgi(ecgi);
-        ue.setId(UeId);
+        ue.setId(ueId);
         return new LinkId(cell, ue);
     }
 
+    /**
+     * Get ECGI.
+     * @return ECGI
+     */
     @JsonProperty("ECGI")
     public ECGI getEcgi() {
         return cell.getEcgi();
     }
 
+    /**
+     * Set ECGI.
+     * @param sourceId ECGI
+     */
     @JsonProperty("ECGI")
     public void setEcgi(ECGI sourceId) {
         cell.setEcgi(sourceId);
     }
 
+    /**
+     * Get UE ID.
+     * @return long UE ID
+     */
     @JsonProperty("UEID")
     public Long getUeId() {
         return ue.getId();
     }
 
+    /**
+     * Set UE ID.
+     * @param destinationId long UE ID
+     */
     @JsonProperty("UEID")
     public void setUeId(Long destinationId) {
         ue.setId(destinationId);
     }
 
+    /**
+     * Get Cell.
+     * @return Cell
+     */
     @JsonIgnore
     public RnibCell getCell() {
         return cell;
     }
 
+    /**
+     * Set Cell.
+     * @param cell Cell
+     */
     @JsonIgnore
     public void setCell(RnibCell cell) {
         this.cell = cell;
     }
 
+    /**
+     * Get UE.
+     * @return UE
+     */
     @JsonIgnore
     public RnibUe getUe() {
         return ue;
     }
 
+    /**
+     * Set UE.
+     * @param ue UE
+     */
     @JsonIgnore
     public void setUe(RnibUe ue) {
         this.ue = ue;
     }
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.lang.Object#equals()
+     */
     @Override
     public boolean equals(Object o) {
         return this == o ||
@@ -103,6 +155,11 @@ public class LinkId {
 
     }
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.lang.Object#hashCode()
+     */
     @Override
     public int hashCode() {
         int result = cell.getEcgi().hashCode();

@@ -1,5 +1,5 @@
 ///*
-// * Copyright 2015-present Open Networking Laboratory
+// * Copyright 2015-present Open Networking Foundation
 // *
 // * Licensed under the Apache License, Version 2.0 (the "License");
 // * you may not use this file except in compliance with the License.
@@ -149,7 +149,7 @@
 //    }
 //
 //    @Override
-//    public List<RnibLink> getLinksByCellId(long cellId) {
+//    public List<RnibLink> getlinksbycellid(long cellId) {
 //        List<RnibLink> list = Lists.newArrayList();
 //        CellId cell = CellId.valueOf(cellId);
 //        linkMap.keySet().forEach(
@@ -163,7 +163,7 @@
 //    }
 //
 //    @Override
-//    public List<RnibLink> getLinksByUeId(long euId) {
+//    public List<RnibLink> getlinksbyueid(long euId) {
 //        List<RnibLink> list = Lists.newArrayList();
 //        UeId ue = UeId.valueOf(euId);
 //        linkMap.keySet().forEach(
@@ -177,7 +177,7 @@
 //    }
 //
 //    @Override
-//    public RnibLink getLinkBetweenCellIdUeId(long cellId, long euId) {
+//    public RnibLink getlinkbetweencellidueid(long cellId, long euId) {
 //        LinkId linkId = LinkId.valueOf(cellId, euId);
 //        final Versioned<RnibLink> rnibLinkVersioned = linkMap.get(linkId);
 //        if (rnibLinkVersioned != null) {
@@ -188,7 +188,7 @@
 //
 //    @Override
 //    public boolean modifyTypeOfLink(long cellId, long euId, String type) {
-//        final RnibLink link = getLinkBetweenCellIdUeId(cellId, euId);
+//        final RnibLink link = getlinkbetweencellidueid(cellId, euId);
 //        if (link != null) {
 //            link.setType(type);
 //            return true;
@@ -198,7 +198,7 @@
 //
 //    @Override
 //    public boolean modifyTrafficPercentOfLink(long cellId, long euId, long trafficPercent) {
-//        final RnibLink link = getLinkBetweenCellIdUeId(cellId, euId);
+//        final RnibLink link = getlinkbetweencellidueid(cellId, euId);
 //        if (link != null) {
 //            link.setTrafficPercent(trafficPercent);
 //            return true;
@@ -232,21 +232,21 @@
 //    }
 //
 //    @Override
-//    public List<RnibCell> getCellNodes() {
+//    public List<RnibCell> getcellnodes() {
 //        List<RnibCell> list = Lists.newArrayList();
 //        cellMap.values().forEach(v -> list.add(v.value()));
 //        return list;
 //    }
 //
 //    @Override
-//    public List<RnibUe> getUeNodes() {
+//    public List<RnibUe> getuenodes() {
 //        List<RnibUe> list = Lists.newArrayList();
 //        ueMap.values().forEach(v -> list.add(v.value()));
 //        return list;
 //    }
 //
 //    @Override
-//    public Object getByNodeId(long nodeId) {
+//    public Object getbynodeid(long nodeId) {
 //        CellId cellId = CellId.valueOf(nodeId);
 //        if (cellMap.containsKey(cellId)) {
 //            return cellMap.get(cellId).value();
@@ -276,7 +276,7 @@
 //    }
 //
 //    @Override
-//    public boolean modifyCellRrmConf(JsonNode rrmConf) {
+//    public boolean modifycellrrmconf(JsonNode rrmConf) {
 //        return false;
 //    }
 //

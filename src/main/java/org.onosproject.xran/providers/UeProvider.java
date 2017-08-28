@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-present Open Networking Laboratory
+ * Copyright 2015-present Open Networking Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,19 @@
 package org.onosproject.xran.providers;
 
 import com.google.common.collect.Sets;
-import org.apache.felix.scr.annotations.*;
+import org.apache.felix.scr.annotations.Activate;
+import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Deactivate;
+import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.ReferenceCardinality;
 import org.onlab.packet.VlanId;
-import org.onosproject.net.*;
+import org.onosproject.net.AnnotationKeys;
+import org.onosproject.net.DefaultAnnotations;
+import org.onosproject.net.Host;
+import org.onosproject.net.HostId;
+import org.onosproject.net.HostLocation;
+import org.onosproject.net.PortNumber;
+import org.onosproject.net.SparseAnnotations;
 import org.onosproject.net.host.DefaultHostDescription;
 import org.onosproject.net.host.HostProvider;
 import org.onosproject.net.host.HostProviderRegistry;
@@ -33,14 +43,13 @@ import org.slf4j.Logger;
 
 import java.util.Set;
 
-import static org.onosproject.net.DeviceId.*;
-import static org.onosproject.xran.entities.RnibCell.*;
+import static org.onosproject.net.DeviceId.deviceId;
+import static org.onosproject.xran.entities.RnibCell.uri;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
- * Created by dimitris on 7/28/17.
+ * UE Provider.
  */
-
 @Component(immediate = true)
 public class UeProvider extends AbstractProvider implements HostProvider {
 
@@ -78,6 +87,9 @@ public class UeProvider extends AbstractProvider implements HostProvider {
 
     }
 
+    /**
+     * Internal host listener.
+     */
     class InternalHostListener implements XranHostListener {
 
         @Override
@@ -94,12 +106,15 @@ public class UeProvider extends AbstractProvider implements HostProvider {
             try {
                 Set<HostLocation> hostLocations = Sets.newConcurrentHashSet();
 
-                ecgiSet.forEach(ecgi -> hostLocations.add(new HostLocation(deviceId(uri(ecgi)), PortNumber.portNumber(0), 0)));
+                ecgiSet.forEach(ecgi -> hostLocations
+                        .add(new HostLocation(deviceId(uri(ecgi)),
+                                PortNumber.portNumber(0), 0)));
 
                 SparseAnnotations annotations = DefaultAnnotations.builder()
                         .set(AnnotationKeys.NAME, "UE " + ue.getId())
                         .build();
 
+                // Host ID is calculated from UE ID with some hacky function to represent a MAC address.
                 DefaultHostDescription desc = new DefaultHostDescription(
                         ue.getHostId().mac(),
                         VlanId.vlanId(VlanId.UNTAGGED),

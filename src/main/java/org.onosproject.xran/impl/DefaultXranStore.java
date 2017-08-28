@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-present Open Networking Laboratory
+ * Copyright 2015-present Open Networking Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,12 @@ package org.onosproject.xran.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
-import org.apache.felix.scr.annotations.*;
+import org.apache.felix.scr.annotations.Activate;
+import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Deactivate;
+import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.ReferenceCardinality;
+import org.apache.felix.scr.annotations.Service;
 import org.onosproject.core.ApplicationId;
 import org.onosproject.core.CoreService;
 import org.onosproject.core.IdGenerator;
@@ -45,7 +50,7 @@ import java.util.stream.Collectors;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
- * Created by dimitris on 7/22/17.
+ * Default xran store.
  */
 @Component(immediate = true)
 @Service
@@ -67,6 +72,7 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
     public void activate() {
         ApplicationId appId = coreService.getAppId(XRAN_APP_ID);
 
+        // create ue id generator
         ueIdGenerator = coreService.getIdGenerator("xran-ue-id");
 
         log.info("XRAN Default Store Started");
@@ -85,7 +91,7 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
     }
 
     @Override
-    public List<RnibLink> getLinksByECGI(ECGI ecgi) {
+    public List<RnibLink> getlinksbyecgi(ECGI ecgi) {
         List<RnibLink> list = Lists.newArrayList();
         list.addAll(
                 linkMap.keySet()
@@ -98,9 +104,9 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
     }
 
     @Override
-    public List<RnibLink> getLinksByCellId(String eciHex) {
+    public List<RnibLink> getlinksbycellid(String eciHex) {
         List<RnibLink> list = Lists.newArrayList();
-        EUTRANCellIdentifier eci = hexToECI(eciHex);
+        EUTRANCellIdentifier eci = hexToEci(eciHex);
 
         list.addAll(
                 linkMap.keySet()
@@ -113,7 +119,7 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
     }
 
     @Override
-    public List<RnibLink> getLinksByUeId(long euId) {
+    public List<RnibLink> getlinksbyueid(long euId) {
         List<RnibLink> list = Lists.newArrayList();
 
         list.addAll(
@@ -128,13 +134,13 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
 
 
     @Override
-    public RnibLink getLinkBetweenCellIdUeId(String eciHex, long euId) {
-        EUTRANCellIdentifier eci = hexToECI(eciHex);
+    public RnibLink getlinkbetweencellidueid(String eciHex, long euId) {
+        EUTRANCellIdentifier eci = hexToEci(eciHex);
 
         Optional<LinkId> first = linkMap.keySet()
                 .stream()
-                .filter(linkId -> linkId.getEcgi().getEUTRANcellIdentifier().equals(eci))
-                .filter(linkId -> linkId.getUeId().equals(euId))
+                .filter(linkId -> linkId.getEcgi().getEUTRANcellIdentifier().equals(eci) &&
+                        linkId.getUeId().equals(euId))
                 .findFirst();
 
         return first.map(linkId -> linkMap.get(linkId)).orElse(null);
@@ -147,12 +153,10 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
                 // if we add a primary link then change the primary to non serving
                 if (link.getType().equals(RnibLink.Type.SERVING_PRIMARY)) {
                     RnibUe ue = link.getLinkId().getUe();
-                    getLinksByUeId(ue.getId())
-                            .forEach(l -> {
-                                if (l.getType().equals(RnibLink.Type.SERVING_PRIMARY)) {
-                                    l.setType(RnibLink.Type.NON_SERVING);
-                                }
-                            });
+                    getlinksbyueid(ue.getId())
+                            .stream()
+                            .filter(l -> l.getType().equals(RnibLink.Type.SERVING_PRIMARY))
+                            .forEach(l -> l.setType(RnibLink.Type.NON_SERVING));
                 }
                 linkMap.put(link.getLinkId(), link);
             }
@@ -166,13 +170,12 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
 
     @Override
     public RnibLink getLink(ECGI ecgi, Long ueId) {
-
         LinkId linkId = LinkId.valueOf(ecgi, ueId);
         return linkMap.get(linkId);
     }
 
     @Override
-    public void modifyLinkRrmConf(RnibLink link, JsonNode rrmConf) {
+    public void modifylinkrrmconf(RnibLink link, JsonNode rrmConf) {
         link.modifyRrmParameters(rrmConf);
     }
 
@@ -185,25 +188,24 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
     }
 
     @Override
-    public List<Object> getCellNodes() {
+    public List<Object> getcellnodes() {
         List<Object> list = Lists.newArrayList();
         list.addAll(cellMap.values());
         return list;
     }
 
     @Override
-    public List<Object> getUeNodes() {
+    public List<Object> getuenodes() {
         List<Object> list = Lists.newArrayList();
         list.addAll(ueMap.values());
         return list;
     }
 
     @Override
-    public Object getByNodeId(String nodeId) {
+    public Object getbynodeid(String nodeId) {
         try {
             return getCell(nodeId);
-        } catch (Exception e) {
-
+        } catch (Exception ignored) {
         }
         return getUe(Long.parseLong(nodeId));
     }
@@ -222,9 +224,13 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
 
     @Override
     public RnibCell getCell(String hexeci) {
-        EUTRANCellIdentifier eci = hexToECI(hexeci);
-        Optional<ECGI> first = cellMap.keySet().stream().filter(ecgi -> ecgi.getEUTRANcellIdentifier().equals(eci)).findFirst();
-        return first.map(ecgi -> cellMap.get(ecgi)).orElse(null);
+        EUTRANCellIdentifier eci = hexToEci(hexeci);
+        Optional<ECGI> first = cellMap.keySet()
+                .stream()
+                .filter(ecgi -> ecgi.getEUTRANcellIdentifier().equals(eci))
+                .findFirst();
+        return first.map(ecgi -> cellMap.get(ecgi))
+                .orElse(null);
     }
 
     @Override
@@ -233,9 +239,11 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
     }
 
     @Override
-    public void modifyCellRrmConf(RnibCell cell, JsonNode rrmConf) throws Exception {
-        List<RnibLink> linkList = getLinksByECGI(cell.getEcgi());
-        List<RnibUe> ueList = linkList.stream().map(link -> link.getLinkId().getUe()).collect(Collectors.toList());
+    public void modifycellrrmconf(RnibCell cell, JsonNode rrmConf) throws Exception {
+        List<RnibLink> linkList = getlinksbyecgi(cell.getEcgi());
+        List<RnibUe> ueList = linkList.stream()
+                .map(link -> link.getLinkId().getUe())
+                .collect(Collectors.toList());
 
         cell.modifyRrmConfig(rrmConf, ueList);
     }
@@ -285,7 +293,13 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
         return ueMap.get(ueId);
     }
 
-    private EUTRANCellIdentifier hexToECI(String eciHex) {
+    /**
+     * Get from HEX string the according ECI class object.
+     *
+     * @param eciHex HEX string
+     * @return ECI object if created successfully
+     */
+    private EUTRANCellIdentifier hexToEci(String eciHex) {
         byte[] hexBinary = DatatypeConverter.parseHexBinary(eciHex);
         return new EUTRANCellIdentifier(hexBinary, 28);
     }

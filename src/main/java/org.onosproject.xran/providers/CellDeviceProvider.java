@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-present Open Networking Laboratory
+ * Copyright 2015-present Open Networking Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,24 @@
 
 package org.onosproject.xran.providers;
 
-import org.apache.felix.scr.annotations.*;
+import org.apache.felix.scr.annotations.Activate;
+import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Deactivate;
+import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.ReferenceCardinality;
 import org.onlab.packet.ChassisId;
-import org.onosproject.net.*;
-import org.onosproject.net.device.*;
+import org.onosproject.net.AnnotationKeys;
+import org.onosproject.net.DefaultAnnotations;
+import org.onosproject.net.Device;
+import org.onosproject.net.DeviceId;
+import org.onosproject.net.MastershipRole;
+import org.onosproject.net.PortNumber;
+import org.onosproject.net.SparseAnnotations;
+import org.onosproject.net.device.DefaultDeviceDescription;
+import org.onosproject.net.device.DeviceDescription;
+import org.onosproject.net.device.DeviceProvider;
+import org.onosproject.net.device.DeviceProviderRegistry;
+import org.onosproject.net.device.DeviceProviderService;
 import org.onosproject.net.provider.AbstractProvider;
 import org.onosproject.net.provider.ProviderId;
 import org.onosproject.xran.controller.XranController;
@@ -27,14 +41,12 @@ import org.onosproject.xran.entities.RnibCell;
 import org.slf4j.Logger;
 
 import static org.onosproject.net.DeviceId.deviceId;
-import static org.onosproject.xran.entities.RnibCell.*;
+import static org.onosproject.xran.entities.RnibCell.uri;
 import static org.slf4j.LoggerFactory.getLogger;
 
-
 /**
- * Created by dimitris on 7/27/17.
+ * Cell device provider.
  */
-
 @Component(immediate = true)
 public class CellDeviceProvider extends AbstractProvider implements DeviceProvider {
 
@@ -87,6 +99,9 @@ public class CellDeviceProvider extends AbstractProvider implements DeviceProvid
 
     }
 
+    /**
+     * Internal device listener.
+     */
     private class InternalDeviceListener implements XranDeviceListener {
 
         @Override
@@ -95,6 +110,7 @@ public class CellDeviceProvider extends AbstractProvider implements DeviceProvid
                 return;
             }
 
+            // use ECGI as device ID URI
             DeviceId id = deviceId(uri(cell.getEcgi()));
 
             ChassisId cId = new ChassisId(id.hashCode());

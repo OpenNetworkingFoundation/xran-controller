@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-present Open Networking Laboratory
+ * Copyright 2015-present Open Networking Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.onosproject.xran.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.onlab.packet.IpAddress;
 import org.onosproject.core.ApplicationId;
 import org.onosproject.net.config.Config;
 import org.onosproject.xran.codecs.api.ECGI;
@@ -33,6 +34,9 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Xran config.
+ */
 public class XranConfig extends Config<ApplicationId> {
 
     private static final String CELLS = "active_cells";
@@ -63,8 +67,13 @@ public class XranConfig extends Config<ApplicationId> {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    public Map<String, ECGI> activeCellSet() {
-        Map<String, ECGI> cells = new ConcurrentHashMap<>();
+    /**
+     * Get a list of all CELLs inside the configuration file.
+     *
+     * @return Map of CELL IP to ECGI
+     */
+    public Map<IpAddress, ECGI> activeCellSet() {
+        Map<IpAddress, ECGI> cells = new ConcurrentHashMap<>();
 
         JsonNode cellsNode = object.get(CELLS);
         if (cellsNode == null) {
@@ -73,58 +82,110 @@ public class XranConfig extends Config<ApplicationId> {
         }
 
         cellsNode.forEach(cellNode -> {
-            String plmn_id = cellNode.get(PLMN_ID).asText();
+            String plmnId = cellNode.get(PLMN_ID).asText();
             String eci = cellNode.get(ECI_ID).asText();
 
             String ipAddress = cellNode.get(IP_ADDR).asText();
 
-            ECGI ecgi = hexToECGI(plmn_id, eci);
-            cells.put(ipAddress, ecgi);
+            ECGI ecgi = hexToEcgi(plmnId, eci);
+            cells.put(IpAddress.valueOf(ipAddress), ecgi);
         });
 
         return cells;
     }
 
+    /**
+     * Get flag for ADMISSION_SUCCESS field in configuration.
+     *
+     * @return boolean value in configuration
+     */
     public boolean admissionFlag() {
         JsonNode flag = object.get(ADMISSION_SUCCESS);
         return flag != null && flag.asBoolean();
     }
 
+    /**
+     * Get flag for BEARER_SUCCESS field in configuration.
+     *
+     * @return boolean value in configuration
+     */
     public boolean bearerFlag() {
         JsonNode flag = object.get(BEARER_SUCCESS);
         return flag != null && flag.asBoolean();
     }
 
+    /**
+     * Get port for xRAN controller server to bind to from configuration.
+     *
+     * @return port number
+     */
     public int getXrancPort() {
         return object.get(XRANC_PORT).asInt();
     }
 
+    /**
+     * Get config request interval from configuration.
+     *
+     * @return interval in seconds
+     */
     public int getConfigRequestInterval() {
         return object.get(XRANC_CELLCONFIG_INTERVAL).asInt();
     }
 
+    /**
+     * Get rx signal interval from configuration.
+     *
+     * @return interval in milliseconds
+     */
     public int getRxSignalInterval() {
         return object.get(RX_SIGNAL_MEAS_REPORT_INTERVAL).asInt();
     }
 
+    /**
+     * Get l2 measurement interval from configuration.
+     *
+     * @return interval in milliseconds
+     */
     public int getL2MeasInterval() {
         return object.get(L2_MEAS_REPORT_INTERVAL).asInt();
     }
 
+    /**
+     * Get removal time of link after not getting measurement from configuration.
+     *
+     * @return interval in milliseconds
+     */
     public int getNoMeasLinkRemoval() {
         return object.get(NO_MEAS_LINK_REMOVAL).asInt();
     }
 
+    /**
+     * Get removal time of UE after being IDLE from configuration.
+     *
+     * @return interval in milliseconds
+     */
     public int getIdleUeRemoval() {
         return object.get(IDLE_UE_REMOVAL).asInt();
     }
 
+    /**
+     * Get northbound timeout when waiting for responses from configuration.
+     *
+     * @return interval in milliseconds
+     */
     public int getNorthBoundTimeout() {
         return object.get(NORTHBOUND_TIMEOUT).asInt();
     }
 
-    private ECGI hexToECGI(String plmn_id, String eci) {
-        byte[] bytes = HexConverter.fromShortHexString(plmn_id);
+    /**
+     * Get ECGI from HEX representation of PLMN_ID and ECI.
+     *
+     * @param plmnId  HEX string of PLMN_ID
+     * @param eci     HEX string of ECI
+     * @return new ECGI object
+     */
+    private ECGI hexToEcgi(String plmnId, String eci) {
+        byte[] bytes = HexConverter.fromShortHexString(plmnId);
         byte[] bytearray = DatatypeConverter.parseHexBinary(eci);
 
         InputStream inputStream = new ByteArrayInputStream(bytearray);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-present Open Networking Laboratory
+ * Copyright 2015-present Open Networking Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,11 @@
 
 package org.onosproject.xran.entities;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.onosproject.net.DeviceId;
 import org.onosproject.store.service.WallClockTimestamp;
@@ -41,10 +45,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * Created by dimitris on 7/22/17.
- */
 
+/**
+ * R-NIB Cell and its properties.
+ */
 @JsonPropertyOrder({
         "ECGI",
         "Configuration",
@@ -81,6 +85,12 @@ public class RnibCell {
         rrmConfig.setEcgi(ecgi);
     }
 
+    /**
+     * Encode ECGI and obtain its URI.
+     *
+     * @param ecgi ECGI
+     * @return URI
+     */
     public static URI uri(ECGI ecgi) {
         if (ecgi != null) {
             try {
@@ -95,6 +105,13 @@ public class RnibCell {
         return null;
     }
 
+    /**
+     * Obtain ECGI from the device ID.
+     *
+     * @param deviceId ID of the device
+     * @return ECGI
+     * @throws IOException I0 Exception for ByteArrayInputStream
+     */
     public static ECGI decodeDeviceId(DeviceId deviceId) throws IOException {
         String uri = deviceId.toString();
         String hexEcgi = uri.substring(uri.lastIndexOf("xran:") + 5);
@@ -107,65 +124,120 @@ public class RnibCell {
         return ecgi;
     }
 
+    /**
+     * Get version ID.
+     *
+     * @return version ID
+     */
     public int getVersion() {
         return Integer.parseInt(version);
     }
 
+    /**
+     * Set version ID.
+     *
+     * @param version version ID
+     */
     public void setVersion(String version) {
         this.version = version;
     }
 
+    /**
+     * Get RRMConfig.
+     *
+     * @return RRMConfig
+     */
     @JsonProperty("RRMConfiguration")
     public RRMConfig getRrmConfig() {
         return rrmConfig;
     }
 
+    /**
+     * Set RRMConfig properties.
+     *
+     * @param rrmConfig RRMConfig
+     */
     @JsonProperty("RRMConfiguration")
     public void setRrmConfig(RRMConfig rrmConfig) {
         this.rrmConfig = rrmConfig;
     }
 
+    /**
+     * Get PRB Usage.
+     * @return prb usage
+     */
     @JsonProperty("PRB-Usage")
     public PrbUsageContainer getPrbUsage() {
         return prbUsage;
     }
 
+    /**
+     * Set PRB Usage.
+     *
+     * @param prbUsage prb Usage
+     */
     @JsonProperty("PRB-Usage")
     public void setPrbUsage(PrbUsageContainer prbUsage) {
         this.prbUsage = prbUsage;
     }
 
+    /**
+     * Get ECGI.
+     *
+     * @return ECGI
+     */
     @JsonProperty("ECGI")
     public ECGI getEcgi() {
         return ecgi;
     }
 
+    /**
+     * Set ECGI.
+     *
+     * @param ecgi ECGI
+     */
     @JsonProperty("ECGI")
     public void setEcgi(ECGI ecgi) {
         this.ecgi = ecgi;
     }
 
+    /**
+     * Get cell config report.
+     *
+     * @return CellConfig Report
+     */
     @JsonProperty("Configuration")
     public CellConfigReport getConf() {
         return conf;
     }
 
+    /**
+     * Set cell config report.
+     *
+     * @param conf Cell config report
+     */
     @JsonProperty("Configuration")
     public void setConf(CellConfigReport conf) {
         this.conf = conf;
     }
 
+    /**
+     * Modify the RRM Config parameters of cell.
+     *
+     * @param rrmConfigNode RRMConfig parameters to modify obtained from REST call
+     * @param ueList List of all UEs
+     * @throws Exception p_a size not equal to UE size
+     */
     public void modifyRrmConfig(JsonNode rrmConfigNode, List<RnibUe> ueList) throws Exception {
         RRMConfig.Crnti crnti = new RRMConfig.Crnti();
         ueList.forEach(ue -> crnti.addCRNTI(ue.getCrnti()));
 
-        {
-            JsonNode p_a = rrmConfigNode.path("p_a");
-            if (!p_a.isMissingNode()) {
+            JsonNode pA = rrmConfigNode.path("p_a");
+            if (!pA.isMissingNode()) {
                 RRMConfig.Pa pa = new RRMConfig.Pa();
-                if (p_a.isArray()) {
-                    if (ueList.size() == p_a.size()) {
-                        List<XICICPA> collect = Stream.of(p_a)
+                if (pA.isArray()) {
+                    if (ueList.size() == pA.size()) {
+                        List<XICICPA> collect = Stream.of(pA)
                                 .map(val -> new XICICPA(val.asInt()))
                                 .collect(Collectors.toList());
                         pa.setXICICPA(collect);
@@ -175,15 +247,13 @@ public class RnibCell {
                 }
                 rrmConfig.setPa(pa);
             }
-        }
 
-        {
-            JsonNode start_prb_dl = rrmConfigNode.path("start_prb_dl");
-            if (!start_prb_dl.isMissingNode()) {
+            JsonNode startPrbDl1 = rrmConfigNode.path("start_prb_dl");
+            if (!startPrbDl1.isMissingNode()) {
                 RRMConfig.StartPrbDl startPrbDl = new RRMConfig.StartPrbDl();
-                if (start_prb_dl.isArray()) {
-                    if (ueList.size() == start_prb_dl.size()) {
-                        List<BerInteger> collect = Stream.of(start_prb_dl)
+                if (startPrbDl1.isArray()) {
+                    if (ueList.size() == startPrbDl1.size()) {
+                        List<BerInteger> collect = Stream.of(startPrbDl1)
                                 .map(val -> new BerInteger(val.asInt()))
                                 .collect(Collectors.toList());
                         startPrbDl.setSeqOf(collect);
@@ -193,15 +263,13 @@ public class RnibCell {
                 }
                 rrmConfig.setStartPrbDl(startPrbDl);
             }
-        }
 
-        {
-            JsonNode end_prb_dl = rrmConfigNode.path("end_prb_dl");
-            if (!end_prb_dl.isMissingNode()) {
+            JsonNode endPrbDl1 = rrmConfigNode.path("end_prb_dl");
+            if (!endPrbDl1.isMissingNode()) {
                 RRMConfig.EndPrbDl endPrbDl = new RRMConfig.EndPrbDl();
-                if (end_prb_dl.isArray()) {
-                    if (ueList.size() == end_prb_dl.size()) {
-                        List<BerInteger> collect = Stream.of(end_prb_dl)
+                if (endPrbDl1.isArray()) {
+                    if (ueList.size() == endPrbDl1.size()) {
+                        List<BerInteger> collect = Stream.of(endPrbDl1)
                                 .map(val -> new BerInteger(val.asInt()))
                                 .collect(Collectors.toList());
                         endPrbDl.setSeqOf(collect);
@@ -211,14 +279,12 @@ public class RnibCell {
                 }
                 rrmConfig.setEndPrbDl(endPrbDl);
             }
-        }
 
-        {
-            JsonNode sub_frame_bitmask_dl = rrmConfigNode.path("sub_frame_bitmask_dl");
-            if (!sub_frame_bitmask_dl.isMissingNode()) {
+            JsonNode frameBitmaskDl = rrmConfigNode.path("sub_frame_bitmask_dl");
+            if (!frameBitmaskDl.isMissingNode()) {
                 RRMConfig.SubframeBitmaskDl subframeBitmaskDl = new RRMConfig.SubframeBitmaskDl();
-                if (sub_frame_bitmask_dl.isArray()) {
-                    List<BerBitString> collect = Stream.of(sub_frame_bitmask_dl)
+                if (frameBitmaskDl.isArray()) {
+                    List<BerBitString> collect = Stream.of(frameBitmaskDl)
                             .map(val -> new BerBitString(DatatypeConverter.parseHexBinary(val.asText()), 10))
                             .collect(Collectors.toList());
 
@@ -228,15 +294,13 @@ public class RnibCell {
                 }
                 rrmConfig.setSubframeBitmaskDl(subframeBitmaskDl);
             }
-        }
 
-        {
-            JsonNode start_prb_ul = rrmConfigNode.path("start_prb_ul");
-            if (!start_prb_ul.isMissingNode()) {
+            JsonNode startPrbUl1 = rrmConfigNode.path("start_prb_ul");
+            if (!startPrbUl1.isMissingNode()) {
                 RRMConfig.StartPrbUl startPrbUl = new RRMConfig.StartPrbUl();
-                if (start_prb_ul.isArray()) {
-                    if (ueList.size() == start_prb_ul.size()) {
-                        List<BerInteger> collect = Stream.of(start_prb_ul)
+                if (startPrbUl1.isArray()) {
+                    if (ueList.size() == startPrbUl1.size()) {
+                        List<BerInteger> collect = Stream.of(startPrbUl1)
                                 .map(val -> new BerInteger(val.asInt()))
                                 .collect(Collectors.toList());
                         startPrbUl.setSeqOf(collect);
@@ -246,15 +310,13 @@ public class RnibCell {
                 }
                 rrmConfig.setStartPrbUl(startPrbUl);
             }
-        }
 
-        {
-            JsonNode end_prb_ul = rrmConfigNode.path("end_prb_ul");
-            if (!end_prb_ul.isMissingNode()) {
+            JsonNode endPrbUl1 = rrmConfigNode.path("end_prb_ul");
+            if (!endPrbUl1.isMissingNode()) {
                 RRMConfig.EndPrbUl endPrbUl = new RRMConfig.EndPrbUl();
-                if (end_prb_ul.isArray()) {
-                    if (ueList.size() == end_prb_ul.size()) {
-                        List<BerInteger> collect = Stream.of(end_prb_ul)
+                if (endPrbUl1.isArray()) {
+                    if (ueList.size() == endPrbUl1.size()) {
+                        List<BerInteger> collect = Stream.of(endPrbUl1)
                                 .map(val -> new BerInteger(val.asInt()))
                                 .collect(Collectors.toList());
                         endPrbUl.setSeqOf(collect);
@@ -264,15 +326,13 @@ public class RnibCell {
                 }
                 rrmConfig.setEndPrbUl(endPrbUl);
             }
-        }
 
-        {
-            JsonNode p0_ue_pusch = rrmConfigNode.path("p0_ue_pusch");
-            if (!p0_ue_pusch.isMissingNode()) {
+            JsonNode uePusch = rrmConfigNode.path("p0_ue_pusch");
+            if (!uePusch.isMissingNode()) {
                 RRMConfig.P0UePusch p0UePusch = new RRMConfig.P0UePusch();
-                if (p0_ue_pusch.isArray()) {
-                    if (ueList.size() == p0_ue_pusch.size()) {
-                        List<BerInteger> collect = Stream.of(p0_ue_pusch)
+                if (uePusch.isArray()) {
+                    if (ueList.size() == uePusch.size()) {
+                        List<BerInteger> collect = Stream.of(uePusch)
                                 .map(val -> new BerInteger(val.asInt()))
                                 .collect(Collectors.toList());
                         p0UePusch.setSeqOf(collect);
@@ -282,14 +342,12 @@ public class RnibCell {
                 }
                 rrmConfig.setP0UePusch(p0UePusch);
             }
-        }
 
-        {
-            JsonNode sub_frame_bitmask_ul = rrmConfigNode.path("sub_frame_bitmask_ul");
-            if (!sub_frame_bitmask_ul.isMissingNode()) {
+            JsonNode frameBitmaskUl = rrmConfigNode.path("sub_frame_bitmask_ul");
+            if (!frameBitmaskUl.isMissingNode()) {
                 RRMConfig.SubframeBitmaskUl subframeBitmaskUl = new RRMConfig.SubframeBitmaskUl();
-                if (sub_frame_bitmask_ul.isArray()) {
-                    List<BerBitString> collect = Stream.of(sub_frame_bitmask_ul)
+                if (frameBitmaskUl.isArray()) {
+                    List<BerBitString> collect = Stream.of(frameBitmaskUl)
                             .map(val -> new BerBitString(DatatypeConverter.parseHexBinary(val.asText()), 10))
                             .collect(Collectors.toList());
 
@@ -299,26 +357,45 @@ public class RnibCell {
                 }
                 rrmConfig.setSubframeBitmaskUl(subframeBitmaskUl);
             }
-        }
 
         rrmConfig.setCrnti(crnti);
     }
 
+    /**
+     * Get QCI values.
+     *
+     * @return QCI values
+     */
     @JsonProperty("QCI")
     public SchedMeasReportPerCell.QciVals getQci() {
         return qci;
     }
 
+    /**
+     * Set QCI values.
+     *
+     * @param qci QCI
+     */
     @JsonProperty("QCI")
     public void setQci(SchedMeasReportPerCell.QciVals qci) {
         this.qci = qci;
     }
 
+    /**
+     * Get L2 measurement config.
+     *
+     * @return L2MeasConfig
+     */
     @JsonProperty("MeasurementConfiguration")
     public L2MeasConfig getMeasConfig() {
         return measConfig;
     }
 
+    /**
+     * Set L2 measurement config.
+     *
+     * @param measConfig l2MeasConfig
+     */
     @JsonProperty("MeasurementConfiguration")
     public void setMeasConfig(L2MeasConfig measConfig) {
         this.measConfig = measConfig;
@@ -337,21 +414,38 @@ public class RnibCell {
                 '}';
     }
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.lang.Object#equals()
+     */
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         RnibCell rnibCell = (RnibCell) o;
 
         return ecgi.equals(rnibCell.ecgi);
     }
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.lang.Object#hashCode()
+     */
     @Override
     public int hashCode() {
         return ecgi.hashCode();
     }
 
+    /**
+     * Container class for PRBUsage.
+     */
     @JsonPropertyOrder({
             "primary",
             "secondary",
@@ -364,33 +458,65 @@ public class RnibCell {
         WallClockTimestamp timesincelastupdate;
 
         @JsonCreator
-        public PrbUsageContainer(@JsonProperty("primary") PRBUsage primary, @JsonProperty("secondary") PRBUsage secondary) {
+        public PrbUsageContainer(@JsonProperty("primary") PRBUsage primary,
+                                 @JsonProperty("secondary") PRBUsage secondary) {
             this.primary = primary;
             this.secondary = secondary;
             this.timesincelastupdate = new WallClockTimestamp();
         }
 
+        /**
+         * Get primary PRBUsage.
+         *
+         * @return PRBUsage
+         */
         public PRBUsage getPrimary() {
             return primary;
         }
 
+        /**
+         * Set secondary PRBUsage.
+         *
+         * @param primary PRBUsage
+         */
         public void setPrimary(PRBUsage primary) {
             this.primary = primary;
         }
 
+        /**
+         * Get secondary PRBUsage.
+         *
+         * @return PRBUsage
+         */
         public PRBUsage getSecondary() {
             return secondary;
         }
 
+        /**
+         * Set secondary PRBUsage.
+         *
+         * @param secondary PRBUsage
+         */
         public void setSecondary(PRBUsage secondary) {
             this.secondary = secondary;
         }
 
-        public long getTimesincelastupdate() {
+        /**
+         * Get time since last update.
+         *
+         * @return long Time
+         */
+        public long getTimeSinceLastUpdate() {
             return new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp();
         }
 
-        public void setTimesincelastupdate(WallClockTimestamp timesincelastupdate) {
+
+        /**
+         * Set time since last update.
+         *
+         * @param timesincelastupdate time since last update
+         */
+        public void setTimeSinceLastUpdate(WallClockTimestamp timesincelastupdate) {
             this.timesincelastupdate = timesincelastupdate;
         }
 
@@ -399,7 +525,8 @@ public class RnibCell {
             return "PrbUsageContainer{" +
                     "primary=" + primary +
                     ", secondary=" + secondary +
-                    ", timesincelastupdate=" + (new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp()) +
+                    ", timesincelastupdate=" + (new WallClockTimestamp().unixTimestamp() -
+                    timesincelastupdate.unixTimestamp()) +
                     '}';
         }
     }

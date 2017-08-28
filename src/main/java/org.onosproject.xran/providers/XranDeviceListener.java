@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-present Open Networking Laboratory
+ * Copyright 2015-present Open Networking Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,21 @@ import org.onosproject.net.DeviceId;
 import org.onosproject.xran.entities.RnibCell;
 
 /**
- * Created by dimitris on 7/27/17.
+ * Xran Device Listener.
  */
 public interface XranDeviceListener {
 
+    /**
+     * Add new CELL as a device.
+     *
+     * @param id CELL entity
+     */
     void deviceAdded(RnibCell id);
 
+    /**
+     * Remove CELL.
+     *
+     * @param id CELL ECGI as device id
+     */
     void deviceRemoved(DeviceId id);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-present Open Networking Laboratory
+ * Copyright 2015-present Open Networking Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,20 @@
 
 package org.onosproject.xran.entities;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Lists;
 import org.onosproject.store.service.WallClockTimestamp;
-import org.onosproject.xran.codecs.api.*;
+import org.onosproject.xran.codecs.api.ERABParams;
+import org.onosproject.xran.codecs.api.RadioRepPerServCell;
+import org.onosproject.xran.codecs.api.TrafficSplitPercentage;
+import org.onosproject.xran.codecs.api.XICICPA;
+import org.onosproject.xran.codecs.api.SchedMeasRepPerServCell;
+import org.onosproject.xran.codecs.api.PRBUsage;
 import org.onosproject.xran.codecs.ber.types.BerBitString;
 import org.onosproject.xran.codecs.ber.types.BerInteger;
 import org.onosproject.xran.codecs.pdu.PDCPMeasReportPerUe;
@@ -36,7 +45,7 @@ import java.util.Optional;
 import java.util.Timer;
 
 /**
- * Created by dimitris on 7/22/17.
+ * R-NIB Link and its properties.
  */
 @JsonPropertyOrder({
         "Link-ID",
@@ -66,9 +75,9 @@ public class RnibLink {
     @JsonProperty("Quality")
     private LinkQuality quality;
     @JsonProperty("PDCP-Throughput")
-    private PDCPThroughput pdcpThroughput;
+    private PdcpThroughput pdcpThroughput;
     @JsonProperty("PDCP-Packet-Delay")
-    private PDCPPacketDelay pdcpPackDelay;
+    private PdcpPacketdelay pdcpPackDelay;
     @JsonProperty("Resource-Usage")
     private ResourceUsage resourceUsage;
     @JsonProperty("Type")
@@ -97,6 +106,11 @@ public class RnibLink {
         rrmParameters.setEcgi(linkId.getEcgi());
     }
 
+    /**
+     * Get timer.
+     *
+     * @return Timer
+     */
     public Timer getTimer() {
         return timer;
     }
@@ -107,201 +121,270 @@ public class RnibLink {
         this.timer = timer;
     }
 
+    /**
+     * Get Link ID.
+     * @return LinkID
+     */
     @JsonProperty("Link-ID")
     public LinkId getLinkId() {
         return linkId;
     }
 
+    /**
+     * Set the Link ID.
+     * @param linkId Link ID
+     */
     @JsonProperty("Link-ID")
     public void setLinkId(LinkId linkId) {
         this.linkId = linkId;
     }
 
+    /**
+     * Set the LINK ID with cell and ue.
+     * @param cell Rnib CELL
+     * @param ue Rnib UE
+     */
     public void setLinkId(RnibCell cell, RnibUe ue) {
         this.linkId = LinkId.valueOf(cell, ue);
         trafficPercent.setEcgi(cell.getEcgi());
     }
 
+    /**
+     * Get the link type.
+     *
+     * @return Link-type
+     */
     @JsonProperty("Type")
     public Type getType() {
         return type;
     }
 
+    /**
+     * Set the link type.
+     * @param type Link-type
+     */
     @JsonProperty("Type")
     public void setType(Type type) {
         this.type = type;
     }
 
+    /**
+     * Get traffic percent.
+     * @return TrafficSplitPercentage
+     */
     @JsonProperty("TrafficPercent")
     public TrafficSplitPercentage getTrafficPercent() {
         return trafficPercent;
     }
 
+    /**
+     * Set traffic percent.
+     * @param trafficPercent TrafficSplitPercentage
+     */
     @JsonProperty("TrafficPercent")
     public void setTrafficPercent(TrafficSplitPercentage trafficPercent) {
         this.trafficPercent = trafficPercent;
     }
 
+    /**
+     * Get the Bearer Parameters.
+     * @return ERABParams
+     */
     @JsonProperty("BearerParameters")
     public ERABParams getBearerParameters() {
         return bearerParameters;
     }
 
+    /**
+     * Set the Bearer Parameters.
+     * @param bearerParameters ERABParams
+     */
     @JsonProperty("BearerParameters")
     public void setBearerParameters(ERABParams bearerParameters) {
         this.bearerParameters = bearerParameters;
     }
 
+    /**
+     * Get Quality.
+     * @return LinkQuality
+     */
     @JsonProperty("Quality")
     public LinkQuality getQuality() {
         return quality;
     }
 
+    /**
+     * Set Quality.
+     * @param quality LinkQuality
+     */
     @JsonProperty("Quality")
     public void setQuality(LinkQuality quality) {
         this.quality = quality;
     }
 
+    /**
+     * Get RRM Configuration.
+     * @return RRMConfig
+     */
     @JsonProperty("RRMConfiguration")
     public RRMConfig getRrmParameters() {
         return rrmParameters;
     }
 
+    /**
+     * Set RRM Configuration.
+     * @param rrmParameters RRMConfig
+     */
     @JsonProperty("RRMConfiguration")
     public void setRrmParameters(RRMConfig rrmParameters) {
         this.rrmParameters = rrmParameters;
     }
 
+    /**
+     * Modify the RRM Config parameters of link.
+     *
+     * @param rrmConfigNode RRMConfig parameters to modify obtained from REST call
+     */
     public void modifyRrmParameters(JsonNode rrmConfigNode) {
-        {
-            JsonNode p_a = rrmConfigNode.path("p_a");
-            if (!p_a.isMissingNode()) {
-                RRMConfig.Pa pa = new RRMConfig.Pa();
 
-                List<XICICPA> collect = Lists.newArrayList();
-                collect.add(new XICICPA(p_a.asInt()));
-                pa.setXICICPA(collect);
-                rrmParameters.setPa(pa);
-            }
+        JsonNode pA = rrmConfigNode.path("p_a");
+        if (!pA.isMissingNode()) {
+            RRMConfig.Pa pa = new RRMConfig.Pa();
+
+            List<XICICPA> collect = Lists.newArrayList();
+            collect.add(new XICICPA(pA.asInt()));
+            pa.setXICICPA(collect);
+            rrmParameters.setPa(pa);
         }
 
-        {
-            JsonNode start_prb_dl = rrmConfigNode.path("start_prb_dl");
-            if (!start_prb_dl.isMissingNode()) {
-                RRMConfig.StartPrbDl startPrbDl = new RRMConfig.StartPrbDl();
+        JsonNode startPrbDl1 = rrmConfigNode.path("start_prb_dl");
+        if (!startPrbDl1.isMissingNode()) {
+            RRMConfig.StartPrbDl startPrbDl = new RRMConfig.StartPrbDl();
 
-                List<BerInteger> collect = Lists.newArrayList();
-                collect.add(new BerInteger(start_prb_dl.asInt()));
-                startPrbDl.setSeqOf(collect);
+            List<BerInteger> collect = Lists.newArrayList();
+            collect.add(new BerInteger(startPrbDl1.asInt()));
+            startPrbDl.setSeqOf(collect);
 
-                rrmParameters.setStartPrbDl(startPrbDl);
-            }
+            rrmParameters.setStartPrbDl(startPrbDl);
         }
 
-        {
-            JsonNode end_prb_dl = rrmConfigNode.path("end_prb_dl");
-            if (!end_prb_dl.isMissingNode()) {
-                RRMConfig.EndPrbDl endPrbDl = new RRMConfig.EndPrbDl();
+        JsonNode endPrbDl1 = rrmConfigNode.path("end_prb_dl");
+        if (!endPrbDl1.isMissingNode()) {
+            RRMConfig.EndPrbDl endPrbDl = new RRMConfig.EndPrbDl();
 
-                List<BerInteger> collect = Lists.newArrayList();
-                collect.add(new BerInteger(end_prb_dl.asInt()));
-                endPrbDl.setSeqOf(collect);
+            List<BerInteger> collect = Lists.newArrayList();
+            collect.add(new BerInteger(endPrbDl1.asInt()));
+            endPrbDl.setSeqOf(collect);
 
-                rrmParameters.setEndPrbDl(endPrbDl);
-            }
+            rrmParameters.setEndPrbDl(endPrbDl);
         }
 
-        {
-            JsonNode sub_frame_bitmask_dl = rrmConfigNode.path("sub_frame_bitmask_dl");
-            if (!sub_frame_bitmask_dl.isMissingNode()) {
-                RRMConfig.SubframeBitmaskDl subframeBitmaskDl = new RRMConfig.SubframeBitmaskDl();
-                List<BerBitString> collect = Lists.newArrayList();
-                
-                byte[] hexString = DatatypeConverter.parseHexBinary(sub_frame_bitmask_dl.asText());
-                collect.add(new BerBitString(hexString, 10));
-                subframeBitmaskDl.setSeqOf(collect);
-                rrmParameters.setSubframeBitmaskDl(subframeBitmaskDl);
-            }
+        JsonNode subFrameBitmaskDl = rrmConfigNode.path("sub_frame_bitmask_dl");
+        if (!subFrameBitmaskDl.isMissingNode()) {
+            RRMConfig.SubframeBitmaskDl subframeBitmaskDl = new RRMConfig.SubframeBitmaskDl();
+            List<BerBitString> collect = Lists.newArrayList();
+
+            byte[] hexString = DatatypeConverter.parseHexBinary(subFrameBitmaskDl.asText());
+            collect.add(new BerBitString(hexString, 10));
+            subframeBitmaskDl.setSeqOf(collect);
+            rrmParameters.setSubframeBitmaskDl(subframeBitmaskDl);
         }
 
-        {
-            JsonNode start_prb_ul = rrmConfigNode.path("start_prb_ul");
-            if (!start_prb_ul.isMissingNode()) {
-                RRMConfig.StartPrbUl startPrbUl = new RRMConfig.StartPrbUl();
+        JsonNode startPrbUl1 = rrmConfigNode.path("start_prb_ul");
+        if (!startPrbUl1.isMissingNode()) {
+            RRMConfig.StartPrbUl startPrbUl = new RRMConfig.StartPrbUl();
 
-                List<BerInteger> collect = Lists.newArrayList();
-                collect.add(new BerInteger(start_prb_ul.asInt()));
-                startPrbUl.setSeqOf(collect);
+            List<BerInteger> collect = Lists.newArrayList();
+            collect.add(new BerInteger(startPrbUl1.asInt()));
+            startPrbUl.setSeqOf(collect);
 
-                rrmParameters.setStartPrbUl(startPrbUl);
-            }
+            rrmParameters.setStartPrbUl(startPrbUl);
         }
 
-        {
-            JsonNode end_prb_ul = rrmConfigNode.path("end_prb_ul");
-            if (!end_prb_ul.isMissingNode()) {
-                RRMConfig.EndPrbUl endPrbUl = new RRMConfig.EndPrbUl();
+        JsonNode endPrbUl1 = rrmConfigNode.path("end_prb_ul");
+        if (!endPrbUl1.isMissingNode()) {
+            RRMConfig.EndPrbUl endPrbUl = new RRMConfig.EndPrbUl();
 
-                List<BerInteger> collect = Lists.newArrayList();
-                collect.add(new BerInteger(end_prb_ul.asInt()));
-                endPrbUl.setSeqOf(collect);
+            List<BerInteger> collect = Lists.newArrayList();
+            collect.add(new BerInteger(endPrbUl1.asInt()));
+            endPrbUl.setSeqOf(collect);
 
-                rrmParameters.setEndPrbUl(endPrbUl);
-            }
+            rrmParameters.setEndPrbUl(endPrbUl);
         }
 
-        {
-            JsonNode p0_ue_pusch = rrmConfigNode.path("p0_ue_pusch");
-            if (!p0_ue_pusch.isMissingNode()) {
-                RRMConfig.P0UePusch p0UePusch = new RRMConfig.P0UePusch();
 
-                List<BerInteger> collect = Lists.newArrayList();
-                collect.add(new BerInteger(p0_ue_pusch.asInt()));
-                p0UePusch.setSeqOf(collect);
+        JsonNode p0UePusch1 = rrmConfigNode.path("p0_ue_pusch");
+        if (!p0UePusch1.isMissingNode()) {
+            RRMConfig.P0UePusch p0UePusch = new RRMConfig.P0UePusch();
 
-                rrmParameters.setP0UePusch(p0UePusch);
-            }
+            List<BerInteger> collect = Lists.newArrayList();
+            collect.add(new BerInteger(p0UePusch1.asInt()));
+            p0UePusch.setSeqOf(collect);
+
+            rrmParameters.setP0UePusch(p0UePusch);
         }
 
-        {
-            JsonNode sub_frame_bitmask_ul = rrmConfigNode.path("sub_frame_bitmask_ul");
-            if (!sub_frame_bitmask_ul.isMissingNode()) {
-                RRMConfig.SubframeBitmaskUl subframeBitmaskUl = new RRMConfig.SubframeBitmaskUl();
-                List<BerBitString> collect = Lists.newArrayList();
+        JsonNode subFrameBitmaskUl = rrmConfigNode.path("sub_frame_bitmask_ul");
+        if (!subFrameBitmaskUl.isMissingNode()) {
+            RRMConfig.SubframeBitmaskUl subframeBitmaskUl = new RRMConfig.SubframeBitmaskUl();
+            List<BerBitString> collect = Lists.newArrayList();
 
-                byte[] hexString = DatatypeConverter.parseHexBinary(sub_frame_bitmask_ul.asText());
-                collect.add(new BerBitString(hexString, 10));
-                subframeBitmaskUl.setSeqOf(collect);
-                rrmParameters.setSubframeBitmaskUl(subframeBitmaskUl);
-            }
+            byte[] hexString = DatatypeConverter.parseHexBinary(subFrameBitmaskUl.asText());
+            collect.add(new BerBitString(hexString, 10));
+            subframeBitmaskUl.setSeqOf(collect);
+            rrmParameters.setSubframeBitmaskUl(subframeBitmaskUl);
         }
     }
 
+    /**
+     * Get PDCP Throughput.
+     * @return PdcpThroughput
+     */
     @JsonProperty("PDCP-Throughput")
-    public PDCPThroughput getPdcpThroughput() {
+    public PdcpThroughput getPdcpThroughput() {
         return pdcpThroughput;
     }
 
+    /**
+     * Set PDCP Throughput.
+     * @param pdcpThroughput PdcpThroughput
+     */
     @JsonProperty("PDCP-Throughput")
-    public void setPdcpThroughput(PDCPThroughput pdcpThroughput) {
+    public void setPdcpThroughput(PdcpThroughput pdcpThroughput) {
         this.pdcpThroughput = pdcpThroughput;
     }
 
+    /**
+     * Get PdcpPackDelay.
+     * @return PdcpPacketdelay
+     */
     @JsonProperty("PDCP-Packet-Delay")
-    public PDCPPacketDelay getPdcpPackDelay() {
+    public PdcpPacketdelay getPdcpPackDelay() {
         return pdcpPackDelay;
     }
 
+    /**
+     * Set PdcpPackDelay.
+     * @param pdcpPackDelay PdcpPacketdelay
+     */
     @JsonProperty("PDCP-Packet-Delay")
-    public void setPdcpPackDelay(PDCPPacketDelay pdcpPackDelay) {
+    public void setPdcpPackDelay(PdcpPacketdelay pdcpPackDelay) {
         this.pdcpPackDelay = pdcpPackDelay;
     }
 
+    /**
+     * Get ResourceUsage.
+     * @return ResourceUsage
+     */
     @JsonProperty("Resource-Usage")
     public ResourceUsage getResourceUsage() {
         return resourceUsage;
     }
 
+    /**
+     * Set ResourceUsage.
+     * @param resourceUsage ResourceUsage
+     */
     @JsonProperty("Resource-Usage")
     public void setResourceUsage(ResourceUsage resourceUsage) {
         this.resourceUsage = resourceUsage;
@@ -325,8 +408,12 @@ public class RnibLink {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         RnibLink link = (RnibLink) o;
 
@@ -338,30 +425,32 @@ public class RnibLink {
         return linkId.hashCode();
     }
 
+    /**
+     * Enum of Link-Type.
+     */
     public enum Type {
         SERVING_PRIMARY("serving/primary") {
             @Override
             public String toString() {
-                return "\"serving/primary\"";
+                return "serving/primary";
             }
         },
-        // TODO: Add CA/DC
         SERVING_SECONDARY_CA("serving/secondary/ca") {
             @Override
             public String toString() {
-                return "\"serving/secondary/ca\"";
+                return "serving/secondary/ca";
             }
         },
         SERVING_SECONDARY_DC("serving/secondary/dc") {
             @Override
             public String toString() {
-                return "\"serving/secondary/dc\"";
+                return "serving/secondary/dc";
             }
         },
         NON_SERVING("non-serving") {
             @Override
             public String toString() {
-                return "\"non-serving\"";
+                return "non-serving";
             }
         };
 
@@ -371,6 +460,11 @@ public class RnibLink {
             this.name = name;
         }
 
+        /**
+         * Get enum value of link-type.
+         * @param name String representation of Enum Type
+         * @return Type
+         */
         public static Type getEnum(String name) {
             Optional<Type> any = Arrays.stream(Type.values()).filter(typeStr -> typeStr.name.equals(name)).findAny();
             if (any.isPresent()) {
@@ -380,153 +474,247 @@ public class RnibLink {
         }
     }
 
+    /**
+     * Quality of Link.
+     */
     @JsonPropertyOrder({
-            "RX",
-            "CQI",
-            "MCS"
+            "rx",
+            "cqi",
+            "mcs"
     })
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class LinkQuality {
-        RX RX = null;
-        CQI CQI = null;
-        MCS MCS = null;
+        Rx rx = null;
+        Cqi cqi = null;
+        Mcs mcs = null;
 
-        public LinkQuality.RX getRX() {
-            return RX;
+        /**
+         * Get rx.
+         * @return rx
+         */
+        public Rx getRx() {
+            return rx;
         }
 
-        public void setRX(LinkQuality.RX RX) {
-            this.RX = RX;
+        /**
+         * Set rx.
+         * @param rx rx
+         */
+        public void setRx(Rx rx) {
+            this.rx = rx;
         }
 
-        public LinkQuality.CQI getCQI() {
-            return CQI;
+        /**
+         * Get cqi.
+         * @return cqi
+         */
+        public Cqi getCqi() {
+            return cqi;
         }
 
-        public void setCQI(LinkQuality.CQI CQI) {
-            this.CQI = CQI;
+        /**
+         * Set cqi.
+         * @param cqi cqi
+         */
+        public void setCqi(Cqi cqi) {
+            this.cqi = cqi;
         }
 
-        public LinkQuality.MCS getMCS() {
-            return MCS;
+        /**
+         * Get mcs.
+         * @return mcs
+         */
+        public Mcs getMcs() {
+            return mcs;
         }
 
-        public void setMCS(LinkQuality.MCS MCS) {
-            this.MCS = MCS;
+        /**
+         * Set mcs.
+         * @param mcs mcs
+         */
+        public void setMcs(Mcs mcs) {
+            this.mcs = mcs;
         }
 
+        /**
+         * Class to represent rx.
+         */
         @JsonPropertyOrder({
-                "RSRP",
-                "RSRQ",
+                "rsrp",
+                "rsrq",
                 "timesincelastupdate"
         })
         @JsonIgnoreProperties(ignoreUnknown = true)
-        public static class RX {
-            double RSRP;
-            double RSRQ;
+        public static class Rx {
+            double rsrp;
+            double rsrq;
             WallClockTimestamp timesincelastupdate;
 
             @JsonCreator
-            public RX(@JsonProperty("RSRP") double RSRP, @JsonProperty("RSRQ") double RSRQ) {
-                this.RSRP = RSRP;
-                this.RSRQ = RSRQ;
+            public Rx(@JsonProperty("rsrp") double rsrp, @JsonProperty("rsrq") double rsrq) {
+                this.rsrp = rsrp;
+                this.rsrq = rsrq;
                 this.timesincelastupdate = new WallClockTimestamp();
             }
 
-            public double getRSRP() {
-                return RSRP;
+            /**
+             * Get rsrp.
+             * @return double rsrp
+             */
+            public double getRsrp() {
+                return rsrp;
             }
 
-            public void setRSRP(double RSRP) {
-                this.RSRP = RSRP;
+            /**
+             * Set rsrp.
+             * @param rsrp rsrp
+             */
+            public void setRsrp(double rsrp) {
+                this.rsrp = rsrp;
             }
 
-            public double getRSRQ() {
-                return RSRQ;
+            /**
+             * Get rsrq.
+             * @return double rsrq
+             */
+            public double getRsrq() {
+                return rsrq;
             }
 
-            public void setRSRQ(double RSRQ) {
-                this.RSRQ = RSRQ;
+            /**
+             * Set rsrq.
+             * @param rsrq rsrq
+             */
+            public void setRsrq(double rsrq) {
+                this.rsrq = rsrq;
             }
 
+            /**
+             * Get time since last update.
+             *
+             * @return long Time
+             */
             public long getTimesincelastupdate() {
                 return new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp();
             }
 
+            /**
+             * Set time since last update.
+             *
+             * @param timesincelastupdate time since last update
+             */
             public void setTimesincelastupdate(WallClockTimestamp timesincelastupdate) {
                 this.timesincelastupdate = timesincelastupdate;
             }
 
             @Override
             public String toString() {
-                return "RX{" +
-                        "RSRP=" + RSRP +
-                        ", RSRQ=" + RSRQ +
-                        ", timesincelastupdate=" + (new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp()) +
+                return "rx{" +
+                        "rsrp=" + rsrp +
+                        ", rsrq=" + rsrq +
+                        ", timesincelastupdate=" + (new WallClockTimestamp().unixTimestamp() -
+                        timesincelastupdate.unixTimestamp()) +
                         '}';
             }
         }
 
         @JsonPropertyOrder({
-                "Hist",
-                "Mode",
-                "Mean",
+                "hist",
+                "mode",
+                "mean",
                 "timesincelastupdate"
         })
         @JsonIgnoreProperties(ignoreUnknown = true)
-        public static class CQI {
-            RadioRepPerServCell.CqiHist Hist;
-            double Mode;
-            double Mean;
+        public static class Cqi {
+            RadioRepPerServCell.CqiHist hist;
+            double mode;
+            double mean;
             WallClockTimestamp timesincelastupdate;
 
             @JsonCreator
-            public CQI(@JsonProperty("Hist") RadioRepPerServCell.CqiHist hist, @JsonProperty("Mode") double mode, @JsonProperty("Mean") double mean) {
-                Hist = hist;
-                Mode = mode;
-                Mean = mean;
+            public Cqi(@JsonProperty("hist") RadioRepPerServCell.CqiHist hist, @JsonProperty("mode") double mode,
+                       @JsonProperty("mean") double mean) {
+                this.hist = hist;
+                this.mode = mode;
+                this.mean = mean;
                 this.timesincelastupdate = new WallClockTimestamp();
             }
 
+
+            /**
+             * Get CQIHist.
+             * @return CqiHist
+             */
             public RadioRepPerServCell.CqiHist getHist() {
-                return Hist;
+                return hist;
             }
 
+            /**
+             * Get CQIHist.
+             * @param hist CqiHist
+             */
             public void setHist(RadioRepPerServCell.CqiHist hist) {
-                Hist = hist;
+                this.hist = hist;
             }
 
+            /**
+             * Get mode.
+             * @return double mode
+             */
             public double getMode() {
-                return Mode;
+                return mode;
             }
 
+            /**
+             * Set mode.
+             * @param mode mode
+             */
             public void setMode(double mode) {
-                Mode = mode;
+                this.mode = mode;
             }
 
+            /**
+             * Get mean.
+             * @return double mean
+             */
             public double getMean() {
-                return Mean;
+                return mean;
             }
 
+            /**
+             * Set mean.
+             * @param mean mean
+             */
             public void setMean(double mean) {
-                Mean = mean;
+                this.mean = mean;
             }
 
+            /**
+             * Get time since last update.
+             *
+             * @return long Time
+             */
             public long getTimesincelastupdate() {
                 return new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp();
             }
 
+            /**
+             * Set time since last update.
+             *
+             * @param timesincelastupdate time since last update
+             */
             public void setTimesincelastupdate(WallClockTimestamp timesincelastupdate) {
                 this.timesincelastupdate = timesincelastupdate;
             }
 
             @Override
             public String toString() {
-                return "CQI{" +
-                        "Hist=" + Hist +
-                        ", Mode=" + Mode +
-                        ", Mean=" + Mean +
-                        ", timesincelastupdate=" + (new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp()) +
+                return "cqi{" +
+                        "hist=" + hist +
+                        ", mode=" + mode +
+                        ", mean=" + mean +
+                        ", timesincelastupdate=" + (new WallClockTimestamp().unixTimestamp() -
+                        timesincelastupdate.unixTimestamp()) +
                         '}';
             }
         }
@@ -537,48 +725,76 @@ public class RnibLink {
                 "timesincelastupdate"
         })
         @JsonIgnoreProperties(ignoreUnknown = true)
-        public static class MCS {
+        public static class Mcs {
             SchedMeasRepPerServCell.McsDl dl;
             SchedMeasRepPerServCell.McsUl ul;
             WallClockTimestamp timesincelastupdate;
 
             @JsonCreator
-            public MCS(@JsonProperty("dl") SchedMeasRepPerServCell.McsDl dl, @JsonProperty("ul") SchedMeasRepPerServCell.McsUl ul) {
+            public Mcs(@JsonProperty("dl") SchedMeasRepPerServCell.McsDl dl,
+                       @JsonProperty("ul") SchedMeasRepPerServCell.McsUl ul) {
                 this.dl = dl;
                 this.ul = ul;
                 this.timesincelastupdate = new WallClockTimestamp();
             }
 
+            /**
+             * Get DL.
+             * @return Dl
+             */
             public SchedMeasRepPerServCell.McsDl getDl() {
                 return dl;
             }
 
+            /**
+             * Set DL.
+             * @param dl DL
+             */
             public void setDl(SchedMeasRepPerServCell.McsDl dl) {
                 this.dl = dl;
             }
 
+            /**
+             * Get UL.
+             * @return Ul
+             */
             public SchedMeasRepPerServCell.McsUl getUl() {
                 return ul;
             }
 
+            /**
+             * Set UL.
+             * @param ul Ul
+             */
             public void setUl(SchedMeasRepPerServCell.McsUl ul) {
                 this.ul = ul;
             }
 
+            /**
+             * Get time since last update.
+             *
+             * @return long Time
+             */
             public long getTimesincelastupdate() {
                 return new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp();
             }
 
+            /**
+             * Set time since last update.
+             *
+             * @param timesincelastupdate time since last update
+             */
             public void setTimesincelastupdate(WallClockTimestamp timesincelastupdate) {
                 this.timesincelastupdate = timesincelastupdate;
             }
 
             @Override
             public String toString() {
-                return "MCS{" +
+                return "mcs{" +
                         "dl=" + dl +
                         ", ul=" + ul +
-                        ", timesincelastupdate=" + (new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp()) +
+                        ", timesincelastupdate=" + (new WallClockTimestamp().unixTimestamp() -
+                        timesincelastupdate.unixTimestamp()) +
                         '}';
             }
         }
@@ -590,38 +806,65 @@ public class RnibLink {
             "ul"
     })
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class PDCPThroughput {
+    public static class PdcpThroughput {
         WallClockTimestamp timesincelastupdate;
         private PDCPMeasReportPerUe.ThroughputDl dl;
         private PDCPMeasReportPerUe.ThroughputUl ul;
 
         @JsonCreator
-        public PDCPThroughput(@JsonProperty("dl") PDCPMeasReportPerUe.ThroughputDl dl, @JsonProperty("ul") PDCPMeasReportPerUe.ThroughputUl ul) {
+        public PdcpThroughput(@JsonProperty("dl") PDCPMeasReportPerUe.ThroughputDl dl,
+                              @JsonProperty("ul") PDCPMeasReportPerUe.ThroughputUl ul) {
             this.dl = dl;
             this.ul = ul;
             this.timesincelastupdate = new WallClockTimestamp();
         }
 
+        /**
+         * Get DL.
+         * @return Dl
+         */
         public PDCPMeasReportPerUe.ThroughputDl getDl() {
             return dl;
         }
 
+        /**
+         * Set DL.
+         * @param dl DL
+         */
         public void setDl(PDCPMeasReportPerUe.ThroughputDl dl) {
             this.dl = dl;
         }
 
+        /**
+         * Get UL.
+         * @return Ul
+         */
         public PDCPMeasReportPerUe.ThroughputUl getUl() {
             return ul;
         }
 
+        /**
+         * Set UL.
+         * @param ul Ul
+         */
         public void setUl(PDCPMeasReportPerUe.ThroughputUl ul) {
             this.ul = ul;
         }
 
+        /**
+         * Get time since last update.
+         *
+         * @return long Time
+         */
         public long getTimesincelastupdate() {
             return new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp();
         }
 
+        /**
+         * Set time since last update.
+         *
+         * @param timesincelastupdate time since last update
+         */
         public void setTimesincelastupdate(WallClockTimestamp timesincelastupdate) {
             this.timesincelastupdate = timesincelastupdate;
         }
@@ -629,10 +872,11 @@ public class RnibLink {
         @Override
         public String
         toString() {
-            return "PDCPThroughput{" +
+            return "PdcpThroughput{" +
                     "dl=" + dl +
                     ", ul=" + ul +
-                    ", timesincelastupdate=" + (new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp()) +
+                    ", timesincelastupdate=" + (new WallClockTimestamp().unixTimestamp() -
+                    timesincelastupdate.unixTimestamp()) +
                     '}';
         }
     }
@@ -642,48 +886,76 @@ public class RnibLink {
             "ul"
     })
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class PDCPPacketDelay {
+    public static class PdcpPacketdelay {
         PDCPMeasReportPerUe.PktDelayDl dl;
         PDCPMeasReportPerUe.PktDelayUl ul;
         WallClockTimestamp timesincelastupdate;
 
         @JsonCreator
-        public PDCPPacketDelay(@JsonProperty("dl") PDCPMeasReportPerUe.PktDelayDl dl, @JsonProperty("ul") PDCPMeasReportPerUe.PktDelayUl ul) {
+        public PdcpPacketdelay(@JsonProperty("dl") PDCPMeasReportPerUe.PktDelayDl dl,
+                               @JsonProperty("ul") PDCPMeasReportPerUe.PktDelayUl ul) {
             this.dl = dl;
             this.ul = ul;
             this.timesincelastupdate = new WallClockTimestamp();
         }
 
+        /**
+         * Get DL.
+         * @return Dl
+         */
         public PDCPMeasReportPerUe.PktDelayDl getDl() {
             return dl;
         }
 
+        /**
+         * Set DL.
+         * @param dl DL
+         */
         public void setDl(PDCPMeasReportPerUe.PktDelayDl dl) {
             this.dl = dl;
         }
 
+        /**
+         * Get UL.
+         * @return Ul
+         */
         public PDCPMeasReportPerUe.PktDelayUl getUl() {
             return ul;
         }
 
+        /**
+         * Set UL.
+         * @param ul Ul
+         */
         public void setUl(PDCPMeasReportPerUe.PktDelayUl ul) {
             this.ul = ul;
         }
 
+        /**
+         * Get time since last update.
+         *
+         * @return long Time
+         */
         public long getTimesincelastupdate() {
             return new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp();
         }
 
+        /**
+         * Set time since last update.
+         *
+         * @param timesincelastupdate time since last update
+         */
         public void setTimesincelastupdate(WallClockTimestamp timesincelastupdate) {
             this.timesincelastupdate = timesincelastupdate;
         }
 
         @Override
         public String toString() {
-            return "PDCPPacketDelay{" +
+            return "PdcpPacketdelay{" +
                     "dl=" + dl +
                     ", ul=" + ul +
-                    ", timesincelastupdate=" + (new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp()) +
+                    ", timesincelastupdate=" + (new WallClockTimestamp().unixTimestamp() -
+                    timesincelastupdate.unixTimestamp()) +
                     '}';
         }
     }
@@ -699,32 +971,59 @@ public class RnibLink {
         WallClockTimestamp timesincelastupdate;
 
         @JsonCreator
-        public ResourceUsage(@JsonProperty("dl") PRBUsage.PrbUsageDl dl, @JsonProperty("ul") PRBUsage.PrbUsageUl ul) {
+        public ResourceUsage(@JsonProperty("dl") PRBUsage.PrbUsageDl dl,
+                             @JsonProperty("ul") PRBUsage.PrbUsageUl ul) {
             this.dl = dl;
             this.ul = ul;
             this.timesincelastupdate = new WallClockTimestamp();
         }
 
+        /**
+         * Get DL.
+         * @return Dl
+         */
         public PRBUsage.PrbUsageDl getDl() {
             return dl;
         }
 
+        /**
+         * Set DL.
+         * @param dl DL
+         */
         public void setDl(PRBUsage.PrbUsageDl dl) {
             this.dl = dl;
         }
 
+        /**
+         * Get UL.
+         * @return Ul
+         */
         public PRBUsage.PrbUsageUl getUl() {
             return ul;
         }
 
+        /**
+         * Set UL.
+         * @param ul Ul
+         */
         public void setUl(PRBUsage.PrbUsageUl ul) {
             this.ul = ul;
         }
 
+        /**
+         * Get time since last update.
+         *
+         * @return long Time
+         */
         public long getTimesincelastupdate() {
             return new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp();
         }
 
+        /**
+         * Set time since last update.
+         *
+         * @param timesincelastupdate time since last update
+         */
         public void setTimesincelastupdate(WallClockTimestamp timesincelastupdate) {
             this.timesincelastupdate = timesincelastupdate;
         }
@@ -734,7 +1033,8 @@ public class RnibLink {
             return "ResourceUsage{" +
                     "dl=" + dl +
                     ", ul=" + ul +
-                    ", timesincelastupdate=" + (new WallClockTimestamp().unixTimestamp() - timesincelastupdate.unixTimestamp()) +
+                    ", timesincelastupdate=" + (new WallClockTimestamp().unixTimestamp() -
+                    timesincelastupdate.unixTimestamp()) +
                     '}';
         }
     }

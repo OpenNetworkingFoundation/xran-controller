@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-present Open Networking Laboratory
+ * Copyright 2015-present Open Networking Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,21 @@
 package org.onosproject.xran.controller;
 
 import io.netty.channel.ChannelHandlerContext;
-import org.onosproject.net.DeviceId;
 import org.onosproject.xran.codecs.pdu.XrancPdu;
 
 import java.io.IOException;
 
+/**
+ * Xran packet processor interface.
+ */
 public interface XranPacketProcessor {
+    /**
+     * Handle an incoming packet.
+     *
+     * @param pdu pdu of incoming packet
+     * @param ctx channel received the packet
+     * @throws IOException io exception
+     * @throws InterruptedException interrupted exception
+     */
     void handlePacket(XrancPdu pdu, ChannelHandlerContext ctx) throws IOException, InterruptedException;
 }

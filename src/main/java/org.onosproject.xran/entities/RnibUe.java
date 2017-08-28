@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-present Open Networking Laboratory
+ * Copyright 2015-present Open Networking Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import java.util.stream.Stream;
 import static org.onosproject.net.HostId.hostId;
 
 /**
- * Created by dimitris on 7/22/17.
+ * R-NIB UE and its properties.
  */
 @JsonPropertyOrder({
         "ID",
@@ -82,6 +82,11 @@ public class RnibUe {
         timer = new Timer();
     }
 
+    /**
+     * Convert Host ID to UE ID.
+     * @param hostId hostID
+     * @return Long UE ID
+     */
     public static Long hostIdtoUEId(HostId hostId) {
         String mac = hostId.mac().toString();
         mac = mac.replace(":", "");
@@ -89,11 +94,19 @@ public class RnibUe {
         return l;
     }
 
+    /**
+     * Get timer.
+     * @return Timer
+     */
     @JsonIgnore
     public Timer getTimer() {
         return timer;
     }
 
+    /**
+     * Set timer.
+     * @param timer Timer
+     */
     @JsonIgnore
     public void setTimer(Timer timer) {
         this.timer.cancel();
@@ -101,46 +114,82 @@ public class RnibUe {
         this.timer = timer;
     }
 
+    /**
+     * Get MMEUES1APID.
+     * @return MMEUES1APID
+     */
     @JsonProperty("MMEUES1APID")
     public MMEUES1APID getMmeS1apId() {
         return mmeS1apId;
     }
 
+    /**
+     * Set MMEUES1APID.
+     * @param mmeS1apId MMEUES1APID
+     */
     @JsonProperty("MMEUES1APID")
     public void setMmeS1apId(MMEUES1APID mmeS1apId) {
         this.mmeS1apId = mmeS1apId;
     }
 
+    /**
+     * Get ENBUES1APID.
+     * @return ENBUES1APID
+     */
     @JsonProperty("ENBUES1APID")
     public ENBUES1APID getEnbS1apId() {
         return enbS1apId;
     }
 
+    /**
+     * Set ENBUES1APID.
+     * @param enbS1apId ENBUES1APID
+     */
     @JsonProperty("ENBUES1APID")
     public void setEnbS1apId(ENBUES1APID enbS1apId) {
         this.enbS1apId = enbS1apId;
     }
 
+    /**
+     * Get CRNTI.
+     * @return CRNTI
+     */
     @JsonProperty("CRNTI")
     public CRNTI getCrnti() {
         return crnti;
     }
 
+    /**
+     * Set CRNTI.
+     * @param crnti CRNTI
+     */
     @JsonProperty("CRNTI")
     public void setCrnti(CRNTI crnti) {
         this.crnti = crnti;
     }
 
+    /**
+     * Get IMSI.
+     * @return IMSI
+     */
     @JsonProperty("IMSI")
     public String getImsi() {
         return imsi;
     }
 
+    /**
+     * Set IMSI.
+     * @param imsi IMSI
+     */
     @JsonProperty("IMSI")
     public void setImsi(String imsi) {
         this.imsi = imsi;
     }
 
+    /**
+     * Get Host ID.
+     * @return HostId
+     */
     @JsonIgnore
     public HostId getHostId() {
         try {
@@ -180,40 +229,72 @@ public class RnibUe {
         return null;
     }
 
+    /**
+     * Get RXMeasConfig Report.
+     * @return RXSigMeasConfig
+     */
     @JsonProperty("MeasurementConfiguration")
     public RXSigMeasConfig getMeasConfig() {
         return measConfig;
     }
 
+    /**
+     * Set RXMeasConfig Report.
+     * @param measConfig RXSigMeasConfig
+     */
     @JsonProperty("MeasurementConfiguration")
     public void setMeasConfig(RXSigMeasConfig measConfig) {
         this.measConfig = measConfig;
     }
 
+    /**
+     * Get UE Capability Info.
+     * @return UECapabilityInfo
+     */
     @JsonProperty("Capability")
     public UECapabilityInfo getCapability() {
         return capability;
     }
 
+    /**
+     * Set UE Capability Info.
+     * @param capability UECapabilityInfo
+     */
     @JsonProperty("Capability")
     public void setCapability(UECapabilityInfo capability) {
         this.capability = capability;
     }
 
+    /**
+     * Get State.
+     * @return State
+     */
     @JsonProperty("State")
     public State getState() {
         return state;
     }
 
+    /**
+     * Set State.
+     * @param state State
+     */
     @JsonProperty("State")
     public void setState(State state) {
         this.state = state;
     }
 
+    /**
+     * Get UE ID.
+     * @return Long UE ID
+     */
     public Long getId() {
         return id;
     }
 
+    /**
+     * Set UE ID.
+     * @param id Long UE ID
+     */
     public void setId(Long id) {
         this.id = id;
     }
@@ -232,30 +313,48 @@ public class RnibUe {
                 '}';
     }
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.lang.Object#equals()
+     */
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         RnibUe rnibUe = (RnibUe) o;
         return Objects.equals(id, rnibUe.id);
     }
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.lang.Object#hashCode()
+     */
     @Override
     public int hashCode() {
         return Objects.hash(id);
     }
 
+
+    /**
+     * Enum of State of UE.
+     */
     public enum State {
         ACTIVE {
             @Override
             public String toString() {
-                return "\"ACTIVE\"";
+                return "ACTIVE";
             }
         },
         IDLE {
             @Override
             public String toString() {
-                return "\"IDLE\"";
+                return "IDLE";
             }
         }
     }

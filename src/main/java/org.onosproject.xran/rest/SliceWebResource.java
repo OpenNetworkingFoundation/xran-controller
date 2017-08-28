@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-present Open Networking Laboratory
+ * Copyright 2016-present Open Networking Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.onosproject.xran.rest;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.onosproject.rest.AbstractWebResource;
@@ -32,7 +31,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -49,10 +47,10 @@ public class SliceWebResource extends AbstractWebResource {
     }
 
     /**
-     * test.
+     * List the slice with the given slice ID.
      *
-     * @param sliceid test
-     * @return test
+     * @param sliceid ID of the slice
+     * @return Response
      */
     @GET
     @Path("{sliceid}")
@@ -66,7 +64,7 @@ public class SliceWebResource extends AbstractWebResource {
 
                 return ResponseHelper.getResponse(
                         mapper(),
-                        ResponseHelper.statusCode.OK,
+                        ResponseHelper.StatusCode.OK,
                         jsonNode
                 );
             } catch (Exception e) {
@@ -76,7 +74,7 @@ public class SliceWebResource extends AbstractWebResource {
 
                 return ResponseHelper.getResponse(
                         mapper(),
-                        ResponseHelper.statusCode.INTERNAL_SERVER_ERROR,
+                        ResponseHelper.StatusCode.INTERNAL_SERVER_ERROR,
                         "Exception",
                         fullStackTrace
                 );
@@ -85,17 +83,17 @@ public class SliceWebResource extends AbstractWebResource {
 
         return ResponseHelper.getResponse(
                 mapper(),
-                ResponseHelper.statusCode.NOT_FOUND,
+                ResponseHelper.StatusCode.NOT_FOUND,
                 "Not Found",
                 "Slice " + sliceid + " not found"
         );
     }
 
     /**
-     * test.
+     * Create slice with the corresponding attributes.
      *
-     * @param stream test
-     * @return test
+     * @param stream Attributes to create slice
+     * @return Response
      */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
@@ -108,7 +106,7 @@ public class SliceWebResource extends AbstractWebResource {
             // FIXME: change when implemented
             return ResponseHelper.getResponse(
                     mapper(),
-                    ResponseHelper.statusCode.NOT_IMPLEMENTED,
+                    ResponseHelper.StatusCode.NOT_IMPLEMENTED,
                     "Not Implemented",
                     "POST Slice not implemented"
             );
@@ -119,7 +117,7 @@ public class SliceWebResource extends AbstractWebResource {
 
             return ResponseHelper.getResponse(
                     mapper(),
-                    ResponseHelper.statusCode.INTERNAL_SERVER_ERROR,
+                    ResponseHelper.StatusCode.INTERNAL_SERVER_ERROR,
                     "Exception",
                     fullStackTrace
             );
