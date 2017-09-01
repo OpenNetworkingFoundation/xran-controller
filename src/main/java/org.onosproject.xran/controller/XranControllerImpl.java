@@ -175,6 +175,7 @@ public class XranControllerImpl implements XranController {
     private ConcurrentMap<ECGI, SynchronousQueue<String>> hoMap = new ConcurrentHashMap<>();
     private ConcurrentMap<ECGI, SynchronousQueue<String>> rrmcellMap = new ConcurrentHashMap<>();
     private ConcurrentMap<CRNTI, SynchronousQueue<String>> scellAddMap = new ConcurrentHashMap<>();
+    // Map used to keep messages in pairs (HO Complete - CTX Update, Adm Status - CTX Update)
     private ConcurrentMap<EcgiCrntiPair, ContextUpdateHandler> contextUpdateMap = new ConcurrentHashMap<>();
     /* QUEUE */
     private BlockingQueue<Long> ueIdQueue = new LinkedBlockingQueue<>();
@@ -890,7 +891,8 @@ public class XranControllerImpl implements XranController {
                         v = new ContextUpdateHandler();
                     }
                     if (v.setAdmissionStatus(ueAdmissionStatus)) {
-                        handleContextUpdate(v.getContextUpdate(), ctx, false);
+                        handlePairedPackets(v.getContextUpdate(), ctx, false);
+                        v.reset();
                     }
                     return v;
                 });
@@ -912,7 +914,7 @@ public class XranControllerImpl implements XranController {
                 }
                 if (v.setContextUpdate(ueContextUpdate)) {
                     HOComplete hoComplete = v.getHoComplete();
-                    handleContextUpdate(ueContextUpdate, ctx, hoComplete != null);
+                    handlePairedPackets(ueContextUpdate, ctx, hoComplete != null);
                     if (hoComplete != null) {
                         try {
                             hoMap.get(hoComplete.getEcgiS()).put("Hand Over Completed");
@@ -923,6 +925,7 @@ public class XranControllerImpl implements XranController {
                             hoMap.remove(hoComplete.getEcgiS());
                         }
                     }
+                    v.reset();
                 }
                 return v;
             });
@@ -1049,7 +1052,7 @@ public class XranControllerImpl implements XranController {
                     v = new ContextUpdateHandler();
                 }
                 if (v.setHoComplete(hoComplete)) {
-                    handleContextUpdate(v.getContextUpdate(), ctx, true);
+                    handlePairedPackets(v.getContextUpdate(), ctx, true);
 
                     try {
                         hoMap.get(hoComplete.getEcgiS()).put("Hand Over Completed");
@@ -1059,6 +1062,7 @@ public class XranControllerImpl implements XranController {
                     } finally {
                         hoMap.remove(hoComplete.getEcgiS());
                     }
+                    v.reset();
                 }
                 return v;
             });
@@ -1342,7 +1346,7 @@ public class XranControllerImpl implements XranController {
          * @param ctx           channel context for the CELL
          * @param handoff       true if we handle a Hand Off
          */
-        private void handleContextUpdate(UEContextUpdate contextUpdate, ChannelHandlerContext ctx, boolean handoff) {
+        private void handlePairedPackets(UEContextUpdate contextUpdate, ChannelHandlerContext ctx, boolean handoff) {
             RnibUe ue;
             RnibCell cell = xranStore.getCell(contextUpdate.getEcgi());
 

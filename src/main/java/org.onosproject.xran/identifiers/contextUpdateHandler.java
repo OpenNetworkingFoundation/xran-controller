@@ -86,6 +86,12 @@ public class ContextUpdateHandler {
         return contextUpdate != null;
     }
 
+    public void reset() {
+        this.hoComplete = null;
+        this.admissionStatus = null;
+        this.contextUpdate = null;
+    }
+
     @Override
     public String toString() {
         return "ContextUpdateHandler{" +
