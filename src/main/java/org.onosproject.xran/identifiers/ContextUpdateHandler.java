@@ -42,10 +42,11 @@ public class ContextUpdateHandler {
      * @return boolean to check context update was for admissionStatus packet or HOComplete packet
      */
     public boolean setContextUpdate(UEContextUpdate contextUpdate) {
-        this.contextUpdate = contextUpdate;
+        synchronized (this) {
+            this.contextUpdate = contextUpdate;
 
-        return admissionStatus != null || hoComplete != null;
-
+            return admissionStatus != null || hoComplete != null;
+        }
     }
 
     /**
@@ -62,9 +63,11 @@ public class ContextUpdateHandler {
      * @return boolean contextUpdate exists or not
      */
     public boolean setAdmissionStatus(UEAdmissionStatus admissionStatus) {
-        this.admissionStatus = admissionStatus;
+        synchronized (this) {
+            this.admissionStatus = admissionStatus;
 
-        return contextUpdate != null;
+            return contextUpdate != null;
+        }
     }
 
     /**
@@ -81,15 +84,19 @@ public class ContextUpdateHandler {
      * @return boolean contextUpdate exists or not
      */
     public boolean setHoComplete(HOComplete hoComplete) {
-        this.hoComplete = hoComplete;
+        synchronized (this) {
+            this.hoComplete = hoComplete;
 
-        return contextUpdate != null;
+            return contextUpdate != null;
+        }
     }
 
     public void reset() {
-        this.hoComplete = null;
-        this.admissionStatus = null;
-        this.contextUpdate = null;
+        synchronized (this) {
+            this.hoComplete = null;
+            this.admissionStatus = null;
+            this.contextUpdate = null;
+        }
     }
 
     @Override

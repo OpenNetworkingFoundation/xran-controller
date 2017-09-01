@@ -209,17 +209,43 @@ public class XranControllerImpl implements XranController {
 
     @Deactivate
     public void deactivate() {
-        controller.stop();
-
         deviceService.removeListener(deviceListener);
         hostService.removeListener(hostListener);
-
-        legitCells.clear();
-
         configService.removeListener(configListener);
         registry.unregisterConfigFactory(xranConfigFactory);
 
+        cleanup();
+
         log.info("XRAN Controller Stopped");
+    }
+
+    private void cleanup() {
+        xranStore.getuenodes().forEach(ue -> {
+            for (XranHostListener l : xranHostListeners) {
+                l.hostRemoved(((RnibUe) ue).getHostId());
+            }
+        });
+
+        xranStore.getcellnodes().forEach(cell -> {
+            for (XranDeviceListener l : xranDeviceListeners) {
+                l.deviceRemoved(deviceId(uri(((RnibCell) cell).getEcgi())));
+            }
+        });
+
+        controller.stop();
+
+        legitCells.clear();
+        hoMap.clear();
+        rrmcellMap.clear();
+        scellAddMap.clear();
+        contextUpdateMap.clear();
+        ueIdQueue.clear();
+        xranDeviceListeners.clear();
+        xranHostListeners.clear();
+
+        cellMap = null;
+        ueMap = null;
+        linkMap = null;
     }
 
     @Override
@@ -838,7 +864,8 @@ public class XranControllerImpl implements XranController {
 
         /**
          * Handle Cellconfigreport.
-         * @param report CellConfigReport
+         *
+         * @param report  CellConfigReport
          * @param version String version ID
          */
         private void handleCellconfigreport(CellConfigReport report, String version) {
@@ -852,8 +879,9 @@ public class XranControllerImpl implements XranController {
 
         /**
          * Handle Ueadmissionrequest.
+         *
          * @param ueAdmissionRequest UEAdmissionRequest
-         * @param ctx ChannelHandlerContext
+         * @param ctx                ChannelHandlerContext
          * @throws IOException IO Exception
          */
         private void handleUeadmissionrequest(UEAdmissionRequest ueAdmissionRequest, ChannelHandlerContext ctx)
@@ -870,8 +898,9 @@ public class XranControllerImpl implements XranController {
 
         /**
          * Handle UEAdmissionStatus.
+         *
          * @param ueAdmissionStatus UEAdmissionStatus
-         * @param ctx ChannelHandlerContext
+         * @param ctx               ChannelHandlerContext
          */
         private void handleAdmissionstatus(UEAdmissionStatus ueAdmissionStatus, ChannelHandlerContext ctx) {
             RnibUe ue = ueMap.get(ueAdmissionStatus.getEcgi(), ueAdmissionStatus.getCrnti());
@@ -901,8 +930,9 @@ public class XranControllerImpl implements XranController {
 
         /**
          * Handle UEContextUpdate.
+         *
          * @param ueContextUpdate UEContextUpdate
-         * @param ctx ChannelHandlerContext
+         * @param ctx             ChannelHandlerContext
          */
         private void handleUecontextupdate(UEContextUpdate ueContextUpdate, ChannelHandlerContext ctx) {
             EcgiCrntiPair ecgiCrntiPair = EcgiCrntiPair
@@ -933,6 +963,7 @@ public class XranControllerImpl implements XranController {
 
         /**
          * Handle UEReconfigInd.
+         *
          * @param ueReconfigInd UEReconfigInd
          */
         private void handleUereconfigind(UEReconfigInd ueReconfigInd) {
@@ -949,6 +980,7 @@ public class XranControllerImpl implements XranController {
 
         /**
          * Handle UEReleaseInd.
+         *
          * @param ueReleaseInd UEReleaseInd
          */
         private void handleUereleaseind(UEReleaseInd ueReleaseInd) {
@@ -975,8 +1007,9 @@ public class XranControllerImpl implements XranController {
 
         /**
          * Handle BearerAdmissionRequest.
+         *
          * @param bearerAdmissionRequest BearerAdmissionRequest
-         * @param ctx ChannelHandlerContext
+         * @param ctx                    ChannelHandlerContext
          * @throws IOException IO Exception
          */
         private void handleBeareradmissionrequest(BearerAdmissionRequest bearerAdmissionRequest,
@@ -1000,6 +1033,7 @@ public class XranControllerImpl implements XranController {
 
         /**
          * Handle BearerReleaseInd.
+         *
          * @param bearerReleaseInd
          */
         private void handleBearerreleaseind(BearerReleaseInd bearerReleaseInd) {
@@ -1023,6 +1057,7 @@ public class XranControllerImpl implements XranController {
 
         /**
          * Handle HOFailure.
+         *
          * @param hoFailure HOFailure
          * @throws InterruptedException ueIdQueue interruption
          */
@@ -1041,8 +1076,9 @@ public class XranControllerImpl implements XranController {
 
         /**
          * Handle HOComplete.
+         *
          * @param hoComplete HOComplete
-         * @param ctx ChannelHandlerContext
+         * @param ctx        ChannelHandlerContext
          */
         private void handleHocomplete(HOComplete hoComplete, ChannelHandlerContext ctx) {
             EcgiCrntiPair ecgiCrntiPair = EcgiCrntiPair.valueOf(hoComplete.getEcgiT(),
@@ -1070,6 +1106,7 @@ public class XranControllerImpl implements XranController {
 
         /**
          * Handle RXSigMeasReport.
+         *
          * @param rxSigMeasReport RXSigMeasReport
          */
         private void handleRxsigmeasreport(RXSigMeasReport rxSigMeasReport) {
@@ -1117,6 +1154,7 @@ public class XranControllerImpl implements XranController {
 
         /**
          * Handle RadioMeasReportPerUE.
+         *
          * @param radioMeasReportPerUE RadioMeasReportPerUE
          */
         private void handleRadionmeasreportperue(RadioMeasReportPerUE radioMeasReportPerUE) {
@@ -1161,6 +1199,7 @@ public class XranControllerImpl implements XranController {
 
         /**
          * Handle SchedMeasReportPerUE.
+         *
          * @param schedMeasReportPerUE SchedMeasReportPerUE
          */
         private void handleSchedmeasreportperue(SchedMeasReportPerUE schedMeasReportPerUE) {
@@ -1197,6 +1236,7 @@ public class XranControllerImpl implements XranController {
 
         /**
          * Handle SchedMeasReportPerCell.
+         *
          * @param schedMeasReportPerCell SchedMeasReportPerCell
          */
         private void handleSchedmeasreportpercell(SchedMeasReportPerCell schedMeasReportPerCell) {
@@ -1215,6 +1255,7 @@ public class XranControllerImpl implements XranController {
 
         /**
          * Handle PDCPMeasReportPerUe.
+         *
          * @param pdcpMeasReportPerUe PDCPMeasReportPerUe
          */
         private void handlePdcpmeasreportperue(PDCPMeasReportPerUe pdcpMeasReportPerUe) {
@@ -1240,6 +1281,7 @@ public class XranControllerImpl implements XranController {
 
         /**
          * Handle UECapabilityInfo.
+         *
          * @param capabilityInfo UECapabilityInfo
          */
         private void handleCapabilityinfo(UECapabilityInfo capabilityInfo) {
@@ -1253,8 +1295,9 @@ public class XranControllerImpl implements XranController {
 
         /**
          * Handle UECapabilityEnquiry.
+         *
          * @param ueCapabilityEnquiry UECapabilityEnquiry
-         * @param ctx ChannelHandlerContext
+         * @param ctx                 ChannelHandlerContext
          * @throws IOException IO Exception
          */
         private void handleUecapabilityenquiry(UECapabilityEnquiry ueCapabilityEnquiry, ChannelHandlerContext ctx)
@@ -1266,6 +1309,7 @@ public class XranControllerImpl implements XranController {
 
         /**
          * Handle ScellAddStatus.
+         *
          * @param scellAddStatus ScellAddStatus
          */
         private void handleScelladdstatus(ScellAddStatus scellAddStatus) {
@@ -1298,6 +1342,7 @@ public class XranControllerImpl implements XranController {
 
         /**
          * Handle RRMConfigStatus.
+         *
          * @param rrmConfigStatus RRMConfigStatus
          */
         private void handleRrmconfigstatus(RRMConfigStatus rrmConfigStatus) {
@@ -1314,6 +1359,7 @@ public class XranControllerImpl implements XranController {
 
         /**
          * Handle TrafficSplitConfig.
+         *
          * @param trafficSplitConfig TrafficSplitConfig
          */
         private void handleTrafficSplitConfig(TrafficSplitConfig trafficSplitConfig) {
@@ -1411,7 +1457,7 @@ public class XranControllerImpl implements XranController {
 
             legitCells.putAll(xranConfig.activeCellSet());
 
-            controller.start(deviceAgent, hostAgent, packetAgent, xranConfig.getXrancPort());
+            controller.start(deviceAgent, hostAgent, packetAgent, xranConfig.getXrancIp(), xranConfig.getXrancPort());
         }
     }
 }

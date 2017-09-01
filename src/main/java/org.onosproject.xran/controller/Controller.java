@@ -25,6 +25,7 @@ import io.netty.channel.sctp.SctpChannel;
 import io.netty.channel.sctp.nio.NioSctpServerChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import org.onlab.packet.IpAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +41,7 @@ public class Controller {
     private EventLoopGroup workerGroup;
     private ChannelFuture channel;
     private int port = 8007;
+    private IpAddress bindAddress = IpAddress.valueOf("0.0.0.0");
     private boolean isRunning = false;
 
     /**
@@ -58,7 +60,7 @@ public class Controller {
                     );
                 }
             });
-            channel = b.bind(this.port).sync();
+            channel = b.bind(this.bindAddress.toInetAddress(), this.port).sync();
         } catch (Exception e) {
             log.warn(e.getMessage());
             e.printStackTrace();
@@ -83,25 +85,28 @@ public class Controller {
 
     /**
      * Initialize controller and start SCTP server.
-     *
-     * @param deviceAgent device agent
+     *  @param deviceAgent device agent
      * @param hostAgent   host agent
      * @param packetAgent packet agent
+     * @param xrancIp
      * @param port        port of server
      */
-    public void start(XranDeviceAgent deviceAgent, XranHostAgent hostAgent, XranPacketProcessor packetAgent, int port) {
-        if (isRunning && this.port != port) {
+    public void start(XranDeviceAgent deviceAgent, XranHostAgent hostAgent, XranPacketProcessor packetAgent,
+                      IpAddress xrancIp, int port) {
+        if (isRunning && (this.port != port || !this.bindAddress.equals(xrancIp))) {
             stop();
             this.deviceAgent = deviceAgent;
             this.hostAgent = hostAgent;
             this.packetAgent = packetAgent;
             this.port = port;
+            this.bindAddress = xrancIp;
             run();
         } else if (!isRunning) {
             this.deviceAgent = deviceAgent;
             this.hostAgent = hostAgent;
             this.packetAgent = packetAgent;
             this.port = port;
+            this.bindAddress = xrancIp;
             run();
             isRunning = true;
         }

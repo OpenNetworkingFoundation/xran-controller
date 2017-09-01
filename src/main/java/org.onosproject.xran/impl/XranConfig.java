@@ -47,6 +47,8 @@ public class XranConfig extends Config<ApplicationId> {
 
     private static final String IP_ADDR = "ip_addr";
 
+    private static final String XRANC_IP = "xranc_bind_ip";
+
     private static final String XRANC_PORT = "xranc_port";
 
     private static final String XRANC_CELLCONFIG_INTERVAL = "xranc_cellconfigrequest_interval_seconds";
@@ -113,6 +115,13 @@ public class XranConfig extends Config<ApplicationId> {
         JsonNode flag = object.get(BEARER_SUCCESS);
         return flag != null && flag.asBoolean();
     }
+
+    /**
+     * Get IP where the Controller binds to.
+     *
+     * @return IP address in configuration
+     */
+    public IpAddress getXrancIp() { return IpAddress.valueOf(object.get(XRANC_IP).asText()); }
 
     /**
      * Get port for xRAN controller server to bind to from configuration.

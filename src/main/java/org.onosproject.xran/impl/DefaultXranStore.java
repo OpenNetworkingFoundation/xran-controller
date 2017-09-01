@@ -65,7 +65,6 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
     private ConcurrentMap<Long, RnibUe> ueMap = new ConcurrentHashMap<>();
     private ConcurrentMap<Object, RnibSlice> sliceMap = new ConcurrentHashMap<>();
     private XranController controller;
-
     private IdGenerator ueIdGenerator;
 
     @Activate
@@ -80,6 +79,12 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
 
     @Deactivate
     public void deactivate() {
+        linkMap.clear();
+        cellMap.clear();
+        ueMap.clear();
+        sliceMap.clear();
+        controller = null;
+        ueIdGenerator = null;
         log.info("XRAN Default Store Stopped");
     }
 
@@ -99,7 +104,6 @@ public class DefaultXranStore extends AbstractStore implements XranStore {
                         .filter(k -> k.getEcgi().equals(ecgi))
                         .map(v -> linkMap.get(v))
                         .collect(Collectors.toList()));
-
         return list;
     }
 
